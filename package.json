@@ -4,8 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --dir apps/frontend dev",
+    "dev:frontend": "pnpm --dir apps/frontend dev",
+    "dev:backend": "pnpm --dir apps/backend dev",
     "build": "pnpm --dir apps/frontend build",
+    "build:frontend": "pnpm --dir apps/frontend build",
+    "build:backend": "pnpm --dir apps/backend build",
     "start": "pnpm --dir apps/frontend start",
-    "lint": "pnpm --dir apps/frontend lint"
+    "start:backend": "pnpm --dir apps/backend start",
+    "lint": "pnpm --dir apps/frontend lint",
+    "lint:backend": "pnpm --dir apps/backend lint",
+    "prisma:generate": "pnpm --dir apps/backend prisma:generate",
+    "prisma:validate": "pnpm --dir apps/backend prisma:validate"
   }
 }

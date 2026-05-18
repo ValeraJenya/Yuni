@@ -1,15 +1,16 @@
 # Architecture
 
-Yuni uses a monorepo-style structure so frontend, backend, database, documentation, and infrastructure can evolve together while staying in separate areas of responsibility.
+Yuni использует монорепозиторий, чтобы frontend, backend, база данных, документация и инфраструктура развивались вместе, но оставались разделены по зонам ответственности.
 
-- Frontend code lives in `apps/frontend`.
-- Backend code will live in `apps/backend`.
-- Database schema, migrations, and seeds live under `database`.
-- Documentation lives under `docs`.
-- Docker and support scripts live under `infra`.
+- Frontend находится в `apps/frontend`.
+- Backend находится в `apps/backend`.
+- SQL-first схема, будущие миграции и seeds находятся в `database`.
+- Документация находится в `docs`.
+- Docker и support scripts будут находиться в `infra`.
 
-The current focus is a safe foundation for future development. Backend and database implementation details will be documented as they are added.
+Текущий фокус - безопасная и понятная foundation-основа для дальнейшей разработки.
 
-## Documents
+## Документы
 
-- [Domain Model](./domain-model.md) - MVP domain blocks and their responsibility boundaries.
+- [Domain Model](./domain-model.md) - доменные блоки MVP и границы ответственности.
+- [Backend Foundation](./backend-foundation.md) - NestJS/Prisma foundation и базовые правила backend-слоя.

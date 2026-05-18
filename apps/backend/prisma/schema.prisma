@@ -1,0 +1,369 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Prisma does not represent PostgreSQL expression/partial indexes used by the SQL draft,
+// for example lower(email), lower(handle), and approved primary photo indexes.
+// Keep those constraints in SQL migrations when migration tooling is added.
+
+enum UserStatus {
+  active
+  disabled
+  deleted
+}
+
+enum PhotoModerationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum LikeKind {
+  like
+  superlike
+  pass
+}
+
+enum MatchStatus {
+  active
+  expired
+  unmatched
+  blocked
+}
+
+enum ConversationStatus {
+  active
+  archived
+  closed
+}
+
+enum MessageStatus {
+  sent
+  deleted
+}
+
+enum ReportStatus {
+  open
+  reviewing
+  resolved
+  dismissed
+}
+
+enum ReportReasonCode {
+  spam
+  fake_profile
+  harassment
+  sexual_content
+  hate_speech
+  scam_or_money
+  underage_suspected
+  violence_or_threats
+  other
+}
+
+enum ProfileVisibilityMode {
+  open
+  private
+}
+
+model User {
+  id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                String
+  passwordHash         String                @map("password_hash")
+  status               UserStatus            @default(active)
+  emailVerifiedAt      DateTime?             @map("email_verified_at") @db.Timestamptz(6)
+  lastLoginAt          DateTime?             @map("last_login_at") @db.Timestamptz(6)
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?             @map("deleted_at") @db.Timestamptz(6)
+
+  profile              Profile?
+  refreshTokens        RefreshToken[]
+  likesSent            Like[]                @relation("LikesSent")
+  likesReceived        Like[]                @relation("LikesReceived")
+  matchesAsUserA       Match[]               @relation("MatchesUserA")
+  matchesAsUserB       Match[]               @relation("MatchesUserB")
+  conversationMembers  ConversationParticipant[]
+  sentMessages         Message[]             @relation("MessagesSent")
+  blockedUsers         Block[]               @relation("BlocksFrom")
+  blockedByUsers       Block[]               @relation("BlocksTo")
+  reportsFiled         Report[]              @relation("ReportsFiled")
+  reportsReceived      Report[]              @relation("ReportsReceived")
+  privacySettings      PrivacySettings?
+  notificationSettings NotificationSettings?
+
+  @@index([status])
+  @@map("users")
+}
+
+model RefreshToken {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  tokenHash     String    @unique @map("token_hash")
+  deviceLabel   String?   @map("device_label")
+  ipAddress     String?   @map("ip_address")
+  userAgent     String?   @map("user_agent")
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokedReason String?   @map("revoked_reason")
+  lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Profile {
+  userId         String            @id @map("user_id") @db.Uuid
+  handle         String
+  displayName    String            @map("display_name")
+  birthDate      DateTime          @map("birth_date") @db.Date
+  bio            String?
+  gender         String?
+  lookingFor     String?           @map("looking_for")
+  city           String?
+  country        String?
+  latitude       Decimal?          @db.Decimal(9, 6)
+  longitude      Decimal?          @db.Decimal(9, 6)
+  isDiscoverable Boolean           @default(true) @map("is_discoverable")
+  completedAt    DateTime?         @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos         ProfilePhoto[]
+  interests      ProfileInterest[]
+
+  @@index([isDiscoverable, country, city])
+  @@index([country, city])
+  @@map("profiles")
+}
+
+model ProfilePhoto {
+  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String                @map("user_id") @db.Uuid
+  storageKey       String                @unique @map("storage_key")
+  publicUrl        String?               @map("public_url")
+  blurhash         String?
+  mimeType         String?               @map("mime_type")
+  width            Int?
+  height           Int?
+  position         Int                   @default(0)
+  isPrimary        Boolean               @default(false) @map("is_primary")
+  moderationStatus PhotoModerationStatus @default(pending) @map("moderation_status")
+  approvedAt       DateTime?             @map("approved_at") @db.Timestamptz(6)
+  rejectedAt       DateTime?             @map("rejected_at") @db.Timestamptz(6)
+  publishedAt      DateTime?             @map("published_at") @db.Timestamptz(6)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile          Profile               @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  reports          Report[]
+
+  @@unique([userId, position])
+  @@index([userId])
+  @@index([moderationStatus])
+  @@map("profile_photos")
+}
+
+model Interest {
+  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String            @unique
+  slug      String            @unique
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  profiles  ProfileInterest[]
+
+  @@map("interests")
+}
+
+model ProfileInterest {
+  profileUserId String   @map("profile_user_id") @db.Uuid
+  interestId    String   @map("interest_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  profile       Profile  @relation(fields: [profileUserId], references: [userId], onDelete: Cascade)
+  interest      Interest @relation(fields: [interestId], references: [id], onDelete: Restrict)
+
+  @@id([profileUserId, interestId])
+  @@index([interestId])
+  @@map("profile_interests")
+}
+
+model Like {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  likerUserId String   @map("liker_user_id") @db.Uuid
+  likedUserId String   @map("liked_user_id") @db.Uuid
+  kind        LikeKind @default(like)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  liker       User     @relation("LikesSent", fields: [likerUserId], references: [id], onDelete: Cascade)
+  liked       User     @relation("LikesReceived", fields: [likedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([likerUserId, likedUserId])
+  @@index([likedUserId, kind])
+  @@index([likerUserId, createdAt])
+  @@map("likes")
+}
+
+model Match {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userAId       String         @map("user_a_id") @db.Uuid
+  userBId       String         @map("user_b_id") @db.Uuid
+  status        MatchStatus    @default(active)
+  matchedAt     DateTime       @default(now()) @map("matched_at") @db.Timestamptz(6)
+  expiresAt     DateTime       @default(dbgenerated("(now() + '7 days'::interval)")) @map("expires_at") @db.Timestamptz(6)
+  endedAt       DateTime?      @map("ended_at") @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  userA         User           @relation("MatchesUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB         User           @relation("MatchesUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  conversation  Conversation?
+
+  @@index([userAId, status])
+  @@index([userBId, status])
+  @@index([expiresAt])
+  @@map("matches")
+}
+
+model Conversation {
+  id           String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  matchId      String?                   @unique @map("match_id") @db.Uuid
+  status       ConversationStatus        @default(active)
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  match        Match?                    @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  participants ConversationParticipant[]
+  messages     Message[]
+  reports      Report[]
+
+  @@index([matchId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId    String        @map("conversation_id") @db.Uuid
+  userId            String        @map("user_id") @db.Uuid
+  joinedAt          DateTime      @default(now()) @map("joined_at") @db.Timestamptz(6)
+  leftAt            DateTime?     @map("left_at") @db.Timestamptz(6)
+  lastReadMessageId String?       @map("last_read_message_id") @db.Uuid
+
+  conversation      Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sentMessages      Message[]     @relation("ParticipantMessages")
+  lastReadMessage   Message?      @relation("LastReadMessage", fields: [lastReadMessageId], references: [id], onDelete: SetNull)
+
+  @@id([conversationId, userId])
+  @@index([userId, conversationId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String                     @map("conversation_id") @db.Uuid
+  senderUserId   String                     @map("sender_user_id") @db.Uuid
+  body           String
+  status         MessageStatus              @default(sent)
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  editedAt       DateTime?                  @map("edited_at") @db.Timestamptz(6)
+  deletedAt      DateTime?                  @map("deleted_at") @db.Timestamptz(6)
+
+  conversation   Conversation               @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User                       @relation("MessagesSent", fields: [senderUserId], references: [id], onDelete: Cascade)
+  senderMember   ConversationParticipant    @relation("ParticipantMessages", fields: [conversationId, senderUserId], references: [conversationId, userId], onDelete: Cascade)
+  readBy         ConversationParticipant[]  @relation("LastReadMessage")
+  reports        Report[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderUserId])
+  @@map("messages")
+}
+
+model Block {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blockerUserId String   @map("blocker_user_id") @db.Uuid
+  blockedUserId String   @map("blocked_user_id") @db.Uuid
+  reason        String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  blocker       User     @relation("BlocksFrom", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blocked       User     @relation("BlocksTo", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerUserId, blockedUserId])
+  @@index([blockerUserId])
+  @@index([blockedUserId])
+  @@map("blocks")
+}
+
+model Report {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterUserId  String            @map("reporter_user_id") @db.Uuid
+  reportedUserId  String            @map("reported_user_id") @db.Uuid
+  conversationId  String?           @map("conversation_id") @db.Uuid
+  messageId       String?           @map("message_id") @db.Uuid
+  profilePhotoId  String?           @map("profile_photo_id") @db.Uuid
+  reasonCode      ReportReasonCode  @map("reason_code")
+  comment         String?
+  status          ReportStatus      @default(open)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  resolvedAt      DateTime?         @map("resolved_at") @db.Timestamptz(6)
+  resolutionNote  String?           @map("resolution_note")
+
+  reporter        User              @relation("ReportsFiled", fields: [reporterUserId], references: [id], onDelete: Cascade)
+  reported        User              @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  conversation    Conversation?     @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  message         Message?          @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  profilePhoto    ProfilePhoto?     @relation(fields: [profilePhotoId], references: [id], onDelete: SetNull)
+
+  @@index([reporterUserId])
+  @@index([reportedUserId, status])
+  @@index([status, createdAt])
+  @@index([messageId])
+  @@index([profilePhotoId])
+  @@map("reports")
+}
+
+model PrivacySettings {
+  userId                       String                @id @map("user_id") @db.Uuid
+  profileVisibilityMode        ProfileVisibilityMode @default(open) @map("profile_visibility_mode")
+  anonymousAvatarKey           String?               @map("anonymous_avatar_key")
+  showDistance                 Boolean               @default(true) @map("show_distance")
+  showOnlineStatus             Boolean               @default(false) @map("show_online_status")
+  showDisplayNameInPrivateMode Boolean               @default(false) @map("show_display_name_in_private_mode")
+  showBioInPrivateMode         Boolean               @default(false) @map("show_bio_in_private_mode")
+  showLocationInPrivateMode    Boolean               @default(false) @map("show_location_in_private_mode")
+  discoverable                 Boolean               @default(true)
+  allowMessagesFromMatchesOnly Boolean               @default(true) @map("allow_messages_from_matches_only")
+  createdAt                    DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user                         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("privacy_settings")
+}
+
+model NotificationSettings {
+  userId                String   @id @map("user_id") @db.Uuid
+  likesEnabled          Boolean  @default(true) @map("likes_enabled")
+  matchesEnabled        Boolean  @default(true) @map("matches_enabled")
+  messagesEnabled       Boolean  @default(true) @map("messages_enabled")
+  productUpdatesEnabled Boolean  @default(false) @map("product_updates_enabled")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}

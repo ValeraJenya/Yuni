@@ -1,27 +1,47 @@
 # Yuni
 
-Yuni is a dating app project organized as a shared repository for frontend, backend, database, documentation, and infrastructure work.
+Yuni - dating app в общем репозитории. Проект постепенно переводится из frontend-прототипа в инженерную основу для разработки frontend, backend, базы данных, документации и инфраструктуры.
 
-## Project Structure
+## Структура
 
-- `apps/frontend` - current Next.js frontend prototype and UI.
-- `apps/backend` - backend foundation placeholder. The NestJS application will be added here later.
-- `database` - database schema, migrations, and seed data will live here.
-- `docs` - architecture, API, security, onboarding, and decision notes.
-- `infra` - infrastructure-related docker and script assets.
-
-Backend implementation, database schema, migrations, and seeds are intentionally not implemented yet. They will be added in later foundation steps.
+- `apps/frontend` - текущий Next.js frontend.
+- `apps/backend` - NestJS backend foundation.
+- `database` - SQL-first схема, будущие миграции и seeds.
+- `docs` - архитектура, security, onboarding и decisions.
+- `infra` - будущие docker/scripts материалы.
 
 ## Frontend
 
-Run the frontend from the repository root:
+Запуск из корня:
 
 ```bash
 pnpm dev
 ```
 
-Or directly from `apps/frontend`:
+Или явно:
 
 ```bash
-pnpm --dir apps/frontend dev
+pnpm dev:frontend
 ```
+
+## Backend
+
+Backend находится в `apps/backend`. Сейчас реализованы foundation, Prisma schema, конфигурация, security baseline и `GET /health`. Полная бизнес-логика auth/profiles/likes/matches/chat/media/moderation будет добавляться следующими шагами.
+
+Минимальная проверка:
+
+```bash
+pnpm install
+pnpm prisma:generate
+pnpm dev:backend
+```
+
+Health endpoint:
+
+```bash
+curl http://localhost:4000/health
+```
+
+## Environment
+
+Скопируйте `.env.example` в локальный `.env` и замените значения на реальные локальные. Настоящие секреты нельзя хранить в репозитории.

@@ -1,11 +1,11 @@
 # Onboarding
 
-Yuni is organized as a small monorepo. Start by reading the root `README.md`, then inspect the area you need to work on.
+Yuni организован как небольшой монорепозиторий. Начните с корневого `README.md`, затем переходите в нужную зону проекта.
 
-- `apps/frontend` contains the current Next.js frontend prototype.
-- `apps/backend` is a placeholder for the future NestJS backend foundation.
-- `database/schema`, `database/migrations`, and `database/seeds` are reserved for database work.
-- `docs` contains project documentation by topic.
-- `infra` is reserved for docker and operational scripts.
+- `apps/frontend` - текущий Next.js frontend.
+- `apps/backend` - NestJS backend foundation.
+- `database/schema`, `database/migrations`, `database/seeds` - зона базы данных.
+- `docs` - документация по архитектуре, security, onboarding и decisions.
+- `infra` - будущие docker и operational scripts.
 
-Backend work is still in the foundation stage, so do not expect API routes, auth, database migrations, or runtime backend services yet.
+Backend сейчас находится на стадии foundation: есть структура, конфигурация, Prisma schema и health endpoint, но полной бизнес-логики auth, profiles, likes, matches, chat, media и moderation пока нет.

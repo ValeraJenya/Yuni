@@ -1,21 +1,21 @@
 # 0001 PostgreSQL Domain Foundation
 
-Status: accepted
+Статус: принято
 
-Yuni will use PostgreSQL as the database foundation for the MVP.
+Yuni использует PostgreSQL как основу базы данных для MVP.
 
-The schema is organized around separate domain blocks: auth, users, profiles, media/photos, likes, matches, chat, moderation, privacy, and notifications. This keeps owner checks and future NestJS module boundaries easier to reason about.
+Схема разделена на доменные блоки: auth, users, profiles, media/photos, likes, matches, chat, moderation, privacy и notifications. Это упрощает owner checks и будущие границы NestJS-модулей.
 
-Sensitive data and private flows are modeled explicitly instead of being folded into one large user table. Passwords and refresh tokens are stored only as hashes. Profile privacy, blocks, reports, and chat membership are separate records so backend authorization can be implemented with clear joins and constraints.
+Sensitive data и private flows моделируются явно, а не складываются в одну большую таблицу users. Пароли и refresh tokens хранятся только как хэши. Profile privacy, blocks, reports и chat membership вынесены в отдельные записи, чтобы backend authorization строился на понятных join и constraints.
 
-Public identity belongs to the profile layer through `profiles.handle`, not the account layer. Handles are URL-friendly technical identifiers with Latin letters, digits, underscore, dot, and practical length limits. User-facing profile content remains normal text and can support Cyrillic.
+Public identity принадлежит профилю через `profiles.handle`, а не учетной записи. Handle - это URL-friendly технический идентификатор: латинские буквы, цифры, underscore, dot и практичные ограничения длины. Пользовательский текст профиля остается обычным текстом и может поддерживать кириллицу.
 
-Yuni keeps one underlying profile per user and uses explicit privacy settings to choose an open or private presentation of that profile in backend serialization. Private mode does not expose user-uploaded photos; it uses a system-provided anonymous rabbit avatar selected by `privacy_settings.anonymous_avatar_key`.
+Yuni хранит один underlying profile на пользователя и использует явные privacy settings, чтобы backend serializer отдавал open или private представление. Private mode не отдает user-uploaded photos; вместо них используется системный anonymous rabbit avatar через `privacy_settings.anonymous_avatar_key`.
 
-Dating-specific flows are represented directly but kept MVP-sized: directional likes support `like`, `superlike`, and `pass`; matches have `matched_at`, a default 7-day `expires_at`, and clear lifecycle statuses; photos support upload, moderation, primary selection, and publishing without storing binaries in PostgreSQL. Match expiration is request-time logic for MVP, so no scheduled cleanup infrastructure is required before backend foundation.
+Dating flows представлены напрямую, но без лишней сложности: directional likes поддерживают `like`, `superlike`, `pass`; matches имеют `matched_at`, стандартный 7-дневный `expires_at` и понятные lifecycle statuses; photos поддерживают upload, moderation, primary selection и publishing без хранения бинарников в PostgreSQL. Match expiration для MVP реализуется request-time логикой, без обязательной scheduled cleanup инфраструктуры.
 
-Discovery eligibility is a backend rule supported by the schema: active account/profile state, discoverability enabled, privacy discovery enabled, minimum profile completion, block filters, and at least one approved published primary photo.
+Discovery eligibility - backend rule, который поддерживается схемой: активный account/profile state, включенная discoverability, разрешение privacy discovery, минимальное заполнение профиля, block filters и минимум одно approved published primary photo.
 
-MVP report reason codes are fixed as `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, and `other`.
+MVP report reason codes зафиксированы: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.
 
-The initial schema is SQL-first and not tied to a specific ORM. When the backend foundation is added, this draft can be translated into ORM entities and migrations.
+Изначальная схема остается SQL-first и не привязана полностью к ORM. Prisma используется в backend foundation как DB access layer, но PostgreSQL-specific constraints вроде expression/partial indexes должны сохраняться в SQL migrations.

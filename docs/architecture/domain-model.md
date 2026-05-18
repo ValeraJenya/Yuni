@@ -1,45 +1,47 @@
 # Domain Model
 
-Yuni is organized around separate domain blocks that map cleanly to PostgreSQL tables and later NestJS modules.
+Yuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и будущие NestJS modules.
 
 ## Auth
 
-`users` owns account identity and stores `password_hash`, status, verification, and lifecycle timestamps. `refresh_tokens` stores hashed refresh tokens for device sessions, expiry, revocation state, last use, and lightweight device metadata. Raw passwords and raw tokens must never be persisted or logged.
+`users` хранит account identity, `password_hash`, status, verification и lifecycle timestamps. `refresh_tokens` хранит hashed refresh tokens, expiry, revocation state, last use и легкие device metadata. Raw passwords и raw tokens нельзя сохранять или логировать.
 
 ## Users
 
-`users` is the stable owner identity used by auth, profiles, likes, matches, conversations, blocks, reports, privacy settings, and notification settings. Most owner checks should start from the authenticated `user.id`.
+`users` - стабильная owner identity для auth, profiles, likes, matches, conversations, blocks, reports, privacy settings и notification settings. Большинство owner checks должны начинаться с authenticated `user.id`.
 
 ## Profiles
 
-`profiles` contains the single underlying dating profile and uses `user_id` as its primary key. The public handle belongs here as `profiles.handle`, not on `users`, because public identity is part of profile presentation rather than raw account identity. For MVP, handles are technical URL-friendly identifiers: Latin letters, digits, underscore, dot, and 3-30 characters. User-facing profile text can still support normal language input, including Cyrillic.
+`profiles` хранит один underlying dating profile и использует `user_id` как primary key. Public handle находится в `profiles.handle`, а не в `users`, потому что публичная идентичность относится к presentation layer профиля.
 
-`birth_date` is stored instead of age so the backend can compute age at request time. Profile discoverability is explicit and should be combined with privacy settings, approved primary photo checks, and block checks.
+Для MVP handle - технический URL-friendly identifier: латинские буквы, цифры, underscore, dot, длина 3-30 символов. Пользовательский текст профиля может поддерживать обычный язык ввода, включая кириллицу.
 
-Open/private presentation is modeled through `privacy_settings`, not through a second profile table. In open mode the backend can expose fuller profile details. In private mode the backend should serialize a smaller subset, such as computed age and selected interests. User-uploaded photos are not shown in private mode; presentation should use `privacy_settings.anonymous_avatar_key` to select a system-provided rabbit avatar.
+`birth_date` хранится вместо age, чтобы backend вычислял возраст на момент запроса. Discoverability профиля должна комбинироваться с privacy settings, approved primary photo checks и block checks.
 
-Discovery eligibility is a backend rule supported by the schema. A profile should be eligible only when the account/profile is active, discoverability is enabled, privacy settings allow discovery, minimum profile completion exists, block filters pass, and the profile has at least one approved and published primary photo.
+Open/private presentation моделируется через `privacy_settings`, без второй таблицы профиля. В open mode backend может отдавать более полный профиль. В private mode backend должен отдавать меньший набор данных, например вычисленный age и selected interests. User-uploaded photos в private mode не показываются; вместо них используется `privacy_settings.anonymous_avatar_key` для системного rabbit avatar.
+
+Discovery eligibility - backend rule, поддерживаемый схемой. Профиль eligible только если account/profile active, discoverability включена, privacy settings разрешают discovery, minimum profile completion выполнен, block filters прошли и есть минимум одно approved published primary photo.
 
 ## Media And Photos
 
-`profile_photos` stores object storage keys, optional public URLs, dimensions, ordering, primary-photo state, moderation status, and publishing timestamps. PostgreSQL should not store image binaries. A photo can be uploaded and moderated before it is published; profile responses should expose only approved and published photos.
+`profile_photos` хранит object storage keys, optional public URLs, dimensions, ordering, primary-photo state, moderation status и publishing timestamps. PostgreSQL не хранит image binaries. Фото может быть uploaded и moderated до публикации; profile responses должны отдавать только approved и published photos.
 
 ## Likes
 
-`likes` stores directional decisions: one user can `like`, `superlike`, or `pass` another user. A unique `(liker_user_id, liked_user_id)` pair prevents duplicated decisions and makes mutual-like checks predictable.
+`likes` хранит directional decisions: `like`, `superlike`, `pass`. Unique `(liker_user_id, liked_user_id)` не дает создавать дубликаты решений и упрощает mutual-like логику.
 
 ## Matches
 
-`matches` represents a mutual relationship between two users. The schema uses unordered uniqueness across the two user ids, so a pair can only have one match row. Match status supports active, expired, unmatched, and blocked lifecycle states. New matches default to a 7-day lifetime through `expires_at`. For MVP, expiration is request-time logic: services should treat active matches with `expires_at <= now()` as expired and can update status opportunistically.
+`matches` представляет mutual relationship между двумя users. Unordered uniqueness не позволяет создать два match для одной пары. Status поддерживает `active`, `expired`, `unmatched`, `blocked`. Новые matches получают стандартный 7-дневный `expires_at`. Для MVP expiration делается request-time логикой: services считают active matches с `expires_at <= now()` истекшими и могут opportunistically обновлять status.
 
 ## Chat
 
-`conversations` is the chat thread. `conversation_participants` is the access-control boundary for chat reads and writes. `messages` requires the sender to be a participant through a composite foreign key, making conversation owner checks straightforward in backend queries.
+`conversations` - chat thread. `conversation_participants` - access-control boundary для chat reads/writes. `messages` требует, чтобы sender был участником conversation через composite foreign key, что делает owner checks понятными.
 
 ## Moderation
 
-`blocks` and `reports` are first-class entities. Blocks are directional and duplicate blocker/blocked pairs are forbidden. Blocks should affect discovery, likes, matches, and chat visibility.
+`blocks` и `reports` - first-class entities. Blocks directional, duplicate blocker/blocked pairs запрещены. Blocks должны влиять на discovery, likes, matches и chat visibility.
 
-Reports are user-focused for MVP: reporter, reported user, reason code, optional comment, and review status. Optional message, conversation, and photo references leave room for richer moderation context without turning reporting into a large content system too early.
+Reports user-focused для MVP: reporter, reported user, reason code, optional comment и review status. Optional message, conversation и photo references оставляют место для richer moderation context без превращения MVP в большую content moderation систему.
 
-The fixed MVP report reason codes are `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, and `other`.
+MVP report reason codes: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.
