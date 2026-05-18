@@ -14,6 +14,7 @@
     "lint": "pnpm --dir apps/frontend lint",
     "lint:backend": "pnpm --dir apps/backend lint",
     "prisma:generate": "pnpm --dir apps/backend prisma:generate",
-    "prisma:validate": "pnpm --dir apps/backend prisma:validate"
+    "prisma:validate": "pnpm --dir apps/backend prisma:validate",
+    "prisma:push": "pnpm --dir apps/backend prisma:push"
   }
 }

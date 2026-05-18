@@ -73,7 +73,7 @@ enum ProfileVisibilityMode {
 
 model User {
   id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                String
+  email                String                @unique
   passwordHash         String                @map("password_hash")
   status               UserStatus            @default(active)
   emailVerifiedAt      DateTime?             @map("email_verified_at") @db.Timestamptz(6)
@@ -106,7 +106,7 @@ model RefreshToken {
   userId        String    @map("user_id") @db.Uuid
   tokenHash     String    @unique @map("token_hash")
   deviceLabel   String?   @map("device_label")
-  ipAddress     String?   @map("ip_address")
+  ipAddress     String?   @map("ip_address") @db.Inet
   userAgent     String?   @map("user_agent")
   expiresAt     DateTime  @map("expires_at") @db.Timestamptz(6)
   revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(6)
@@ -123,7 +123,7 @@ model RefreshToken {
 
 model Profile {
   userId         String            @id @map("user_id") @db.Uuid
-  handle         String
+  handle         String            @unique
   displayName    String            @map("display_name")
   birthDate      DateTime          @map("birth_date") @db.Date
   bio            String?

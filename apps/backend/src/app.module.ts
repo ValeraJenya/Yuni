@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { appConfig } from './config/app.config';
 import { authConfig } from './config/auth.config';
 import { validateEnv } from './config/env.validation';
@@ -22,6 +24,12 @@ import { UsersModule } from './modules/users/users.module';
       validate: validateEnv,
       load: [appConfig, authConfig],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 20,
+      },
+    ]),
     PrismaModule,
     HealthModule,
     AuthModule,
@@ -32,6 +40,12 @@ import { UsersModule } from './modules/users/users.module';
     MatchesModule,
     ChatModule,
     ModerationModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

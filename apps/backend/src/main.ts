@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -18,6 +19,7 @@ async function bootstrap() {
   const allowedOrigins = buildAllowedOrigins(frontendUrl, rawOrigins);
 
   app.use(helmet());
+  app.use(cookieParser());
   app.enableCors({
     origin(origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {

@@ -7,6 +7,8 @@ export interface ValidatedEnv {
   FRONTEND_URL: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
+  JWT_ACCESS_TTL_SECONDS: number;
+  REFRESH_TOKEN_TTL_DAYS: number;
   CORS_ALLOWED_ORIGINS?: string;
 }
 
@@ -23,6 +25,8 @@ export function validateEnv(config: Record<string, unknown>): ValidatedEnv {
   const frontendUrl = String(config.FRONTEND_URL ?? 'http://localhost:3000');
   const accessSecret = String(config.JWT_ACCESS_SECRET ?? '');
   const refreshSecret = String(config.JWT_REFRESH_SECRET ?? '');
+  const accessTtlSeconds = Number(config.JWT_ACCESS_TTL_SECONDS ?? 900);
+  const refreshTokenTtlDays = Number(config.REFRESH_TOKEN_TTL_DAYS ?? 30);
   const corsAllowedOrigins = config.CORS_ALLOWED_ORIGINS
     ? String(config.CORS_ALLOWED_ORIGINS)
     : undefined;
@@ -53,6 +57,14 @@ export function validateEnv(config: Record<string, unknown>): ValidatedEnv {
     errors.push('JWT_REFRESH_SECRET must be at least 32 characters long');
   }
 
+  if (!Number.isInteger(accessTtlSeconds) || accessTtlSeconds < 60) {
+    errors.push('JWT_ACCESS_TTL_SECONDS must be an integer >= 60');
+  }
+
+  if (!Number.isInteger(refreshTokenTtlDays) || refreshTokenTtlDays < 1) {
+    errors.push('REFRESH_TOKEN_TTL_DAYS must be an integer >= 1');
+  }
+
   if (errors.length > 0) {
     throw new Error(`Invalid backend environment:\n- ${errors.join('\n- ')}`);
   }
@@ -64,6 +76,8 @@ export function validateEnv(config: Record<string, unknown>): ValidatedEnv {
     FRONTEND_URL: frontendUrl,
     JWT_ACCESS_SECRET: accessSecret,
     JWT_REFRESH_SECRET: refreshSecret,
+    JWT_ACCESS_TTL_SECONDS: accessTtlSeconds,
+    REFRESH_TOKEN_TTL_DAYS: refreshTokenTtlDays,
     CORS_ALLOWED_ORIGINS: corsAllowedOrigins,
   };
 }

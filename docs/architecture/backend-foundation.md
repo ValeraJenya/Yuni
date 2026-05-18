@@ -13,7 +13,7 @@ Backend Yuni строится на NestJS, Prisma и PostgreSQL. Этот сло
 ## Модули
 
 - `health` - рабочий `GET /health` для проверки запуска.
-- `auth` - заготовка для регистрации, входа, password hashing и refresh token hashing.
+- `auth` - минимальный register/login/refresh/logout/me flow, password hashing и refresh token hashing.
 - `users` - будущая работа с учетной записью пользователя.
 - `profiles` - профиль, handle, privacy/visibility и discovery eligibility.
 - `media` - фото, moderation status, primary photo и публикация.
@@ -39,4 +39,4 @@ Backend Yuni строится на NestJS, Prisma и PostgreSQL. Этот сло
 
 ## Следующий шаг
 
-После этого foundation можно переходить к реализации auth: password hashing, register/login DTO, refresh token hashing, хранение `token_hash`, logout/revoke и базовые owner checks.
+Следующий шаг после auth foundation - расширение owner checks и реализация первого продуктового домена, например profiles или media.
