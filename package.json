@@ -13,8 +13,10 @@
     "start:backend": "pnpm --dir apps/backend start",
     "lint": "pnpm --dir apps/frontend lint",
     "lint:backend": "pnpm --dir apps/backend lint",
-    "prisma:generate": "pnpm --dir apps/backend prisma:generate",
-    "prisma:validate": "pnpm --dir apps/backend prisma:validate",
-    "prisma:push": "pnpm --dir apps/backend prisma:push"
+    "prisma:generate": "corepack pnpm --dir apps/backend prisma:generate",
+    "prisma:validate": "corepack pnpm --dir apps/backend prisma:validate",
+    "prisma:migrate:dev": "corepack pnpm --dir apps/backend prisma:migrate:dev",
+    "prisma:migrate:deploy": "corepack pnpm --dir apps/backend prisma:migrate:deploy",
+    "prisma:migrate:reset": "corepack pnpm --dir apps/backend prisma:migrate:reset"
   }
 }

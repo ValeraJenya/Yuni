@@ -13,20 +13,34 @@
 - `src/modules/health` - рабочий health endpoint.
 - `src/modules/auth` - минимальные `register`, `login`, `refresh`, `logout`, `me`.
 - `src/modules/users`, `profiles`, `media`, `likes`, `matches`, `chat`, `moderation` - границы будущих доменных модулей.
-- `prisma/schema.prisma` - Prisma-модель, выровненная с SQL-first схемой.
+- `prisma/schema.prisma` - ORM-модель для Prisma Client.
+- `prisma/migrations` - основной способ применения greenfield PostgreSQL schema.
 
 ## Локальный запуск
 
 Из корня репозитория:
 
 ```bash
-pnpm install
-pnpm prisma:generate
-pnpm prisma:push
-pnpm dev:backend
+corepack pnpm install --frozen-lockfile
+copy .env.example .env
+corepack pnpm prisma:migrate:dev
+corepack pnpm prisma:generate
+corepack pnpm dev:backend
 ```
 
-Перед `prisma:push` в PostgreSQL должна существовать база из `DATABASE_URL`, например `yuni`.
+Перед `prisma:migrate:dev` в PostgreSQL должна существовать новая пустая база из `DATABASE_URL`, например `yuni`.
+
+Для применения migrations на сервере или в CI используйте:
+
+```bash
+corepack pnpm prisma:migrate:deploy
+```
+
+Для локального сброса greenfield базы используйте только осознанно:
+
+```bash
+corepack pnpm prisma:migrate:reset
+```
 
 Проверка:
 
@@ -67,6 +81,8 @@ pnpm --dir apps/backend dev
 - Сырые пароли не хранятся: будущая реализация должна сохранять только `password_hash`.
 - Сырые refresh tokens не хранятся: сохраняется только `token_hash`.
 - Refresh token передается через HttpOnly cookie `yuni_refresh`; access token возвращается в JSON и используется как Bearer token.
-- Для локальной проверки Prisma schema можно применить через `pnpm prisma:push`. Полный migration workflow будет добавлен отдельно.
+- Prisma migrations являются основным workflow применения схемы. `prisma db push` не используется как основной путь.
+- Проект стартует с новой пустой PostgreSQL БД; legacy data migration, перенос старых пользователей и cleanup старых данных не нужны.
 - Доступ к приватным данным, чатам и профилям должен строиться вокруг `user_id`, membership checks и owner checks.
-- Prisma schema не заменяет SQL-first решения для PostgreSQL expression/partial indexes; такие ограничения нужно сохранить в миграциях.
+- `database/schema/schema.sql` остается SQL-first reference/documentation. Реальный source of truth для применения схемы - `prisma/schema.prisma` вместе с `prisma/migrations`.
+- PostgreSQL-specific expression/partial indexes и check constraints сохраняются в `migration.sql`.

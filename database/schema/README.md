@@ -1,6 +1,10 @@
 # Database Schema
 
-Это PostgreSQL-first draft схемы Yuni для MVP foundation. Схема намеренно описана SQL-first, чтобы будущий NestJS backend мог перенести ее в Prisma migrations без потери доменной модели.
+Это PostgreSQL-first reference схемы Yuni для MVP foundation. Файл `database/schema/schema.sql` остается domain documentation/reference и не является основным способом применения схемы.
+
+Основной workflow применения схемы теперь находится в `apps/backend/prisma/migrations`. `apps/backend/prisma/schema.prisma` описывает ORM-модель для Prisma Client, а PostgreSQL-specific constraints/indexes должны сохраняться в `migration.sql`.
+
+Проект стартует с новой пустой PostgreSQL БД. Legacy data migration, импорт старых пользователей, сохранение старых ID и cleanup старых данных не нужны.
 
 ## Сущности
 
