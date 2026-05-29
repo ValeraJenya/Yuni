@@ -85,7 +85,11 @@ curl -i http://localhost:4000/auth/me \
 curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:4000/auth/refresh
 ```
 
-Refresh проверяет cookie, сверяет raw token с `token_hash` в базе, отзывает старую refresh session и выдает новую пару токенов.
+Refresh token rotation is single-use. Successful refresh atomically revokes the old refresh session and issues a new access token plus a new HttpOnly refresh cookie.
+
+Reused, expired, revoked or invalid refresh tokens return `401 Authentication required`. The response does not reveal which token failure case happened.
+
+Clients must use the newest cookie from the latest successful refresh response. Clients should avoid parallel refresh retries with the same old cookie: if two refresh requests use the same cookie, only one can succeed.
 
 ### Logout
 

@@ -55,6 +55,14 @@ export interface AuthResponse {
 
 const MINIMUM_REGISTRATION_AGE = 18;
 
+type RefreshSessionTokens = Pick<AuthTokens, 'refreshCookieValue' | 'refreshExpiresAt'>;
+
+interface PreparedRefreshTokenSession {
+  rawToken: string;
+  tokenHash: string;
+  expiresAt: Date;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -155,15 +163,6 @@ export class AuthService {
   async refresh(refreshCookieValue: string | undefined, meta: ClientSessionMeta): Promise<AuthResponse & AuthTokens> {
     const session = await this.verifyRefreshCookie(refreshCookieValue);
 
-    await this.prisma.refreshToken.update({
-      where: { id: session.refreshTokenId },
-      data: {
-        revokedAt: new Date(),
-        revokedReason: 'rotated',
-        lastUsedAt: new Date(),
-      },
-    });
-
     const user = await this.prisma.user.findUnique({
       where: { id: session.user.id },
       include: { profile: true },
@@ -173,11 +172,17 @@ export class AuthService {
       throw new UnauthorizedException('Authentication required');
     }
 
-    const tokens = await this.issueTokenPair(user.id, user.email, meta);
+    const refreshSession = await this.rotateRefreshTokenSession(
+      session.refreshTokenId,
+      user.id,
+      meta,
+    );
+    const accessToken = await this.signAccessToken(user.id, user.email);
 
     return {
       user: this.toSafeAuthUser(user),
-      ...tokens,
+      accessToken,
+      ...refreshSession,
     };
   }
 
@@ -326,15 +331,24 @@ export class AuthService {
     meta: ClientSessionMeta,
   ): Promise<AuthTokens> {
     const accessToken = await this.signAccessToken(userId, email);
-    const refreshToken = randomBytes(48).toString('base64url');
-    const refreshExpiresAt = this.getRefreshExpiryDate();
-    const tokenHash = await argon2.hash(refreshToken);
+    const refreshSession = await this.createRefreshTokenSession(userId, meta);
 
+    return {
+      accessToken,
+      ...refreshSession,
+    };
+  }
+
+  private async createRefreshTokenSession(
+    userId: string,
+    meta: ClientSessionMeta,
+  ): Promise<RefreshSessionTokens> {
+    const preparedSession = await this.prepareRefreshTokenSession();
     const refreshTokenRow = await this.prisma.refreshToken.create({
       data: {
         userId,
-        tokenHash,
-        expiresAt: refreshExpiresAt,
+        tokenHash: preparedSession.tokenHash,
+        expiresAt: preparedSession.expiresAt,
         ipAddress: meta.ipAddress,
         userAgent: meta.userAgent,
       },
@@ -344,10 +358,79 @@ export class AuthService {
     });
 
     return {
-      accessToken,
-      refreshCookieValue: `${refreshTokenRow.id}.${refreshToken}`,
-      refreshExpiresAt,
+      refreshCookieValue: this.buildRefreshCookieValue(
+        refreshTokenRow.id,
+        preparedSession.rawToken,
+      ),
+      refreshExpiresAt: preparedSession.expiresAt,
     };
+  }
+
+  private async rotateRefreshTokenSession(
+    oldRefreshTokenId: string,
+    userId: string,
+    meta: ClientSessionMeta,
+  ): Promise<RefreshSessionTokens> {
+    const preparedSession = await this.prepareRefreshTokenSession();
+    const rotatedAt = new Date();
+
+    const refreshTokenRow = await this.prisma.$transaction(async (tx) => {
+      const revokeResult = await tx.refreshToken.updateMany({
+        where: {
+          id: oldRefreshTokenId,
+          revokedAt: null,
+          expiresAt: {
+            gt: rotatedAt,
+          },
+        },
+        data: {
+          revokedAt: rotatedAt,
+          revokedReason: 'rotated',
+          lastUsedAt: rotatedAt,
+        },
+      });
+
+      if (revokeResult.count !== 1) {
+        throw new UnauthorizedException('Authentication required');
+      }
+
+      return tx.refreshToken.create({
+        data: {
+          userId,
+          tokenHash: preparedSession.tokenHash,
+          expiresAt: preparedSession.expiresAt,
+          ipAddress: meta.ipAddress,
+          userAgent: meta.userAgent,
+        },
+        select: {
+          id: true,
+        },
+      });
+    });
+
+    return {
+      refreshCookieValue: this.buildRefreshCookieValue(
+        refreshTokenRow.id,
+        preparedSession.rawToken,
+      ),
+      refreshExpiresAt: preparedSession.expiresAt,
+    };
+  }
+
+  private async prepareRefreshTokenSession(): Promise<PreparedRefreshTokenSession> {
+    const rawToken = randomBytes(48).toString('base64url');
+    const expiresAt = this.getRefreshExpiryDate();
+    const tokenHash = await argon2.hash(rawToken);
+
+    return {
+      rawToken,
+      tokenHash,
+      expiresAt,
+    };
+  }
+
+  private buildRefreshCookieValue(refreshTokenId: string, rawToken: string): string {
+    return `${refreshTokenId}.${rawToken}`;
   }
 
   private async signAccessToken(userId: string, email: string): Promise<string> {
