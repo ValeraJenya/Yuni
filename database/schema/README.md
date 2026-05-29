@@ -27,7 +27,7 @@
 
 У каждого `user` может быть один `profile`, один `privacy_settings`, один `notification_settings`, много `refresh_tokens`, много photos через profile, много likes, matches и conversation memberships.
 
-`profiles.handle` - публичный технический identifier для URL, search, indexing и moderation. Для MVP он ограничен латинскими буквами, цифрами, underscore, dot и длиной 3-30 символов. Обычный profile content, например display name, bio, interests, work, education и будущие free-text поля, должен поддерживать обычный пользовательский ввод, включая кириллицу.
+`profiles.handle` - публичный технический identifier для URL, search, indexing и moderation. Для MVP он ограничен латинскими буквами, цифрами, underscore, dot, hyphen и длиной 3-30 символов. Обычный profile content, например display name, bio, interests, work, education и будущие free-text поля, должен поддерживать обычный пользовательский ввод, включая кириллицу.
 
 `likes` directional. `matches` mutual и используют unordered uniqueness, чтобы пары `A-B` и `B-A` не дублировались. Active matches истекают через `expires_at`. Для MVP expiration выполняется request-time логикой: backend должен считать active matches с `expires_at <= now()` истекшими и может opportunistically обновлять status на `expired`.
 
