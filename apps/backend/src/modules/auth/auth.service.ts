@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -17,6 +18,17 @@ import type { JwtPayload } from './types/jwt-payload';
 interface ClientSessionMeta {
   ipAddress?: string;
   userAgent?: string;
+}
+
+interface UtcDateParts {
+  year: number;
+  month: number;
+  day: number;
+}
+
+interface ParsedBirthDate {
+  date: Date;
+  parts: UtcDateParts;
 }
 
 export interface SafeAuthUser {
@@ -41,6 +53,8 @@ export interface AuthResponse {
   accessToken: string;
 }
 
+const MINIMUM_REGISTRATION_AGE = 18;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -53,11 +67,13 @@ export class AuthService {
     const email = dto.email.trim().toLowerCase();
     const handle = dto.handle.trim();
     const displayName = dto.displayName.trim();
+    const birthDate = this.parseBirthDateOrThrow(dto.birthDate);
+
+    this.assertAdultOrThrow(birthDate.parts);
 
     await this.ensureEmailAndHandleAvailable(email, handle);
 
     const passwordHash = await argon2.hash(dto.password);
-    const birthDate = new Date(dto.birthDate);
 
     try {
       const user = await this.prisma.user.create({
@@ -68,7 +84,7 @@ export class AuthService {
             create: {
               handle,
               displayName,
-              birthDate,
+              birthDate: birthDate.date,
             },
           },
           privacySettings: {
@@ -225,6 +241,83 @@ export class AuthService {
     if (existingUser || existingProfile) {
       throw new ConflictException('Email or handle is already in use');
     }
+  }
+
+  private parseBirthDateOrThrow(value: string): ParsedBirthDate {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    if (!match) {
+      throw new BadRequestException('birthDate must be in YYYY-MM-DD format');
+    }
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      throw new BadRequestException('birthDate must be a valid calendar date');
+    }
+
+    return {
+      date,
+      parts: { year, month, day },
+    };
+  }
+
+  private assertAdultOrThrow(birthDate: UtcDateParts): void {
+    const today = this.getTodayUtcDateParts();
+
+    if (this.compareUtcDateParts(birthDate, today) > 0) {
+      throw new BadRequestException('birthDate cannot be in the future');
+    }
+
+    if (!this.isAtLeastAge(birthDate, today, MINIMUM_REGISTRATION_AGE)) {
+      throw new BadRequestException('You must be at least 18 years old to register');
+    }
+  }
+
+  private getTodayUtcDateParts(): UtcDateParts {
+    const today = new Date();
+
+    return {
+      year: today.getUTCFullYear(),
+      month: today.getUTCMonth() + 1,
+      day: today.getUTCDate(),
+    };
+  }
+
+  private isAtLeastAge(
+    birthDate: UtcDateParts,
+    today: UtcDateParts,
+    minimumAge: number,
+  ): boolean {
+    let age = today.year - birthDate.year;
+
+    if (
+      today.month < birthDate.month ||
+      (today.month === birthDate.month && today.day < birthDate.day)
+    ) {
+      age -= 1;
+    }
+
+    return age >= minimumAge;
+  }
+
+  private compareUtcDateParts(left: UtcDateParts, right: UtcDateParts): number {
+    if (left.year !== right.year) {
+      return left.year - right.year;
+    }
+
+    if (left.month !== right.month) {
+      return left.month - right.month;
+    }
+
+    return left.day - right.day;
   }
 
   private async issueTokenPair(

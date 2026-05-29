@@ -1,5 +1,4 @@
 import {
-  IsDateString,
   IsEmail,
   IsString,
   Matches,
@@ -26,6 +25,9 @@ export class RegisterDto {
   @MaxLength(80)
   displayName!: string;
 
-  @IsDateString()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'birthDate must be in YYYY-MM-DD format',
+  })
   birthDate!: string;
 }
