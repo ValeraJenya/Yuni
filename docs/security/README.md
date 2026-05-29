@@ -17,6 +17,26 @@
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
 - Auth endpoints имеют базовый throttling foundation. Production rate limits можно уточнить позже.
 
+## Frontend is not a security boundary
+
+Frontend validation используется только для UX. Browser-side checks можно обойти через DevTools, curl, Postman или прямые HTTP-запросы.
+
+Все критичные правила должны enforced на backend:
+
+- authentication and session rules;
+- minimum age 18+;
+- owner checks;
+- conversation membership checks;
+- media/photo ownership and visibility;
+- likes/matches/block/report restrictions;
+- public/private profile serialization.
+
+Backend не должен доверять `birthDate`, `userId`, `profileId`, `conversationId`, `photoId`, `role`, `status`, `isAdult`, `isAgeConfirmed`, `isOwner`, `isMember` или `isAdmin`, пришедшим с frontend.
+
+Возраст 18+ enforced на backend: backend сам вычисляет возраст по `birthDate` и не принимает `isAdult` или `isAgeConfirmed` как доказательство возраста. `birthDate` считается sensitive data и не должна логироваться.
+
+Database constraints должны защищать критичные invariants там, где это возможно.
+
 ## Database security/integrity baseline
 
 - Greenfield schema применяется через Prisma migrations, а не через `prisma db push`.

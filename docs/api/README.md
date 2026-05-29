@@ -30,10 +30,32 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni
 
 ### Register
 
+`birthDate` принимает только календарную дату в формате `YYYY-MM-DD`. Datetime strings, `DD.MM.YYYY`, `YYYY/MM/DD` и несуществующие даты не являются валидным API contract.
+
+Backend самостоятельно проверяет minimum age 18+. Frontend validation используется только для UX и не считается security boundary. Если пользователь младше 18 лет, дата рождения в будущем или формат даты неверный, API возвращает 400-level ошибку.
+
+Valid adult example:
+
 ```bash
 curl -i -c cookies.txt -X POST http://localhost:4000/auth/register \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"test@example.com\",\"password\":\"password123\",\"handle\":\"test_user\",\"displayName\":\"Тест\",\"birthDate\":\"2000-01-01\"}"
+```
+
+Invalid date format example:
+
+```bash
+curl -i -X POST http://localhost:4000/auth/register \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"format@example.com\",\"password\":\"password123\",\"handle\":\"format_user\",\"displayName\":\"Format\",\"birthDate\":\"01.01.2000\"}"
+```
+
+Underage example:
+
+```bash
+curl -i -X POST http://localhost:4000/auth/register \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"underage@example.com\",\"password\":\"password123\",\"handle\":\"underage_user\",\"displayName\":\"Underage\",\"birthDate\":\"2010-01-01\"}"
 ```
 
 Ответ содержит безопасный `user` и `accessToken`. Сырые пароль и refresh token не возвращаются. Refresh token устанавливается в HttpOnly cookie `yuni_refresh`.
