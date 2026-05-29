@@ -7,10 +7,10 @@
 Для ручной проверки нужен запущенный PostgreSQL и примененная Prisma-схема:
 
 ```bash
-corepack pnpm install
+corepack pnpm install --frozen-lockfile
 copy .env.example .env
+corepack pnpm prisma:migrate:dev
 corepack pnpm prisma:generate
-corepack pnpm prisma:push
 corepack pnpm dev:backend
 ```
 
@@ -20,7 +20,9 @@ corepack pnpm dev:backend
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni
 ```
 
-Если база `yuni` еще не создана, создайте ее в PostgreSQL до `prisma:push`.
+Если база `yuni` еще не создана, создайте новую пустую PostgreSQL базу до `prisma:migrate:dev`.
+
+Проект стартует как greenfield: legacy DB migration, импорт старых пользователей и cleanup старых данных не нужны. Основной способ применения схемы - Prisma migrations. `prisma db push` не является основным workflow.
 
 ## Auth
 

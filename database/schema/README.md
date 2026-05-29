@@ -1,6 +1,10 @@
 # Database Schema
 
-Это PostgreSQL-first draft схемы Yuni для MVP foundation. Схема намеренно описана SQL-first, чтобы будущий NestJS backend мог перенести ее в Prisma migrations без потери доменной модели.
+Это PostgreSQL-first reference схемы Yuni для MVP foundation. Файл `database/schema/schema.sql` остается domain documentation/reference и не является основным способом применения схемы.
+
+Основной workflow применения схемы теперь находится в `apps/backend/prisma/migrations`. `apps/backend/prisma/schema.prisma` описывает ORM-модель для Prisma Client, а PostgreSQL-specific constraints/indexes должны сохраняться в `migration.sql`.
+
+Проект стартует с новой пустой PostgreSQL БД. Legacy data migration, импорт старых пользователей, сохранение старых ID и cleanup старых данных не нужны.
 
 ## Сущности
 
@@ -23,7 +27,7 @@
 
 У каждого `user` может быть один `profile`, один `privacy_settings`, один `notification_settings`, много `refresh_tokens`, много photos через profile, много likes, matches и conversation memberships.
 
-`profiles.handle` - публичный технический identifier для URL, search, indexing и moderation. Для MVP он ограничен латинскими буквами, цифрами, underscore, dot и длиной 3-30 символов. Обычный profile content, например display name, bio, interests, work, education и будущие free-text поля, должен поддерживать обычный пользовательский ввод, включая кириллицу.
+`profiles.handle` - публичный технический identifier для URL, search, indexing и moderation. Для MVP он ограничен латинскими буквами, цифрами, underscore, dot, hyphen и длиной 3-30 символов. Обычный profile content, например display name, bio, interests, work, education и будущие free-text поля, должен поддерживать обычный пользовательский ввод, включая кириллицу.
 
 `likes` directional. `matches` mutual и используют unordered uniqueness, чтобы пары `A-B` и `B-A` не дублировались. Active matches истекают через `expires_at`. Для MVP expiration выполняется request-time логикой: backend должен считать active matches с `expires_at <= now()` истекшими и может opportunistically обновлять status на `expired`.
 

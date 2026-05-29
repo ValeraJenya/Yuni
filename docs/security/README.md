@@ -17,4 +17,16 @@
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
 - Auth endpoints имеют базовый throttling foundation. Production rate limits можно уточнить позже.
 
+## Database security/integrity baseline
+
+- Greenfield schema применяется через Prisma migrations, а не через `prisma db push`.
+- Migrations не должны содержать реальные email, пароли, refresh tokens, дампы БД или другие PII.
+- DB-level constraints защищают критичные invariants даже при ошибке в application code.
+- Case-insensitive unique indexes запрещают дубли email/handle, отличающиеся только регистром.
+- Check constraints запрещают self-like, self-match, self-block и self-report.
+- Unordered unique match pair index запрещает duplicate matches для пар `A-B` и `B-A`.
+- Photo constraints запрещают published photo без approved moderation state и несколько primary photos для одного пользователя.
+- Messages должны быть связаны с `conversation_participants`, чтобы sender был участником conversation.
+- Raw passwords и raw refresh tokens не должны появляться ни в migrations, ни в seeds, ни в logs.
+
 Полные security rules будут расширяться по мере реализации auth, chat, media, moderation и хранения данных.
