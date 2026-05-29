@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Post,
   Req,
   Res,
@@ -58,6 +59,7 @@ export class AuthController {
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(200)
   @Post('refresh')
   async refresh(
     @Req() request: Request,
@@ -75,6 +77,7 @@ export class AuthController {
     };
   }
 
+  @HttpCode(200)
   @Post('logout')
   async logout(
     @Req() request: Request,

@@ -9,8 +9,10 @@
 - Password hashing реализуется через argon2.
 - Refresh token хранится у клиента в HttpOnly cookie, а в базе хранится только argon2 hash.
 - Cookie содержит `refreshTokenId.rawToken`: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе.
+- Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз.
+- Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions.
 - Access token передается как Bearer token и не должен логироваться.
-- Нельзя логировать токены, пароли, session values и лишние персональные данные.
+- Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
 - Доступ к чатам должен проверяться через membership в `conversation_participants`.
 - Доступ к профилям, фото, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
