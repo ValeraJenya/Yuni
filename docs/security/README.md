@@ -45,6 +45,44 @@ Database constraints должны защищать критичные invariants
 
 Mock/demo flow не является production auth source. Product UI может временно использовать mock-data для discover/matches/messages, но доступ к protected routes и состояние авторизации должны зависеть от backend session/API response, а не от frontend flag в storage.
 
+## Backend access-control patterns
+
+Backend security boundary для будущих product modules строится вокруг authenticated `user_id` из `CurrentUser`. Frontend значения `userId`, `profileId`, `photoId`, `conversationId`, `isOwner`, `isMember` и `isAdmin` считаются untrusted input и всегда проверяются на backend.
+
+Общие helpers находятся в `apps/backend/src/common/security`:
+
+- `assertOwner(resourceOwnerId, currentUserId)` и `assertSameUser(targetUserId, currentUserId)` - для owner-only операций.
+- `assertConversationMember(membership, currentUserId)` - для chat reads/writes. Conversation id сам по себе не даёт доступ.
+- `assertMatchParticipant(match, currentUserId)` - для match-scoped действий.
+- `assertCanAccessProfile(profile, currentUserId)` - для own profile и public discover/profile access с учетом private mode.
+- `assertCanAccessPhoto(photo, currentUserId)` - для own photos или approved+published public photos.
+
+Отсутствующий ресурс возвращает `404 Resource not found`. Недостаточные права возвращают `403 Forbidden`. Ошибки не должны раскрывать детали вроде "user exists but you are not owner".
+
+## Serializer rules
+
+Response serializers находятся в `apps/backend/src/common/serializers`. Public serializers не должны отдавать:
+
+- `email`;
+- `passwordHash`;
+- `birthDate`;
+- refresh/session fields;
+- `deletedAt`;
+- private settings;
+- internal moderation fields.
+
+Self/private serializers могут отдавать больше данных владельцу, но всё равно не должны отдавать password/session/token fields. Private profile mode enforced на backend serializer, а не только на frontend.
+
+## Pagination and anti-abuse
+
+List endpoints для discover, likes, matches, messages, reports и moderation должны использовать server-side pagination. Общий cursor pagination pattern находится в `apps/backend/src/common/pagination`:
+
+- default `limit`: `20`;
+- max `limit`: `50`;
+- frontend не может запросить unlimited list.
+
+Для dating app это часть anti-scraping и anti-abuse foundation: большие списки профилей, сообщений или жалоб нельзя отдавать одним запросом.
+
 ## Database security/integrity baseline
 
 - Greenfield schema применяется через Prisma migrations, а не через `prisma db push`.

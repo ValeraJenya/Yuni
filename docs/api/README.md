@@ -37,6 +37,31 @@ Frontend использует тот же contract через `NEXT_PUBLIC_API_U
 - Access token хранится только в memory state. Refresh token не читается JavaScript-кодом и не хранится во frontend storage.
 - Frontend validation нужна только для UX; backend остается security boundary.
 
+## Error and Access-Control Conventions
+
+Будущие endpoints должны использовать единые security/error conventions:
+
+- `401` - пользователь не аутентифицирован или session/token invalid.
+- `403` - пользователь аутентифицирован, но не имеет доступа к ресурсу.
+- `404` - ресурс отсутствует.
+- `409` - конфликт уникальности или доменного состояния.
+- `400` - request validation error.
+
+Backend не должен раскрывать security-sensitive details в ошибках. Например, публичный ответ не должен объяснять, что "user exists but you are not owner".
+
+Owner checks, conversation membership checks, match participant checks и profile/photo visibility checks должны выполняться на backend через common security helpers. Frontend flags не считаются доказательством доступа.
+
+## Pagination Conventions
+
+Будущие list endpoints должны использовать cursor pagination:
+
+- default `limit`: `20`;
+- max `limit`: `50`;
+- `cursor` указывает продолжение списка;
+- unlimited lists запрещены.
+
+Это важно для dating app anti-scraping: discover, likes, matches, messages и reports не должны отдавать большие списки без server-side limit.
+
 ### Register
 
 `birthDate` принимает только календарную дату в формате `YYYY-MM-DD`. Datetime strings, `DD.MM.YYYY`, `YYYY/MM/DD` и несуществующие даты не являются валидным API contract.
