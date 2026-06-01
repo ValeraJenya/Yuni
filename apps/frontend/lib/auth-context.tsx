@@ -31,7 +31,7 @@ interface AuthContextValue {
   refreshSession: () => Promise<AuthSession | null>
   authenticatedRequest: <T>(
     path: string,
-    options?: { method?: "GET" | "POST"; body?: unknown },
+    options?: { method?: "GET" | "POST" | "PATCH"; body?: unknown },
   ) => Promise<T>
 }
 
@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authenticatedRequest = useCallback(
     async <T,>(
       path: string,
-      options: { method?: "GET" | "POST"; body?: unknown } = {},
+      options: { method?: "GET" | "POST" | "PATCH"; body?: unknown } = {},
     ): Promise<T> => {
       let token = accessTokenRef.current
 
