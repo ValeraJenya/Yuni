@@ -14,6 +14,7 @@ import {
   ApiError,
   apiRequest,
   authApi,
+  type ApiRequestMethod,
   type AuthSession,
   type LoginRequest,
   type RegisterRequest,
@@ -31,7 +32,7 @@ interface AuthContextValue {
   refreshSession: () => Promise<AuthSession | null>
   authenticatedRequest: <T>(
     path: string,
-    options?: { method?: "GET" | "POST" | "PATCH"; body?: unknown },
+    options?: { method?: ApiRequestMethod; body?: unknown },
   ) => Promise<T>
 }
 
@@ -126,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authenticatedRequest = useCallback(
     async <T,>(
       path: string,
-      options: { method?: "GET" | "POST" | "PATCH"; body?: unknown } = {},
+      options: { method?: ApiRequestMethod; body?: unknown } = {},
     ): Promise<T> => {
       let token = accessTokenRef.current
 

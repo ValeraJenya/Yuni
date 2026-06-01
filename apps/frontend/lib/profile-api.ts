@@ -1,3 +1,7 @@
+import type { ApiRequestMethod } from "@/lib/auth-api"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
 export interface SelfProfilePhoto {
   id: string
   publicUrl: string | null
@@ -59,8 +63,22 @@ export interface ProfileResponse<TProfile> {
 
 type AuthenticatedRequest = <T>(
   path: string,
-  options?: { method?: "GET" | "POST" | "PATCH"; body?: unknown },
+  options?: { method?: ApiRequestMethod; body?: unknown },
 ) => Promise<T>
+
+export function resolveProfilePhotoUrl(publicUrl: string | null): string | null {
+  if (!publicUrl) {
+    return null
+  }
+
+  if (/^https?:\/\//.test(publicUrl)) {
+    return publicUrl
+  }
+
+  return `${API_BASE_URL.replace(/\/$/, "")}${
+    publicUrl.startsWith("/") ? publicUrl : `/${publicUrl}`
+  }`
+}
 
 export const profileApi = {
   me(request: AuthenticatedRequest) {
@@ -78,5 +96,42 @@ export const profileApi = {
     return request<ProfileResponse<PublicProfile>>(
       `/profiles/${encodeURIComponent(handle)}`,
     )
+  },
+
+  myPhotos(request: AuthenticatedRequest) {
+    return request<{ photos: SelfProfilePhoto[] }>("/media/profile-photos/me")
+  },
+
+  uploadPhoto(request: AuthenticatedRequest, file: File) {
+    const formData = new FormData()
+    formData.append("file", file)
+
+    return request<ProfileResponse<SelfProfile> & { photo: SelfProfilePhoto }>(
+      "/media/profile-photos",
+      {
+        method: "POST",
+        body: formData,
+      },
+    )
+  },
+
+  setPrimaryPhoto(request: AuthenticatedRequest, photoId: string) {
+    return request<ProfileResponse<SelfProfile> & { photos: SelfProfilePhoto[] }>(
+      `/media/profile-photos/${encodeURIComponent(photoId)}/primary`,
+      {
+        method: "PATCH",
+      },
+    )
+  },
+
+  deletePhoto(request: AuthenticatedRequest, photoId: string) {
+    return request<
+      ProfileResponse<SelfProfile> & {
+        success: true
+        photos: SelfProfilePhoto[]
+      }
+    >(`/media/profile-photos/${encodeURIComponent(photoId)}`, {
+      method: "DELETE",
+    })
   },
 }
