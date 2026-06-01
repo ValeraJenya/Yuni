@@ -28,6 +28,15 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni
 
 Примеры ниже используют `cookies.txt`, чтобы curl сохранял и отправлял HttpOnly refresh cookie.
 
+Frontend использует тот же contract через `NEXT_PUBLIC_API_URL`:
+
+- `POST /auth/register` и `POST /auth/login` возвращают безопасный `user` и `accessToken`, а refresh cookie выставляет backend.
+- `POST /auth/refresh` вызывается с `credentials: include` при bootstrap после reload и при одном retry после `401`.
+- `GET /auth/me` вызывается с `Authorization: Bearer <accessToken>`.
+- `POST /auth/logout` отзывает refresh session и очищает cookie на backend; frontend после этого очищает memory state.
+- Access token хранится только в memory state. Refresh token не читается JavaScript-кодом и не хранится во frontend storage.
+- Frontend validation нужна только для UX; backend остается security boundary.
+
 ### Register
 
 `birthDate` принимает только календарную дату в формате `YYYY-MM-DD`. Datetime strings, `DD.MM.YYYY`, `YYYY/MM/DD` и несуществующие даты не являются валидным API contract.

@@ -11,6 +11,10 @@
 - Cookie содержит `refreshTokenId.rawToken`: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе.
 - Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз.
 - Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions.
+- Frontend хранит access token только в memory state. Access token нельзя сохранять в `localStorage`, `sessionStorage`, cookies или logs.
+- Refresh token хранится только в HttpOnly cookie, выставленной backend. JavaScript не должен читать, копировать или сохранять refresh token.
+- Frontend должен отправлять auth requests с `credentials: include`, чтобы browser сам отправлял HttpOnly cookie на `/auth/*`.
+- При `401` frontend может один раз выполнить refresh retry через shared refresh promise, чтобы параллельные requests не создавали refresh storm.
 - Access token передается как Bearer token и не должен логироваться.
 - Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
@@ -38,6 +42,8 @@ Backend не должен доверять `birthDate`, `userId`, `profileId`, `
 Возраст 18+ enforced на backend: backend сам вычисляет возраст по `birthDate` и не принимает `isAdult` или `isAgeConfirmed` как доказательство возраста. `birthDate` считается sensitive data и не должна логироваться.
 
 Database constraints должны защищать критичные invariants там, где это возможно.
+
+Mock/demo flow не является production auth source. Product UI может временно использовать mock-data для discover/matches/messages, но доступ к protected routes и состояние авторизации должны зависеть от backend session/API response, а не от frontend flag в storage.
 
 ## Database security/integrity baseline
 

@@ -26,6 +26,14 @@ corepack pnpm install --frozen-lockfile
 copy .env.example .env
 ```
 
+Для локальной связки frontend/backend должны быть выставлены:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+FRONTEND_URL=http://localhost:3000
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+```
+
 3. Создайте или поднимите новую пустую PostgreSQL базу из `DATABASE_URL`.
 
 4. Примените migrations и сгенерируйте Prisma Client:
@@ -41,5 +49,7 @@ corepack pnpm prisma:generate
 corepack pnpm dev:backend
 corepack pnpm dev:frontend
 ```
+
+Frontend auth использует реальный backend contract: register/login/refresh/logout/me. Refresh token остается в HttpOnly cookie, access token хранится только в memory state и восстанавливается через `POST /auth/refresh` после reload. Demo/mock state не является production auth source.
 
 Yuni стартует с новой пустой БД. Legacy data migration, перенос старых пользователей, сохранение старых ID и cleanup старых данных не нужны.

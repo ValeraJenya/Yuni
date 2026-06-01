@@ -1,15 +1,49 @@
 "use client"
 
-import type { ReactNode } from "react"
-import { useDemoSession } from "@/lib/demo-session"
-import { DemoGate } from "./demo-gate"
+import { useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { AppNav } from "./app-nav"
 
 export function AppContent({ children }: { children: ReactNode }) {
-  const { isDemo } = useDemoSession()
+  const router = useRouter()
+  const { isLoading, isAuthenticated } = useAuth()
 
-  if (!isDemo) {
-    return <DemoGate />
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/signin")
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center px-6"
+        style={{ background: "oklch(0.075 0.010 15)" }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <img
+            src="/yuni-logo.png"
+            alt=""
+            aria-hidden="true"
+            style={{
+              width: "28px",
+              height: "28px",
+              objectFit: "contain",
+              filter:
+                "brightness(0) saturate(100%) invert(44%) sepia(72%) saturate(600%) hue-rotate(310deg) brightness(105%)",
+              opacity: 0.72,
+            }}
+          />
+          <span
+            className="font-sans tracking-[0.18em] uppercase"
+            style={{ fontSize: "10px", color: "oklch(0.42 0.008 15)" }}
+          >
+            Loading
+          </span>
+        </div>
+      </div>
+    )
   }
 
   return (

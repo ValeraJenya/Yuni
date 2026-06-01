@@ -1,10 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowRight } from "lucide-react"
 import { AuthField } from "./auth-field"
 import type { AuthFormState } from "@/types/auth"
 import { useLang } from "@/lib/lang-context"
+import { useAuth } from "@/lib/auth-context"
+import { ApiError } from "@/lib/auth-api"
 
 const copy = {
   ru: {
@@ -20,7 +23,7 @@ const copy = {
     noAccount: "Ещё нет аккаунта?",
     join: "Создать профиль",
     errorEmail: "Введи корректный email",
-    errorPassword: "Минимум 6 символов",
+    errorPassword: "Минимум 8 символов",
     errorGeneral: "Неверный email или пароль",
     successMessage: "Добро пожаловать обратно.",
     divider: "или",
@@ -40,7 +43,7 @@ const copy = {
     noAccount: "No account yet?",
     join: "Create a profile",
     errorEmail: "Enter a valid email",
-    errorPassword: "At least 6 characters",
+    errorPassword: "At least 8 characters",
     errorGeneral: "Incorrect email or password",
     successMessage: "Welcome back.",
     divider: "or",
@@ -53,12 +56,14 @@ function validate(email: string, password: string, lang: "ru" | "en") {
   const t = copy[lang]
   const errs: { email?: string; password?: string } = {}
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = t.errorEmail
-  if (!password || password.length < 6) errs.password = t.errorPassword
+  if (!password || password.length < 8) errs.password = t.errorPassword
   return errs
 }
 
 export function SignInForm() {
   const { lang } = useLang()
+  const router = useRouter()
+  const { login } = useAuth()
   const t = copy[lang]
 
   const [email, setEmail] = useState("")
@@ -67,7 +72,7 @@ export function SignInForm() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
   const [formState, setFormState] = useState<AuthFormState>("idle")
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const errs = validate(email, password, lang)
     if (Object.keys(errs).length > 0) {
@@ -77,16 +82,16 @@ export function SignInForm() {
     setErrors({})
     setFormState("loading")
 
-    // Mock API call
-    setTimeout(() => {
-      // Mock: wrong password simulation
-      if (password === "wrongpass") {
-        setErrors({ general: t.errorGeneral })
-        setFormState("error")
-      } else {
-        setFormState("success")
-      }
-    }, 1200)
+    try {
+      await login({ email, password })
+      setFormState("success")
+      router.replace("/discover")
+    } catch (error) {
+      setErrors({
+        general: error instanceof ApiError ? error.message : t.errorGeneral,
+      })
+      setFormState("error")
+    }
   }
 
   if (formState === "success") {

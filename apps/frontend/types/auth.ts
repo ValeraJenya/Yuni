@@ -3,8 +3,12 @@ export type Lang = "ru" | "en"
 export interface AuthUser {
   id: string
   email: string
-  name: string
-  avatarUrl?: string
+  status: string
+  createdAt: string
+  profile: {
+    handle: string
+    displayName: string
+  } | null
 }
 
 export interface SignInPayload {
@@ -13,12 +17,11 @@ export interface SignInPayload {
 }
 
 export interface SignUpPayload {
-  name: string
   email: string
   password: string
-  birthdate: string
-  agreedToTerms: boolean
-  agreedToAge: boolean
+  handle: string
+  displayName: string
+  birthDate: string
 }
 
 export interface ForgotPasswordPayload {

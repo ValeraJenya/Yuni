@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Flame, MessageCircle, Heart, User, FlaskConical } from "lucide-react"
+import { Flame, MessageCircle, Heart, User, LogOut } from "lucide-react"
 import { useLang } from "@/lib/lang-context"
-import { useDemoSession } from "@/lib/demo-session"
+import { useAuth } from "@/lib/auth-context"
 import Image from "next/image"
 
 const navItems = [
@@ -39,14 +39,18 @@ const navItems = [
 export function AppNav() {
   const pathname = usePathname()
   const { lang, toggle } = useLang()
-  const { exitDemo } = useDemoSession()
+  const { logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
+  }
 
   return (
     <>
-      {/* ── Mobile demo badge ────────────────────────────── */}
+      {/* ── Mobile sign out ────────────────────────────── */}
       <div className="fixed bottom-[64px] right-3 z-50 md:hidden">
         <button
-          onClick={exitDemo}
+          onClick={handleLogout}
           className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-sans font-medium"
           style={{
             fontSize: "9px",
@@ -56,10 +60,10 @@ export function AppNav() {
             border: "1px solid oklch(0.65 0.26 12 / 0.18)",
             backdropFilter: "blur(12px)",
           }}
-          aria-label={lang === "ru" ? "Выйти из демо" : "Exit demo"}
+          aria-label={lang === "ru" ? "Выйти" : "Sign out"}
         >
-          <FlaskConical size={9} />
-          {lang === "ru" ? "Демо" : "Demo"}
+          <LogOut size={9} />
+          {lang === "ru" ? "Выйти" : "Sign out"}
         </button>
       </div>
 
@@ -268,17 +272,17 @@ export function AppNav() {
           >
             {lang === "ru" ? "На главную" : "Home"}
           </Link>
-          {/* Demo exit */}
+          {/* Sign out */}
           <button
-            onClick={exitDemo}
+            onClick={handleLogout}
             className="flex items-center gap-1.5 font-sans transition-colors select-none"
             style={{ fontSize: "10px", color: "oklch(0.65 0.26 12 / 0.55)" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12 / 0.55)")}
-            aria-label="Exit demo"
+            aria-label={lang === "ru" ? "Выйти" : "Sign out"}
           >
-            <FlaskConical size={10} />
-            {lang === "ru" ? "Выйти из демо" : "Exit demo"}
+            <LogOut size={10} />
+            {lang === "ru" ? "Выйти" : "Sign out"}
           </button>
         </div>
       </nav>

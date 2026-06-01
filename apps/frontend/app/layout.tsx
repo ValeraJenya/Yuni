@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Cormorant_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/lib/auth-context'
 import './globals.css'
 
 const inter = Inter({
@@ -55,7 +56,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark bg-background">
       <body className={`${inter.variable} ${cormorant.variable} font-sans antialiased`}>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
