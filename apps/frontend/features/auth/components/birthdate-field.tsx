@@ -181,3 +181,12 @@ export function validateBirthdate(
 
   return null
 }
+
+export function formatBirthdateForApi(masked: string): string {
+  const digits = digitsOnly(masked)
+  const day = digits.slice(0, 2)
+  const month = digits.slice(2, 4)
+  const year = digits.slice(4, 8)
+
+  return `${year}-${month}-${day}`
+}

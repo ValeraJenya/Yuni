@@ -24,6 +24,8 @@ pnpm dev
 pnpm dev:frontend
 ```
 
+Frontend auth flow использует backend API из `NEXT_PUBLIC_API_URL` и HttpOnly refresh cookie, которую выставляет backend. Access token хранится только в памяти React state и восстанавливается после reload через `POST /auth/refresh`; токены нельзя хранить в `localStorage` или `sessionStorage`.
+
 ## Backend
 
 Backend находится в `apps/backend`. Сейчас реализованы foundation, Prisma schema, конфигурация, security baseline и `GET /health`. Полная бизнес-логика auth/profiles/likes/matches/chat/media/moderation будет добавляться следующими шагами.
@@ -72,3 +74,11 @@ corepack pnpm prisma:migrate:deploy
 ## Environment
 
 Скопируйте `.env.example` в локальный `.env` и замените значения на реальные локальные. Настоящие секреты нельзя хранить в репозитории.
+
+Для локальной связки frontend/backend:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+FRONTEND_URL=http://localhost:3000
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+```

@@ -1,16 +1,25 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react"
 import { AuthField } from "./auth-field"
-import { BirthdateField, validateBirthdate } from "./birthdate-field"
+import {
+  BirthdateField,
+  formatBirthdateForApi,
+  validateBirthdate,
+} from "./birthdate-field"
 import type { AuthFormState } from "@/types/auth"
 import { useLang } from "@/lib/lang-context"
+import { useAuth } from "@/lib/auth-context"
+import { ApiError } from "@/lib/auth-api"
 
 const copy = {
   ru: {
     nameLabel: "Имя",
     namePlaceholder: "Как тебя зовут",
+    handleLabel: "Никнейм",
+    handlePlaceholder: "alex.yuni",
     emailLabel: "Email",
     emailPlaceholder: "you@example.com",
     passwordLabel: "Пароль",
@@ -26,11 +35,13 @@ const copy = {
     hasAccount: "Уже есть аккаунт?",
     signIn: "Войти",
     errorName: "Введи своё имя",
+    errorHandle: "3–30 символов: латиница, цифры, _, . или -",
     errorEmail: "Введи корректный email",
     errorPassword: "Минимум 8 символов",
     errorBirthdate: "Укажи дату рождения",
     errorAge: "Нужно подтвердить возраст",
     errorTerms: "Нужно принять условия",
+    errorGeneral: "Не удалось создать профиль",
     successHeadline: "Добро пожаловать в Yuni.",
     successSub: "Твой профиль создан. Скоро мы свяжемся с тобой.",
     divider: "или",
@@ -41,6 +52,8 @@ const copy = {
   en: {
     nameLabel: "Name",
     namePlaceholder: "What's your name",
+    handleLabel: "Handle",
+    handlePlaceholder: "alex.yuni",
     emailLabel: "Email",
     emailPlaceholder: "you@example.com",
     passwordLabel: "Password",
@@ -56,11 +69,13 @@ const copy = {
     hasAccount: "Already have an account?",
     signIn: "Sign in",
     errorName: "Enter your name",
+    errorHandle: "3-30 chars: letters, numbers, _, . or -",
     errorEmail: "Enter a valid email",
     errorPassword: "At least 8 characters",
     errorBirthdate: "Enter your date of birth",
     errorAge: "You must confirm your age",
     errorTerms: "You must accept the terms",
+    errorGeneral: "Could not create profile",
     successHeadline: "Welcome to Yuni.",
     successSub: "Your profile has been created. We will be in touch.",
     divider: "or",
@@ -72,20 +87,33 @@ const copy = {
 
 interface Errors {
   name?: string
+  handle?: string
   email?: string
   password?: string
   birthdate?: string
   age?: string
   terms?: string
+  general?: string
 }
 
 function validate(
-  fields: { name: string; email: string; password: string; birthdate: string; agreedToAge: boolean; agreedToTerms: boolean },
+  fields: {
+    name: string
+    handle: string
+    email: string
+    password: string
+    birthdate: string
+    agreedToAge: boolean
+    agreedToTerms: boolean
+  },
   lang: "ru" | "en"
 ): Errors {
   const t = copy[lang]
   const errs: Errors = {}
   if (!fields.name.trim()) errs.name = t.errorName
+  if (!/^[a-zA-Z0-9_][a-zA-Z0-9_.-]{2,29}$/.test(fields.handle)) {
+    errs.handle = t.errorHandle
+  }
   if (!fields.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) errs.email = t.errorEmail
   if (!fields.password || fields.password.length < 8) errs.password = t.errorPassword
   const bdErr = validateBirthdate(fields.birthdate, lang)
@@ -137,9 +165,12 @@ function Checkbox({
 
 export function SignUpForm() {
   const { lang } = useLang()
+  const router = useRouter()
+  const { register } = useAuth()
   const t = copy[lang]
 
   const [name, setName] = useState("")
+  const [handle, setHandle] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [birthdate, setBirthdate] = useState("")
@@ -149,17 +180,32 @@ export function SignUpForm() {
   const [errors, setErrors] = useState<Errors>({})
   const [formState, setFormState] = useState<AuthFormState>("idle")
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const errs = validate({ name, email, password, birthdate, agreedToAge, agreedToTerms }, lang)
+    const errs = validate({ name, handle, email, password, birthdate, agreedToAge, agreedToTerms }, lang)
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
     setErrors({})
     setFormState("loading")
-    // Mock API
-    setTimeout(() => { setFormState("success") }, 1400)
+
+    try {
+      await register({
+        email,
+        password,
+        handle,
+        displayName: name.trim(),
+        birthDate: formatBirthdateForApi(birthdate),
+      })
+      setFormState("success")
+      router.replace("/discover")
+    } catch (error) {
+      setErrors({
+        general: error instanceof ApiError ? error.message : t.errorGeneral,
+      })
+      setFormState("error")
+    }
   }
 
   if (formState === "success") {
@@ -193,6 +239,20 @@ export function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-7 w-full">
+      {errors.general && (
+        <div
+          className="px-4 py-3 rounded-lg font-sans text-sm"
+          style={{
+            background: "oklch(0.52 0.20 25 / 0.08)",
+            border: "1px solid oklch(0.52 0.20 25 / 0.22)",
+            color: "oklch(0.70 0.16 25)",
+            fontSize: "13px",
+          }}
+          role="alert"
+        >
+          {errors.general}
+        </div>
+      )}
 
       <div className="flex flex-col gap-7">
         <AuthField
@@ -204,6 +264,16 @@ export function SignUpForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           error={errors.name}
+        />
+        <AuthField
+          label={t.handleLabel}
+          type="text"
+          name="handle"
+          autoComplete="username"
+          placeholder={t.handlePlaceholder}
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          error={errors.handle}
         />
         <AuthField
           label={t.emailLabel}
