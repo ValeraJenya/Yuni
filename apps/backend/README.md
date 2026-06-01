@@ -9,7 +9,7 @@
 - `src/main.ts` - запуск NestJS, CORS, Helmet, ValidationPipe и общий фильтр ошибок.
 - `src/app.module.ts` - корневой модуль приложения.
 - `src/config` - загрузка и проверка переменных окружения.
-- `src/common` - общие инфраструктурные части, включая Prisma и error filter.
+- `src/common` - общие инфраструктурные части, включая Prisma, error filter, security helpers, serializers и pagination helpers.
 - `src/modules/health` - рабочий health endpoint.
 - `src/modules/auth` - минимальные `register`, `login`, `refresh`, `logout`, `me`.
 - `src/modules/users`, `profiles`, `media`, `likes`, `matches`, `chat`, `moderation` - границы будущих доменных модулей.
@@ -84,5 +84,12 @@ pnpm --dir apps/backend dev
 - Prisma migrations являются основным workflow применения схемы. `prisma db push` не используется как основной путь.
 - Проект стартует с новой пустой PostgreSQL БД; legacy data migration, перенос старых пользователей и cleanup старых данных не нужны.
 - Доступ к приватным данным, чатам и профилям должен строиться вокруг `user_id`, membership checks и owner checks.
+- Для будущих endpoints используйте `src/common/security`:
+  - `assertOwner` / `assertSameUser` для owner-only действий;
+  - `assertConversationMember` для chat reads/writes;
+  - `assertMatchParticipant` для match-scoped действий;
+  - `assertCanAccessProfile` / `assertCanAccessPhoto` для public/private visibility.
+- Response shapes должны проходить через serializers из `src/common/serializers`: public profile не должен отдавать `email`, `passwordHash`, `birthDate`, refresh/session fields, deleted/internal moderation fields или private settings.
+- List endpoints должны использовать cursor pagination из `src/common/pagination` с default limit `20` и max limit `50`. Unbounded lists запрещены.
 - `database/schema/schema.sql` остается SQL-first reference/documentation. Реальный source of truth для применения схемы - `prisma/schema.prisma` вместе с `prisma/migrations`.
 - PostgreSQL-specific expression/partial indexes и check constraints сохраняются в `migration.sql`.

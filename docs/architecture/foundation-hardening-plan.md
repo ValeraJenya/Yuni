@@ -204,6 +204,8 @@ Docs:
 - ввести public/private serializers;
 - ввести pagination DTO/pattern;
 - привести error responses к единому виду.
+- common helpers должны жить в backend foundation, например `apps/backend/src/common/security`, `apps/backend/src/common/serializers` и `apps/backend/src/common/pagination`.
+- product modules не должны заново изобретать owner/membership/serializer/pagination rules.
 
 Acceptance criteria:
 - новые product modules используют одинаковые security primitives;
