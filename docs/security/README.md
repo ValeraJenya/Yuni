@@ -73,6 +73,19 @@ Response serializers находятся в `apps/backend/src/common/serializers`
 
 Self/private serializers могут отдавать больше данных владельцу, но всё равно не должны отдавать password/session/token fields. Private profile mode enforced на backend serializer, а не только на frontend.
 
+## Profiles MVP security rules
+
+Profiles MVP использует backend как источник истины для profile data:
+
+- `GET /profiles/me` и `PATCH /profiles/me` работают только с authenticated `CurrentUser`.
+- `PATCH /profiles/me` берет `userId` только из access token, а не из request body.
+- Через self-update можно менять только `displayName`, `bio`, `gender`, `lookingFor`, `city`, `country` и `isDiscoverable`.
+- `userId`, `email`, `password`, `birthDate`, `handle`, `status`, `role`, `photos`, moderation fields и direct `privacySettings` не принимаются в profile update payload.
+- `GET /profiles/:handle` использует case-insensitive lookup и public serializer.
+- Public profile response не содержит `email`, `birthDate`, private settings, refresh/session fields, raw tokens или internal moderation fields.
+- Недоступный чужой profile с `isDiscoverable=false` или private visibility mode возвращает `403 Forbidden`.
+- Frontend profile page не хранит private profile data, access token или refresh token в `localStorage`/`sessionStorage`; profile data загружается через authenticated backend API.
+
 ## Pagination and anti-abuse
 
 List endpoints для discover, likes, matches, messages, reports и moderation должны использовать server-side pagination. Общий cursor pagination pattern находится в `apps/backend/src/common/pagination`:

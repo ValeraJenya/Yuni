@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Пока реализован только минимальный auth/session flow.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow и Profiles MVP.
 
 ## Подготовка
 
@@ -132,6 +132,62 @@ curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:4000/auth/logout
 ```
 
 Logout отзывает текущую refresh session, если cookie присутствует, и очищает cookie.
+
+## Profiles
+
+Все profile endpoints требуют `Authorization: Bearer <accessToken>`. Frontend вызывает их через общий auth client: access token живет только в memory, а refresh cookie остается HttpOnly.
+
+### Get My Profile
+
+```bash
+curl -i http://localhost:4000/profiles/me \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Ответ:
+
+- `profile.userId`;
+- `profile.handle`;
+- `profile.displayName`;
+- `profile.birthDate` для владельца профиля;
+- `profile.bio`, `gender`, `lookingFor`, `city`, `country`, `isDiscoverable`;
+- `profile.photos` в owner/self shape, включая moderation status.
+
+Self response не должен отдавать `email`, `passwordHash`, refresh/session fields, raw tokens или private settings.
+
+### Update My Profile
+
+```bash
+curl -i -X PATCH http://localhost:4000/profiles/me \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d "{\"displayName\":\"Alex\",\"bio\":\"Short bio\",\"city\":\"Almaty\",\"country\":\"KZ\",\"isDiscoverable\":true}"
+```
+
+Разрешенные поля:
+
+- `displayName`;
+- `bio`;
+- `gender`;
+- `lookingFor`;
+- `city`;
+- `country`;
+- `isDiscoverable`.
+
+Поля вроде `userId`, `email`, `password`, `birthDate`, `handle`, `status`, `role`, `photos`, moderation fields и `privacySettings` нельзя обновлять через этот endpoint. Global `ValidationPipe` использует whitelist + forbidNonWhitelisted, поэтому лишние поля возвращают `400`.
+
+Строковые поля trim-ятся на backend. Пустые optional строки для `bio`, `gender`, `lookingFor`, `city` и `country` сохраняются как `null`. Пустой `displayName` невалиден.
+
+### Get Public Profile By Handle
+
+```bash
+curl -i http://localhost:4000/profiles/test_user \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+`handle` ищется case-insensitive. Public response не отдает `email`, `birthDate`, private settings, refresh/session fields, raw tokens или internal moderation fields.
+
+Если profile не найден, API возвращает `404`. Если profile существует, но не доступен текущему пользователю из-за `isDiscoverable=false` или private visibility mode, API возвращает `403 Forbidden`. Владелец всегда может читать свой профиль.
 
 ## Cookie Behavior
 

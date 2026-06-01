@@ -38,7 +38,7 @@ export class ApiError extends Error {
 }
 
 interface ApiRequestOptions {
-  method?: "GET" | "POST"
+  method?: "GET" | "POST" | "PATCH"
   body?: unknown
   accessToken?: string | null
 }
