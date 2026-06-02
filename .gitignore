@@ -13,3 +13,6 @@ dist/
 !.env.example
 .env*.local
 .DS_Store
+
+# Local MVP uploads
+apps/backend/uploads/

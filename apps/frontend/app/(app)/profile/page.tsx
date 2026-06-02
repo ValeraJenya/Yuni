@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import {
   ShieldCheck,
@@ -18,13 +18,19 @@ import {
   User,
   Camera,
   Plus,
+  Trash2,
   Heart,
   TrendingUp,
 } from "lucide-react"
 import { ApiError } from "@/lib/auth-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
-import { profileApi, type SelfProfile, type UpdateProfileRequest } from "@/lib/profile-api"
+import {
+  profileApi,
+  resolveProfilePhotoUrl,
+  type SelfProfile,
+  type UpdateProfileRequest,
+} from "@/lib/profile-api"
 
 const copy = {
   ru: {
@@ -73,6 +79,10 @@ const copy = {
     matchesCount: "Матчей",
     profileViews: "Просмотров",
     addPhoto: "Добавить фото",
+    setPrimaryPhoto: "Сделать основным",
+    deletePhoto: "Удалить фото",
+    uploadErrorLabel: "Не удалось загрузить фото",
+    photoActionErrorLabel: "Не удалось обновить фото",
     upgradeLabel: "Улучши профиль",
     upgradeSub: "Получи больше показов и возможностей",
     upgradeCta: "Подробнее",
@@ -123,6 +133,10 @@ const copy = {
     matchesCount: "Matches",
     profileViews: "Views",
     addPhoto: "Add photo",
+    setPrimaryPhoto: "Set primary",
+    deletePhoto: "Delete photo",
+    uploadErrorLabel: "Could not upload photo",
+    photoActionErrorLabel: "Could not update photo",
     upgradeLabel: "Boost your profile",
     upgradeSub: "Get more visibility and matches",
     upgradeCta: "Learn more",
@@ -167,7 +181,7 @@ function getProfilePhotos(profile: SelfProfile): string[] {
   return profile.photos
     .filter((photo) => photo.publicUrl)
     .sort((left, right) => left.position - right.position)
-    .map((photo) => photo.publicUrl as string)
+    .map((photo) => resolveProfilePhotoUrl(photo.publicUrl) as string)
 }
 
 function getCompletionPct(profile: SelfProfile): number {
@@ -255,14 +269,18 @@ export default function ProfilePage() {
   const { lang } = useLang()
   const t = copy[lang]
   const { authenticatedRequest, isLoading: authLoading, logout } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [profileRecord, setProfileRecord] = useState<SelfProfile | null>(null)
   const [profileForm, setProfileForm] = useState<ProfileFormState | null>(null)
   const [editingBio, setEditingBio] = useState(false)
   const [isProfileLoading, setIsProfileLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [activePhotoActionId, setActivePhotoActionId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
 
   const applyProfile = useCallback((nextProfile: SelfProfile) => {
     setProfileRecord(nextProfile)
@@ -377,6 +395,82 @@ export default function ProfilePage() {
     }
   }, [applyProfile, authenticatedRequest, profileForm, t.saveErrorLabel, t.savedLabel])
 
+  const uploadProfilePhoto = useCallback(
+    async (file: File) => {
+      setIsUploadingPhoto(true)
+      setPhotoError(null)
+
+      try {
+        const { profile: updatedProfile } = await profileApi.uploadPhoto(
+          authenticatedRequest,
+          file,
+        )
+        applyProfile(updatedProfile)
+      } catch (error) {
+        setPhotoError(error instanceof ApiError ? error.message : t.uploadErrorLabel)
+      } finally {
+        setIsUploadingPhoto(false)
+      }
+    },
+    [applyProfile, authenticatedRequest, t.uploadErrorLabel],
+  )
+
+  const handlePhotoInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      event.target.value = ""
+
+      if (file) {
+        void uploadProfilePhoto(file)
+      }
+    },
+    [uploadProfilePhoto],
+  )
+
+  const setPrimaryPhoto = useCallback(
+    async (photoId: string) => {
+      setActivePhotoActionId(photoId)
+      setPhotoError(null)
+
+      try {
+        const { profile: updatedProfile } = await profileApi.setPrimaryPhoto(
+          authenticatedRequest,
+          photoId,
+        )
+        applyProfile(updatedProfile)
+      } catch (error) {
+        setPhotoError(
+          error instanceof ApiError ? error.message : t.photoActionErrorLabel,
+        )
+      } finally {
+        setActivePhotoActionId(null)
+      }
+    },
+    [applyProfile, authenticatedRequest, t.photoActionErrorLabel],
+  )
+
+  const deleteProfilePhoto = useCallback(
+    async (photoId: string) => {
+      setActivePhotoActionId(photoId)
+      setPhotoError(null)
+
+      try {
+        const { profile: updatedProfile } = await profileApi.deletePhoto(
+          authenticatedRequest,
+          photoId,
+        )
+        applyProfile(updatedProfile)
+      } catch (error) {
+        setPhotoError(
+          error instanceof ApiError ? error.message : t.photoActionErrorLabel,
+        )
+      } finally {
+        setActivePhotoActionId(null)
+      }
+    },
+    [applyProfile, authenticatedRequest, t.photoActionErrorLabel],
+  )
+
   const stats = [
     { icon: Heart, value: "0", label: t.likesReceived },
     { icon: Star, value: "0", label: t.matchesCount },
@@ -403,8 +497,17 @@ export default function ProfilePage() {
     )
   }
 
-  const primaryPhoto = profile.photos[0] ?? FALLBACK_PROFILE_PHOTO
-  const allPhotos = profile.photos
+  const allPhotos = profileRecord.photos
+    .filter((photo) => photo.publicUrl)
+    .sort((left, right) => left.position - right.position)
+    .map((photo) => ({
+      ...photo,
+      resolvedUrl: resolveProfilePhotoUrl(photo.publicUrl) as string,
+    }))
+  const primaryPhoto =
+    allPhotos.find((photo) => photo.isPrimary)?.resolvedUrl ??
+    allPhotos[0]?.resolvedUrl ??
+    FALLBACK_PROFILE_PHOTO
   const lookingForLabel = profile.lookingFor
     ? t.lookingForValues[
         profile.lookingFor as keyof typeof t.lookingForValues
@@ -623,17 +726,31 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-3.5">
               <SectionLabel>{t.photosLabel}</SectionLabel>
               <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
                 className="flex items-center gap-1 font-sans font-medium"
                 style={{ fontSize: "11px", color: "oklch(0.65 0.26 12)" }}
               >
                 <Camera size={11} />
-                {t.edit}
+                {isUploadingPhoto
+                  ? lang === "ru"
+                    ? "Загрузка..."
+                    : "Uploading..."
+                  : t.addPhoto}
               </button>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handlePhotoInputChange}
+            />
             <div className="grid grid-cols-4 gap-2">
-              {allPhotos.map((src, i) => (
+              {allPhotos.map((photo, i) => (
                 <div
-                  key={i}
+                  key={photo.id}
                   className="relative overflow-hidden rounded-xl"
                   style={{
                     aspectRatio: "1",
@@ -642,13 +759,13 @@ export default function ProfilePage() {
                   }}
                 >
                   <Image
-                    src={src}
+                    src={photo.resolvedUrl}
                     alt={`Photo ${i + 1}`}
                     fill
                     className="object-cover object-top"
                     sizes="80px"
                   />
-                  {i === 0 && (
+                  {photo.isPrimary && (
                     <div
                       className="absolute top-1 left-1 rounded-full px-1.5 py-0.5 font-sans"
                       style={{
@@ -660,10 +777,49 @@ export default function ProfilePage() {
                       {lang === "ru" ? "Главное" : "Main"}
                     </div>
                   )}
+                  <div className="absolute bottom-1 right-1 flex gap-1">
+                    {!photo.isPrimary && (
+                      <button
+                        type="button"
+                        title={t.setPrimaryPhoto}
+                        aria-label={t.setPrimaryPhoto}
+                        disabled={activePhotoActionId === photo.id}
+                        onClick={() => void setPrimaryPhoto(photo.id)}
+                        className="flex h-6 w-6 items-center justify-center rounded-full transition-all disabled:opacity-50"
+                        style={{
+                          color: "oklch(0.92 0.005 60)",
+                          background: "oklch(0.07 0.012 15 / 0.82)",
+                          border: "1px solid oklch(0.65 0.26 12 / 0.30)",
+                          backdropFilter: "blur(10px)",
+                        }}
+                      >
+                        <Star size={11} strokeWidth={1.7} />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      title={t.deletePhoto}
+                      aria-label={t.deletePhoto}
+                      disabled={activePhotoActionId === photo.id}
+                      onClick={() => void deleteProfilePhoto(photo.id)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full transition-all disabled:opacity-50"
+                      style={{
+                        color: "oklch(0.90 0.004 60)",
+                        background: "oklch(0.07 0.012 15 / 0.82)",
+                        border: "1px solid oklch(0.55 0.20 25 / 0.35)",
+                        backdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <Trash2 size={11} strokeWidth={1.7} />
+                    </button>
+                  </div>
                 </div>
               ))}
               {/* Add photo button */}
               <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
                 className="overflow-hidden rounded-xl flex flex-col items-center justify-center gap-1 transition-all"
                 style={{
                   aspectRatio: "1",
@@ -684,6 +840,14 @@ export default function ProfilePage() {
                 <Plus size={16} strokeWidth={1.5} />
               </button>
             </div>
+            {photoError && (
+              <p
+                className="font-sans mt-3"
+                style={{ fontSize: "11.5px", color: "oklch(0.60 0.18 25 / 0.85)" }}
+              >
+                {photoError}
+              </p>
+            )}
           </div>
         </div>
 

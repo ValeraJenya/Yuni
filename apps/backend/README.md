@@ -2,7 +2,7 @@
 
 Это базовая основа backend-приложения Yuni на NestJS.
 
-Сейчас здесь есть каркас модулей, подключение конфигурации, Prisma, базовые security-настройки, `GET /health`, auth/session flow и Profiles MVP. Полная бизнес-логика likes, matches, chat, media и moderation пока намеренно не реализована.
+Сейчас здесь есть каркас модулей, подключение конфигурации, Prisma, базовые security-настройки, `GET /health`, auth/session flow, Profiles MVP и Profile Photos / Media MVP. Полная бизнес-логика likes, matches, chat и moderation пока намеренно не реализована.
 
 ## Структура
 
@@ -13,9 +13,11 @@
 - `src/modules/health` - рабочий health endpoint.
 - `src/modules/auth` - `register`, `login`, `refresh`, `logout`, `me`.
 - `src/modules/profiles` - MVP endpoints `GET /profiles/me`, `PATCH /profiles/me`, `GET /profiles/:handle`.
-- `src/modules/users`, `media`, `likes`, `matches`, `chat`, `moderation` - границы будущих доменных модулей.
+- `src/modules/media` - MVP endpoints для own profile photos: list, upload, set primary и delete.
+- `src/modules/users`, `likes`, `matches`, `chat`, `moderation` - границы будущих доменных модулей.
 - `prisma/schema.prisma` - ORM-модель для Prisma Client.
 - `prisma/migrations` - основной способ применения greenfield PostgreSQL schema.
+- `uploads/profile-photos` - local MVP storage для загруженных profile photos. Папка ignored by git.
 
 ## Локальный запуск
 
@@ -86,6 +88,25 @@ curl -i http://localhost:4000/profiles/test_user \
   -H "Authorization: Bearer <accessToken>"
 ```
 
+Минимальная media/profile-photos проверка:
+
+```bash
+curl -i http://localhost:4000/media/profile-photos/me \
+  -H "Authorization: Bearer <accessToken>"
+
+curl -i -X POST http://localhost:4000/media/profile-photos \
+  -H "Authorization: Bearer <accessToken>" \
+  -F "file=@./local-photo.png"
+
+curl -i -X PATCH http://localhost:4000/media/profile-photos/<photoId>/primary \
+  -H "Authorization: Bearer <accessToken>"
+
+curl -i -X DELETE http://localhost:4000/media/profile-photos/<photoId> \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Media MVP хранит файлы локально в `apps/backend/uploads/profile-photos`, принимает только JPEG/PNG/WebP до `5 MB`, генерирует storage filename на backend и не использует original filename как имя файла. Production S3/CDN/media pipeline будет отдельной задачей позже.
+
 Для запуска напрямую из backend:
 
 ```bash
@@ -101,6 +122,9 @@ pnpm --dir apps/backend dev
 - Проект стартует с новой пустой PostgreSQL БД; legacy data migration, перенос старых пользователей и cleanup старых данных не нужны.
 - Доступ к приватным данным, чатам и профилям должен строиться вокруг `user_id`, membership checks и owner checks.
 - Profile update endpoints должны брать owner identity только из `CurrentUser`, а не из body/query/path.
+- Profile photo endpoints должны брать owner identity только из `CurrentUser`; `photoId` из path не является proof of access.
+- Public profile serializers должны отдавать только approved+published photos и не раскрывать `storageKey`, filesystem path или original filename.
+- Local uploads не должны попадать в git, dumps или backups.
 - Для будущих endpoints используйте `src/common/security`:
   - `assertOwner` / `assertSameUser` для owner-only действий;
   - `assertConversationMember` для chat reads/writes;

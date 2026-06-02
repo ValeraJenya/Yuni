@@ -37,8 +37,10 @@ export class ApiError extends Error {
   }
 }
 
+export type ApiRequestMethod = "GET" | "POST" | "PATCH" | "DELETE"
+
 interface ApiRequestOptions {
-  method?: "GET" | "POST" | "PATCH"
+  method?: ApiRequestMethod
   body?: unknown
   accessToken?: string | null
 }
@@ -69,9 +71,18 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = {}
+  const isFormDataBody =
+    typeof FormData !== "undefined" && options.body instanceof FormData
+  let requestBody: BodyInit | undefined
+
+  if (options.body !== undefined && !isFormDataBody) {
+    headers["Content-Type"] = "application/json"
+  }
 
   if (options.body !== undefined) {
-    headers["Content-Type"] = "application/json"
+    requestBody = isFormDataBody
+      ? (options.body as BodyInit)
+      : JSON.stringify(options.body)
   }
 
   if (options.accessToken) {
@@ -82,7 +93,7 @@ export async function apiRequest<T>(
     method: options.method ?? "GET",
     credentials: "include",
     headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body: requestBody,
   })
 
   if (!response.ok) {

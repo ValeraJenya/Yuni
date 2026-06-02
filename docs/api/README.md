@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow и Profiles MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP и Profile Photos / Media MVP.
 
 ## Подготовка
 
@@ -188,6 +188,73 @@ curl -i http://localhost:4000/profiles/test_user \
 `handle` ищется case-insensitive. Public response не отдает `email`, `birthDate`, private settings, refresh/session fields, raw tokens или internal moderation fields.
 
 Если profile не найден, API возвращает `404`. Если profile существует, но не доступен текущему пользователю из-за `isDiscoverable=false` или private visibility mode, API возвращает `403 Forbidden`. Владелец всегда может читать свой профиль.
+
+## Profile Photos / Media MVP
+
+Все media endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет владельца только из `CurrentUser`, а не из body/query/path.
+
+Локальное MVP-хранилище:
+
+- файлы сохраняются в `apps/backend/uploads/profile-photos`;
+- папка uploads не коммитится;
+- `publicUrl` имеет вид `/uploads/profile-photos/<generated-file-name>`;
+- storage filename генерируется backend через random UUID и не использует original filename;
+- production S3/CDN pipeline будет отдельным шагом позже.
+
+### Get My Profile Photos
+
+```bash
+curl -i http://localhost:4000/media/profile-photos/me \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Owner response возвращает `id`, `publicUrl`, `blurhash`, `isPrimary`, `position`, `moderationStatus` и `publishedAt`. Self response не должен отдавать `storageKey`, filesystem path, original filename, private tokens или user secrets.
+
+### Upload Profile Photo
+
+```bash
+curl -i -X POST http://localhost:4000/media/profile-photos \
+  -H "Authorization: Bearer <accessToken>" \
+  -F "file=@./local-photo.png"
+```
+
+Contract:
+
+- multipart field: `file`;
+- allowed MIME types: `image/jpeg`, `image/png`, `image/webp`;
+- max size: `5 MB`;
+- unsupported type or missing file returns `400`;
+- too large file returns `413` at upload boundary or `400` if rejected by service validation;
+- local MVP marks uploaded photos as `approved` and published immediately;
+- first uploaded photo becomes primary automatically.
+
+### Set Primary Profile Photo
+
+```bash
+curl -i -X PATCH http://localhost:4000/media/profile-photos/<photoId>/primary \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Only the owner can set a photo as primary. Non-owner access returns `403`; missing photo returns `404`.
+
+### Delete Profile Photo
+
+```bash
+curl -i -X DELETE http://localhost:4000/media/profile-photos/<photoId> \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Only the owner can delete a photo. Backend deletes the DB row and best-effort removes the local file. If the deleted photo was primary, backend promotes the next owner photo by position.
+
+### Public Profile Photo Visibility
+
+Public profile responses include only photos that have:
+
+- `publicUrl`;
+- `moderationStatus=approved`;
+- `publishedAt` set.
+
+Public profile responses do not expose `storageKey`, filesystem path, original filename, moderation internals or private owner-only fields.
 
 ## Cookie Behavior
 

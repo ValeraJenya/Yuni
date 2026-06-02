@@ -10,7 +10,7 @@ Yuni организован как небольшой монорепозитор
 - `docs` - документация по архитектуре, security, onboarding и decisions.
 - `infra` - будущие docker и operational scripts.
 
-Backend сейчас находится на стадии foundation: есть структура, конфигурация, Prisma schema и health endpoint, но полной бизнес-логики auth, profiles, likes, matches, chat, media и moderation пока нет.
+Backend сейчас находится на стадии foundation: есть структура, конфигурация, Prisma schema, health endpoint, auth/session flow, Profiles MVP и Profile Photos / Media MVP. Полной бизнес-логики likes, matches, chat и moderation пока нет.
 
 ## Быстрый локальный старт
 
@@ -51,5 +51,7 @@ corepack pnpm dev:frontend
 ```
 
 Frontend auth использует реальный backend contract: register/login/refresh/logout/me. Refresh token остается в HttpOnly cookie, access token хранится только в memory state и восстанавливается через `POST /auth/refresh` после reload. Demo/mock state не является production auth source.
+
+Profile Photos / Media MVP использует local uploads в `apps/backend/uploads/profile-photos`; эта папка ignored by git. Для production media storage, CDN, EXIF stripping и async moderation будет отдельный этап.
 
 Yuni стартует с новой пустой БД. Legacy data migration, перенос старых пользователей, сохранение старых ID и cleanup старых данных не нужны.

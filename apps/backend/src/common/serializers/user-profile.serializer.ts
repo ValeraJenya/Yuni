@@ -181,7 +181,9 @@ export function toSelfProfile(profile: ProfileSource): SelfProfileView {
     country: profile.country ?? null,
     isDiscoverable: profile.isDiscoverable,
     completedAt: profile.completedAt,
-    photos: (profile.photos ?? []).map(toSelfProfilePhoto),
+    photos: [...(profile.photos ?? [])]
+      .sort((left, right) => left.position - right.position)
+      .map(toSelfProfilePhoto),
   };
 }
 
