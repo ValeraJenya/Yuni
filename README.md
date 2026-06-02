@@ -84,3 +84,15 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 FRONTEND_URL=http://localhost:3000
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
+
+## Documentation
+
+Ключевые architecture docs находятся в `docs/architecture`:
+
+- `backend-structure.md`;
+- `frontend-structure.md`;
+- `module-boundaries.md`;
+- `program-flow-map.md`;
+- `scaling-roadmap.md`.
+
+Правила выдачи данных зафиксированы в `docs/security/data-exposure-rules.md`.
