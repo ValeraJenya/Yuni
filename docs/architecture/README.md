@@ -14,3 +14,9 @@ Yuni использует монорепозиторий, чтобы frontend, b
 
 - [Domain Model](./domain-model.md) - доменные блоки MVP и границы ответственности.
 - [Backend Foundation](./backend-foundation.md) - NestJS/Prisma foundation и базовые правила backend-слоя.
+- [Backend Structure](./backend-structure.md) - текущая структура backend, роли слоев и стандарт module layout.
+- [Frontend Structure](./frontend-structure.md) - текущая структура frontend, API client rules и auth state rules.
+- [Module Boundaries](./module-boundaries.md) - правила границ модулей и допустимые cross-module interactions.
+- [Program Flow Map](./program-flow-map.md) - карта текущих auth/profile/media flows от frontend до Prisma/serializers.
+- [Scaling Roadmap](./scaling-roadmap.md) - поэтапная стратегия масштабирования без преждевременных микросервисов.
+- [Foundation Hardening Plan](./foundation-hardening-plan.md) - master plan укрепления foundation.
