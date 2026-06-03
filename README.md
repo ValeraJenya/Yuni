@@ -85,6 +85,20 @@ FRONTEND_URL=http://localhost:3000
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
+## Quality gates
+
+Перед PR запускайте локальные проверки из корня проекта. Для Prisma validate нужен локальный или временный non-production `DATABASE_URL`:
+
+```powershell
+corepack pnpm install --frozen-lockfile
+$env:DATABASE_URL="postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=public"
+corepack pnpm check
+```
+
+`corepack pnpm check` выполняет backend Prisma validate/generate, backend build/lint, frontend lint/typecheck/build. Frontend lint является обязательной проверкой.
+
+GitHub Actions workflow `quality-gates` запускается на `pull_request` и `push` в `main`. CI использует fake non-production `DATABASE_URL` только для Prisma validate/generate, не использует production secrets и не делает deploy.
+
 ## Documentation
 
 Ключевые architecture docs находятся в `docs/architecture`:

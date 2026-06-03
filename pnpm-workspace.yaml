@@ -7,3 +7,4 @@ allowBuilds:
   argon2: true
   prisma: true
   sharp: true
+  unrs-resolver: true
