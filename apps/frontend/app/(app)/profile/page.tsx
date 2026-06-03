@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ElementType } from "react"
 import Image from "next/image"
 import {
   ShieldCheck,
@@ -31,6 +31,12 @@ import {
   type SelfProfile,
   type UpdateProfileRequest,
 } from "@/lib/profile-api"
+
+type ProfileInfoRow = { icon: ElementType; label: string; value: string }
+
+function isProfileInfoRow(row: ProfileInfoRow | undefined | null | false): row is ProfileInfoRow {
+  return Boolean(row)
+}
 
 const copy = {
   ru: {
@@ -1174,10 +1180,10 @@ export default function ProfilePage() {
                   value: lookingForLabel,
                 },
               ] as Array<
-                { icon: React.ElementType; label: string; value: string } | undefined | null | false
+                ProfileInfoRow | undefined | null | false
               >)
-                .filter(Boolean)
-                .map((row: any, i, arr) => (
+                .filter(isProfileInfoRow)
+                .map((row, i, arr) => (
                   <div
                     key={row.label}
                     className="flex items-center gap-4 px-5 py-3.5"

@@ -1,0 +1,50 @@
+name: Quality Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  quality-gates:
+    name: Build, lint, and typecheck
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=public
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Validate Prisma schema
+        run: corepack pnpm --dir apps/backend prisma:validate
+
+      - name: Generate Prisma Client
+        run: corepack pnpm --dir apps/backend prisma:generate
+
+      - name: Build backend
+        run: corepack pnpm --filter backend build
+
+      - name: Lint backend
+        run: corepack pnpm --filter backend lint
+
+      - name: Lint frontend
+        run: corepack pnpm --filter frontend lint
+
+      - name: Typecheck frontend
+        run: corepack pnpm --filter frontend exec tsc --noEmit
+
+      - name: Build frontend
+        run: corepack pnpm --filter frontend build

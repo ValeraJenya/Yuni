@@ -1,6 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
+import Link from "next/link"
 import { useLang } from "@/lib/lang-context"
 
 interface AuthShellProps {
@@ -57,7 +58,7 @@ export function AuthShell({ children }: AuthShellProps) {
         style={{ height: "60px" }}
       >
         {/* Brand lockup */}
-        <a href="/" className="flex items-center gap-3 select-none group" aria-label="Yuni — на главную">
+        <Link href="/" className="flex items-center gap-3 select-none group" aria-label="Yuni — на главную">
           <div className="relative flex-shrink-0" style={{ width: "24px", height: "24px" }}>
             <img
               src="/yuni-logo.png"
@@ -85,7 +86,7 @@ export function AuthShell({ children }: AuthShellProps) {
               by Pink Rabbit
             </span>
           </div>
-        </a>
+        </Link>
 
         {/* Lang switcher */}
         <button

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { X, Menu } from "lucide-react"
 
 interface NavbarProps {
@@ -41,7 +42,7 @@ export function Navbar({ lang, onLangToggle }: NavbarProps) {
         <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-6 md:px-10">
 
           {/* Brand lockup: monomark + wordmark */}
-          <a href="/" className="flex items-center gap-3 select-none group" aria-label="Yuni">
+          <Link href="/" className="flex items-center gap-3 select-none group" aria-label="Yuni">
             {/* Rabbit-heart monomark — tinted to rose, small and precise */}
             <div
               className="relative flex-shrink-0"
@@ -77,7 +78,7 @@ export function Navbar({ lang, onLangToggle }: NavbarProps) {
                 by Pink Rabbit
               </span>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop — minimal nav: only the essentials */}
           <nav className="hidden md:flex items-center gap-8">
