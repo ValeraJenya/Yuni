@@ -34,6 +34,9 @@ jobs:
       - name: Generate Prisma Client
         run: corepack pnpm --dir apps/backend prisma:generate
 
+      - name: Test backend
+        run: corepack pnpm --filter backend test
+
       - name: Build backend
         run: corepack pnpm --filter backend build
 

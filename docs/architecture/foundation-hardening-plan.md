@@ -224,12 +224,12 @@ Docs:
 
 Что входит:
 - поддерживать frontend lint/typecheck/build как обязательные gates;
-- поддерживать backend Prisma validate/generate, build и lint как обязательные gates;
+- поддерживать backend Prisma validate/generate, tests, build и lint как обязательные gates;
 - держать local commands и CI workflow синхронизированными;
 - не добавлять deploy/secrets в quality workflow.
 
 Acceptance criteria:
-- перед merge выполняются install, prisma validate/generate, backend lint/build, frontend lint/typecheck/build и будущие tests;
+- перед merge выполняются install, prisma validate/generate, backend tests/lint/build, frontend lint/typecheck/build и будущие расширенные tests;
 - CI падает при TypeScript errors;
 - локальные команды совпадают с CI.
 
