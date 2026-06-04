@@ -60,7 +60,7 @@ $env:DATABASE_URL="postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=
 corepack pnpm check
 ```
 
-Эта команда проверяет backend Prisma validate/generate, backend build/lint, frontend lint/typecheck/build. В CI используется только non-production `DATABASE_URL`; production secrets, deploy и подключение к real DB в quality workflow не используются.
+Эта команда проверяет backend Prisma validate/generate, backend tests, backend build/lint, frontend lint/typecheck/build. В CI используется только non-production `DATABASE_URL`; backend tests не используют real DB, production secrets, deploy и подключение к real DB в quality workflow не используются.
 
 Frontend auth использует реальный backend contract: register/login/refresh/logout/me. Refresh token остается в HttpOnly cookie, access token хранится только в memory state и восстанавливается через `POST /auth/refresh` после reload. Demo/mock state не является production auth source.
 

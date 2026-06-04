@@ -95,9 +95,9 @@ $env:DATABASE_URL="postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=
 corepack pnpm check
 ```
 
-`corepack pnpm check` выполняет backend Prisma validate/generate, backend build/lint, frontend lint/typecheck/build. Frontend lint является обязательной проверкой.
+`corepack pnpm check` выполняет backend Prisma validate/generate, backend tests, backend build/lint, frontend lint/typecheck/build. Frontend lint и backend tests являются обязательными проверками.
 
-GitHub Actions workflow `quality-gates` запускается на `pull_request` и `push` в `main`. CI использует fake non-production `DATABASE_URL` только для Prisma validate/generate, не использует production secrets и не делает deploy.
+GitHub Actions workflow `quality-gates` запускается на `pull_request` и `push` в `main`. CI использует fake non-production `DATABASE_URL` только для Prisma validate/generate, backend tests не используют real DB, production secrets не используются и deploy не выполняется.
 
 ## Documentation
 
