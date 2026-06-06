@@ -7,9 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Prisma does not represent PostgreSQL expression/partial indexes used by the SQL draft,
-// for example lower(email), lower(handle), and approved primary photo indexes.
-// Keep those constraints in SQL migrations when migration tooling is added.
+// Prisma does not represent every PostgreSQL expression/partial index or exclusion
+// constraint used by Yuni. Keep lower(email), lower(handle), approved primary photo
+// indexes, and likes active-overlap protection in SQL migrations.
 
 enum UserStatus {
   active
@@ -203,14 +203,16 @@ model Like {
   likerUserId String   @map("liker_user_id") @db.Uuid
   likedUserId String   @map("liked_user_id") @db.Uuid
   kind        LikeKind @default(like)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   liker       User     @relation("LikesSent", fields: [likerUserId], references: [id], onDelete: Cascade)
   liked       User     @relation("LikesReceived", fields: [likedUserId], references: [id], onDelete: Cascade)
 
-  @@unique([likerUserId, likedUserId])
-  @@index([likedUserId, kind])
+  @@index([likedUserId, kind, expiresAt])
+  @@index([likerUserId, likedUserId, expiresAt])
+  @@index([likerUserId, expiresAt])
   @@index([likerUserId, createdAt])
   @@map("likes")
 }

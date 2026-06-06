@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP и Profile Photos / Media MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP и Likes MVP.
 
 ## Подготовка
 
@@ -255,6 +255,72 @@ Public profile responses include only photos that have:
 - `publishedAt` set.
 
 Public profile responses do not expose `storageKey`, filesystem path, original filename, moderation internals or private owner-only fields.
+
+## Likes MVP
+
+Все likes endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет actor только из `CurrentUser`, а не из body/query/path.
+
+Важно по naming: `targetProfileUserId` - это `profiles.user_id`. У Profile нет отдельного id; primary key профиля равен user id. Если в старых заметках встречается `targetProfileId`, его нужно читать как `profiles.user_id`, а не как новый profile id.
+
+Step 12 реализует только `LIKE` и `SKIP/PASS`:
+
+- `like` сохраняется как `LikeKind.like`;
+- `skip`/`pass` сохраняется как `LikeKind.pass`;
+- superlike не реализован в Step 12;
+- matches будут отдельным Step 13;
+- blocks/reports будут отдельным Step 14.
+
+### Like Profile
+
+```bash
+curl -i -X POST http://localhost:4000/likes/<targetProfileUserId> \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "interaction": {
+    "targetProfileUserId": "22222222-2222-4222-8222-222222222222",
+    "action": "like",
+    "expiresAt": "2026-06-10T12:00:00.000Z"
+  }
+}
+```
+
+LIKE cooldown: 3 days. Active LIKE/SKIP for the same actor and target blocks another LIKE/SKIP until `expiresAt`. Expired interactions do not block a new action.
+
+### Skip / Pass Profile
+
+```bash
+curl -i -X POST http://localhost:4000/likes/<targetProfileUserId>/skip \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "interaction": {
+    "targetProfileUserId": "22222222-2222-4222-8222-222222222222",
+    "action": "skip",
+    "expiresAt": "2026-06-08T12:00:00.000Z"
+  }
+}
+```
+
+SKIP/PASS cooldown: 1 day.
+
+Security and conflict behavior:
+
+- self-like and self-skip return `400`;
+- inactive/deleted actor returns `401`;
+- missing, inactive or deleted target user returns `404`;
+- target profile must be discoverable/open by current profile access rules;
+- active duplicate interaction returns safe `409`;
+- DB overlap constraint conflicts are also mapped to safe `409`;
+- response is an explicit safe shape, not a raw Prisma `Like` row.
 
 ## Cookie Behavior
 

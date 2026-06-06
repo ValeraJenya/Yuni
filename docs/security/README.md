@@ -22,6 +22,7 @@
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
 - Доступ к чатам должен проверяться через membership в `conversation_participants`.
 - Доступ к профилям, фото, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
+- Likes MVP принимает target profile только как `targetProfileUserId`, то есть `profiles.user_id`. У профиля нет отдельного публичного id.
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
 - Auth endpoints имеют базовый throttling foundation. Production rate limits можно уточнить позже.
 
@@ -113,6 +114,32 @@ Known MVP limitations:
 - Image dimension validation, malware scanning, perceptual hashing и async moderation не входят в этот MVP шаг.
 - Локальное хранение подходит для development/early MVP, но не для production scale.
 
+## Likes MVP security rules
+
+Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike, matches, chat, blocks/reports и full backend discovery не входят в Step 12: matches planned for Step 13, blocks/reports planned for Step 14.
+
+Security rules:
+
+- Все endpoints `POST /likes/:targetProfileUserId` и `POST /likes/:targetProfileUserId/skip` требуют authenticated `CurrentUser`.
+- `targetProfileUserId` означает `profiles.user_id`; backend не вводит отдельный profile id.
+- Backend берет actor identity только из access token, а не из body/query/path или frontend state.
+- Self-like и self-skip запрещены.
+- Actor должен быть active и not deleted.
+- Target user должен быть active и not deleted.
+- Target profile должен быть доступен по текущим profile access rules: discoverable/open для другого пользователя.
+- `like` сохраняется как `LikeKind.like`, `skip`/`pass` сохраняется как `LikeKind.pass`.
+- LIKE cooldown - 3 days; SKIP/PASS cooldown - 1 day.
+- Active interaction blocks another LIKE/SKIP for the same actor/target until `expiresAt`.
+- Expired interaction does not block a new LIKE/SKIP.
+- Duplicate active interaction returns safe `409 Active interaction already exists`.
+- DB overlap constraint conflicts are mapped to the same safe `409`, without leaking constraint details.
+- Response shape is explicit and safe: `interaction.targetProfileUserId`, `interaction.action`, `interaction.expiresAt`; raw Prisma `Like` rows are never returned.
+
+Known MVP limitations:
+
+- Race/exclusion constraint behavior should be covered by integration/e2e tests with a test database in a later step.
+- Backend discover feed, match creation, blocks/reports effects and superlike rules are intentionally outside Step 12.
+
 ## Pagination and anti-abuse
 
 List endpoints для discover, likes, matches, messages, reports и moderation должны использовать server-side pagination. Общий cursor pagination pattern находится в `apps/backend/src/common/pagination`:
@@ -130,6 +157,7 @@ List endpoints для discover, likes, matches, messages, reports и moderation 
 - DB-level constraints защищают критичные invariants даже при ошибке в application code.
 - Case-insensitive unique indexes запрещают дубли email/handle, отличающиеся только регистром.
 - Check constraints запрещают self-like, self-match, self-block и self-report.
+- Expiring likes use `expires_at` and an overlap exclusion constraint so active interactions cannot overlap, while expired interactions and future rematch flows remain possible.
 - Unordered unique match pair index запрещает duplicate matches для пар `A-B` и `B-A`.
 - Photo constraints запрещают published photo без approved moderation state и несколько primary photos для одного пользователя.
 - Messages должны быть связаны с `conversation_participants`, чтобы sender был участником conversation.

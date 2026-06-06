@@ -1,7 +1,9 @@
 -- Yuni database schema draft.
 -- PostgreSQL-first foundation; convert to ORM migrations when the backend stack is finalized.
--- UUID generation assumes pgcrypto. Enable it in the real migration if the target database does not have it.
+-- UUID generation assumes pgcrypto. Likes active-overlap protection assumes btree_gist.
+-- Enable extensions in real migrations if the target database does not have them.
 -- CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 CREATE TABLE users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -124,13 +126,24 @@ CREATE TABLE likes (
   liked_user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   kind text NOT NULL DEFAULT 'like'
     CHECK (kind IN ('like', 'superlike', 'pass')),
+  expires_at timestamptz NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT likes_no_self_like CHECK (liker_user_id <> liked_user_id),
-  CONSTRAINT likes_pair_unique UNIQUE (liker_user_id, liked_user_id)
+  CONSTRAINT likes_expires_after_created CHECK (expires_at > created_at)
 );
 
-CREATE INDEX likes_liked_user_id_idx ON likes (liked_user_id, kind);
+ALTER TABLE likes
+  ADD CONSTRAINT likes_no_overlapping_active_interactions
+  EXCLUDE USING gist (
+    liker_user_id WITH =,
+    liked_user_id WITH =,
+    tstzrange(created_at, expires_at, '[)') WITH &&
+  );
+
+CREATE INDEX likes_liked_user_id_idx ON likes (liked_user_id, kind, expires_at);
+CREATE INDEX likes_liker_liked_expires_idx ON likes (liker_user_id, liked_user_id, expires_at);
+CREATE INDEX likes_liker_expires_idx ON likes (liker_user_id, expires_at);
 CREATE INDEX likes_liker_user_id_idx ON likes (liker_user_id, created_at DESC);
 
 CREATE TABLE matches (

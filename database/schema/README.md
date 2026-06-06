@@ -13,7 +13,7 @@
 - `profiles` хранит один underlying dating profile пользователя, включая публичный `handle`. Возраст вычисляется на backend из `birth_date`.
 - `profile_photos` хранит storage keys, URLs, metadata, ordering, primary photo state, moderation state и publishing timestamps. Бинарники изображений не хранятся в PostgreSQL.
 - `interests` и `profile_interests` описывают интересы и many-to-many связь с профилем.
-- `likes` хранит directional decision: `like`, `superlike` или `pass`.
+- `likes` хранит expiring directional interactions. Step 12 реализует `like` и `pass`/`skip`; `superlike` остается future work.
 - `matches` хранит mutual relationship с `matched_at`, стандартным 7-дневным `expires_at` и lifecycle statuses.
 - `conversations` представляет chat threads, обычно связанные с match.
 - `conversation_participants` явно связывает пользователей с conversations и является основой chat owner checks.
@@ -29,7 +29,7 @@
 
 `profiles.handle` - публичный технический identifier для URL, search, indexing и moderation. Для MVP он ограничен латинскими буквами, цифрами, underscore, dot, hyphen и длиной 3-30 символов. Обычный profile content, например display name, bio, interests, work, education и будущие free-text поля, должен поддерживать обычный пользовательский ввод, включая кириллицу.
 
-`likes` directional. `matches` mutual и используют unordered uniqueness, чтобы пары `A-B` и `B-A` не дублировались. Active matches истекают через `expires_at`. Для MVP expiration выполняется request-time логикой: backend должен считать active matches с `expires_at <= now()` истекшими и может opportunistically обновлять status на `expired`.
+`likes` directional and time-bound: LIKE действует 3 days, SKIP/PASS действует 1 day. Вечный unique `(liker_user_id, liked_user_id)` не используется, чтобы не блокировать future rematch. Active overlap для одной пары защищается PostgreSQL exclusion constraint. `matches` mutual и используют unordered uniqueness, чтобы пары `A-B` и `B-A` не дублировались. Active matches истекают через `expires_at`. Для MVP expiration выполняется request-time логикой: backend должен считать active matches с `expires_at <= now()` истекшими и может opportunistically обновлять status на `expired`.
 
 `blocks` и `reports` отделены от profiles и matches, чтобы safety flows применялись к discovery, matching и chat без перегруза других таблиц.
 

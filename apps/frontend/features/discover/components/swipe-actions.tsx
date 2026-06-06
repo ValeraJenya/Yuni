@@ -6,9 +6,10 @@ import type { SwipeAction } from "@/types/app"
 interface SwipeActionsProps {
   onAction: (action: SwipeAction) => void
   disabled?: boolean
+  showSuperlike?: boolean
 }
 
-export function SwipeActions({ onAction, disabled }: SwipeActionsProps) {
+export function SwipeActions({ onAction, disabled, showSuperlike = true }: SwipeActionsProps) {
   return (
     <div
       className="flex items-center justify-center gap-4"
@@ -69,35 +70,37 @@ export function SwipeActions({ onAction, disabled }: SwipeActionsProps) {
       </button>
 
       {/* Super like */}
-      <button
-        onClick={() => onAction("superlike")}
-        disabled={disabled}
-        aria-label="Суперлайк"
-        className="flex items-center justify-center rounded-full transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-        style={{
-          width: "48px",
-          height: "48px",
-          background: "oklch(0.11 0.012 15 / 0.88)",
-          border: "1px solid oklch(0.65 0.20 220 / 0.38)",
-          boxShadow: [
-            "0 0 18px oklch(0.65 0.20 220 / 0.20)",
-            "0 8px 24px oklch(0.04 0.005 15 / 0.60)",
-            "inset 0 1px 0 oklch(0.65 0.20 220 / 0.15)",
-          ].join(", "),
-          backdropFilter: "blur(14px)",
-          color: "oklch(0.72 0.20 220)",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "oklch(0.65 0.20 220 / 0.55)"
-          e.currentTarget.style.color = "oklch(0.82 0.18 220)"
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "oklch(0.65 0.20 220 / 0.38)"
-          e.currentTarget.style.color = "oklch(0.72 0.20 220)"
-        }}
-      >
-        <Star size={19} strokeWidth={1.8} />
-      </button>
+      {showSuperlike && (
+        <button
+          onClick={() => onAction("superlike")}
+          disabled={disabled}
+          aria-label="Суперлайк"
+          className="flex items-center justify-center rounded-full transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            width: "48px",
+            height: "48px",
+            background: "oklch(0.11 0.012 15 / 0.88)",
+            border: "1px solid oklch(0.65 0.20 220 / 0.38)",
+            boxShadow: [
+              "0 0 18px oklch(0.65 0.20 220 / 0.20)",
+              "0 8px 24px oklch(0.04 0.005 15 / 0.60)",
+              "inset 0 1px 0 oklch(0.65 0.20 220 / 0.15)",
+            ].join(", "),
+            backdropFilter: "blur(14px)",
+            color: "oklch(0.72 0.20 220)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "oklch(0.65 0.20 220 / 0.55)"
+            e.currentTarget.style.color = "oklch(0.82 0.18 220)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "oklch(0.65 0.20 220 / 0.38)"
+            e.currentTarget.style.color = "oklch(0.72 0.20 220)"
+          }}
+        >
+          <Star size={19} strokeWidth={1.8} />
+        </button>
+      )}
     </div>
   )
 }

@@ -141,9 +141,23 @@ Owns profile photos, local MVP storage, upload validation, owner checks and self
 
 ### `likes`
 
-Scaffold-only.
+Implemented Step 12 MVP.
 
-Future responsibility: like, dislike/pass and superlike actions.
+- `POST /likes/:targetProfileUserId`
+- `POST /likes/:targetProfileUserId/skip`
+
+Owns expiring LIKE/SKIP interactions:
+
+- actor identity from `CurrentUser`;
+- `targetProfileUserId` equals `profiles.user_id`;
+- self-like/self-skip rejection;
+- target active/not deleted and profile access checks;
+- LIKE cooldown of 3 days;
+- SKIP/PASS cooldown of 1 day;
+- active duplicate conflict handling;
+- safe response shape.
+
+Superlike, matches, chat effects and blocks/reports are outside Step 12.
 
 ### `matches`
 

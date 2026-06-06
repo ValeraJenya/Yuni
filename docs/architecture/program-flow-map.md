@@ -385,28 +385,68 @@ Public photo response does not expose:
 
 These sections are intentionally short. They document expected boundaries without inventing endpoints.
 
-### Likes Flow - Planned
+### Likes Flow - Step 12 MVP
 
-Expected module: `LikesModule`.
+Implemented module: `LikesModule`.
 
-Expected DB models already present:
+Frontend files:
 
-- `Like`;
-- `Block`;
-- `Match` may be affected by reciprocal likes.
+- `apps/frontend/app/(app)/discover/page.tsx`
+- `apps/frontend/features/discover/components/swipe-actions.tsx`
+- `apps/frontend/lib/likes-api.ts`
+- `apps/frontend/lib/auth-context.tsx`
 
-Expected security:
+Backend files:
 
-- authenticated user from `CurrentUser`;
-- no self-like;
-- block-aware behavior;
-- rate limit/anti-spam;
-- backend decides like actor, not frontend `userId`.
+- `apps/backend/src/modules/likes/likes.controller.ts`
+- `apps/backend/src/modules/likes/likes.service.ts`
+- `apps/backend/src/modules/likes/likes.module.ts`
 
-Expected serializers:
+Database model:
 
-- explicit response shape for like result;
-- no raw Prisma `Like` object.
+- `Like`
+
+`targetProfileUserId` means `profiles.user_id`. Profile primary key is user id; Step 12 does not introduce a separate profile id.
+
+```text
+discover card action
+  -> likesApi.likeProfile or likesApi.skipProfile
+  -> authenticatedRequest attaches Bearer access token
+  -> POST /likes/:targetProfileUserId or /likes/:targetProfileUserId/skip
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> LikesService
+  -> assert active actor
+  -> find target profile by Profile.userId
+  -> assert target user active/not deleted
+  -> assertCanAccessProfile for discoverable/open target
+  -> reject active duplicate Like where expiresAt > now
+  -> create Like with expiresAt
+  -> explicit safe interaction response
+  -> frontend removes card only after successful response
+```
+
+Security:
+
+- authenticated user comes from `CurrentUser`;
+- frontend never chooses actor user id;
+- self-like and self-skip are rejected;
+- target profile must be discoverable/open by current rules;
+- `like` maps to `LikeKind.like`;
+- `skip`/`pass` maps to `LikeKind.pass`;
+- LIKE cooldown is 3 days;
+- SKIP/PASS cooldown is 1 day;
+- expired interactions do not block a new action;
+- active duplicate interactions return safe `409`;
+- DB overlap constraint conflicts are mapped to safe `409`;
+- response is `{ interaction: { targetProfileUserId, action, expiresAt } }`, not a raw Prisma `Like` row.
+
+Out of scope for Step 12:
+
+- superlike;
+- match creation, planned for Step 13;
+- blocks/reports, planned for Step 14;
+- full backend discovery feed.
 
 ### Matches Flow - Planned
 
