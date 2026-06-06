@@ -8,6 +8,9 @@ import { SwipeActions } from "@/features/discover/components/swipe-actions"
 import { useProfileReveal } from "@/features/discover/hooks/use-profile-reveal"
 import { DISCOVER_PROFILES } from "@/mock-data/profiles"
 import type { SwipeAction } from "@/types/app"
+import { ApiError } from "@/lib/auth-api"
+import { likesApi } from "@/lib/likes-api"
+import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 
 const distances = [3, 12, 7, 4, 9, 5]
@@ -33,6 +36,7 @@ const copy = {
     nearby: "Рядом",
     online: "В сети",
     verified: "Верифицированы",
+    actionError: "Не удалось сохранить действие. Попробуйте ещё раз.",
   },
   en: {
     eyebrow: "For you",
@@ -54,6 +58,7 @@ const copy = {
     nearby: "Nearby",
     online: "Online",
     verified: "Verified",
+    actionError: "Could not save this action. Try again.",
   },
 }
 
@@ -409,6 +414,7 @@ function SideBlock({
 
 export default function DiscoverPage() {
   const { lang } = useLang()
+  const { authenticatedRequest } = useAuth()
   const t = copy[lang]
 
   const [stack, setStack] = useState(DISCOVER_PROFILES)
@@ -417,6 +423,8 @@ export default function DiscoverPage() {
   const [toastKey, setToastKey] = useState(0)
   const [filterOpen, setFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
+  const [pendingAction, setPendingAction] = useState<SwipeAction | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const current = stack[0]
   const next = stack[1]
@@ -443,16 +451,32 @@ export default function DiscoverPage() {
     unlockZone: reveal.unlockZone,
   } : undefined
 
-  function handleAction(action: SwipeAction) {
-    if (!current) return
-    setLastAction(action)
-    setToastKey((k) => k + 1)
-    if (action === "like" || action === "superlike") {
-      if (Math.random() < 0.4) {
-        setTimeout(() => setMatchProfile(current), 380)
+  async function handleAction(action: SwipeAction) {
+    if (!current || pendingAction || action === "superlike") return
+
+    const targetProfileUserId = current.id
+    setPendingAction(action)
+    setActionError(null)
+
+    try {
+      if (action === "like") {
+        await likesApi.likeProfile(authenticatedRequest, targetProfileUserId)
+      } else {
+        await likesApi.skipProfile(authenticatedRequest, targetProfileUserId)
       }
+
+      setLastAction(action)
+      setToastKey((key) => key + 1)
+      setStack((profiles) =>
+        profiles[0]?.id === targetProfileUserId
+          ? profiles.slice(1)
+          : profiles.filter((profile) => profile.id !== targetProfileUserId),
+      )
+    } catch (error) {
+      setActionError(error instanceof ApiError ? error.message : t.actionError)
+    } finally {
+      setPendingAction(null)
     }
-    setStack((s) => s.slice(1))
   }
 
   function reset() {
@@ -643,7 +667,24 @@ export default function DiscoverPage() {
               </div>
 
               {/* Action buttons */}
-              <SwipeActions onAction={handleAction} />
+              <SwipeActions
+                onAction={handleAction}
+                disabled={Boolean(pendingAction)}
+                showSuperlike={false}
+              />
+              {actionError && (
+                <p
+                  className="font-sans text-center max-w-xs"
+                  role="status"
+                  style={{
+                    fontSize: "12px",
+                    color: "oklch(0.70 0.16 28)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {actionError}
+                </p>
+              )}
             </div>
 
             {/* ── Desktop sidebar panel ── */}

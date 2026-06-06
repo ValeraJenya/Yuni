@@ -50,9 +50,23 @@ MediaModule should not decide profile questionnaire fields, likes/matches state 
 
 ### LikesModule
 
-Planned.
+Implemented Step 12 MVP for expiring LIKE/SKIP interactions.
 
-Owns like/dislike/pass/superlike actions and related anti-abuse limits.
+Owns:
+
+- `POST /likes/:targetProfileUserId`;
+- `POST /likes/:targetProfileUserId/skip`;
+- mapping API `like` to `LikeKind.like`;
+- mapping API `skip`/`pass` to `LikeKind.pass`;
+- LIKE cooldown of 3 days;
+- SKIP/PASS cooldown of 1 day;
+- active duplicate interaction checks;
+- safe conflict response for application and DB overlap conflicts;
+- explicit safe interaction response shape.
+
+`targetProfileUserId` means `profiles.user_id`; no separate profile id exists.
+
+LikesModule should not create matches, chats, blocks or reports. Superlike is not implemented in Step 12.
 
 ### MatchesModule
 
@@ -131,9 +145,25 @@ Avoid:
 - performs owner checks via `assertOwner`;
 - returns `toSelfProfile` and `toSelfProfilePhoto`.
 
+### LikesModule
+
+`LikesController` receives authenticated LIKE/SKIP requests and delegates to `LikesService`.
+
+`LikesService`:
+
+- reads actor from `CurrentUser`;
+- rejects self-like/self-skip;
+- checks active actor;
+- loads target profile by `Profile.userId`;
+- verifies target user is active/not deleted;
+- uses `assertCanAccessProfile` for discoverable/open access;
+- blocks active duplicate interactions until `expiresAt`;
+- maps DB overlap conflicts to safe `409`;
+- returns explicit interaction shape instead of raw Prisma `Like`.
+
 ## Future Module Additions
 
-When implementing likes, matches, chat, moderation or discovery:
+When implementing matches, chat, moderation or discovery:
 
 1. Add the endpoint to the owning module.
 2. Define DTOs before accepting input.

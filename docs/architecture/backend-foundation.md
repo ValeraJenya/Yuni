@@ -17,7 +17,7 @@ Backend Yuni строится на NestJS, Prisma и PostgreSQL. Этот сло
 - `users` - будущая работа с учетной записью пользователя.
 - `profiles` - профиль, handle, privacy/visibility и discovery eligibility.
 - `media` - фото, moderation status, primary photo и публикация.
-- `likes` - `like`, `superlike`, `pass`.
+- `likes` - Step 12 MVP for expiring `like` and `pass`/`skip`; `superlike` остается future work.
 - `matches` - взаимные мэтчи и request-time expiration по `expires_at`.
 - `chat` - conversations, participants, messages и membership checks.
 - `moderation` - blocks и reports.

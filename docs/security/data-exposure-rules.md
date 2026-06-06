@@ -125,6 +125,28 @@ Self photo response may additionally include:
 
 No media response should expose local storage internals such as `storageKey`, filesystem path or original filename.
 
+## Likes Response Shapes
+
+Likes MVP responses may include only the explicit interaction confirmation shape:
+
+- `interaction.targetProfileUserId`, which is `profiles.user_id`;
+- `interaction.action`, currently `like` or `skip`;
+- `interaction.expiresAt`.
+
+Likes responses must not expose:
+
+- raw Prisma `Like` rows;
+- `id`;
+- `likerUserId`;
+- raw `likedUserId` outside the documented `targetProfileUserId` response field;
+- `kind`;
+- `createdAt`;
+- `updatedAt`;
+- user email;
+- `birthDate`;
+- private profile settings;
+- password/session/token fields.
+
 ## Admin API Future Rule
 
 Admin API must be documented separately before implementation.

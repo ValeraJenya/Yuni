@@ -28,7 +28,17 @@ Discovery eligibility - backend rule, поддерживаемый схемой.
 
 ## Likes
 
-`likes` хранит directional decisions: `like`, `superlike`, `pass`. Unique `(liker_user_id, liked_user_id)` не дает создавать дубликаты решений и упрощает mutual-like логику.
+`likes` хранит directional decisions между двумя users. В Step 12 реализованы только временные `LIKE` и `SKIP/PASS`:
+
+- API `like` сохраняется как `LikeKind.like`;
+- API `skip`/`pass` сохраняется как `LikeKind.pass`;
+- `superlike` остается будущим расширением и не реализован в Step 12.
+
+У Profile нет отдельного id: target profile в likes API обозначается как `targetProfileUserId`, то есть `profiles.user_id`.
+
+LIKE действует 3 days, SKIP/PASS действует 1 day. `expires_at` задает cooldown window: active interaction blocks another LIKE/SKIP for the same liker/liked pair until expiration, while expired interactions do not block a new action.
+
+Схема не использует вечный unique `(liker_user_id, liked_user_id)`, потому что это мешало бы future rematch. Вместо этого DB-level overlap exclusion constraint защищает от пересекающихся active interactions for the same pair. Race behavior for this constraint should be covered in a later integration/e2e step with a test database.
 
 ## Matches
 
