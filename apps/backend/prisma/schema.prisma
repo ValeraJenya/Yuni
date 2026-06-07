@@ -9,7 +9,8 @@ datasource db {
 
 // Prisma does not represent every PostgreSQL expression/partial index or exclusion
 // constraint used by Yuni. Keep lower(email), lower(handle), approved primary photo
-// indexes, and likes active-overlap protection in SQL migrations.
+// indexes, likes active-overlap protection, and matches active-overlap protection
+// in SQL migrations.
 
 enum UserStatus {
   active
@@ -234,6 +235,7 @@ model Match {
 
   @@index([userAId, status])
   @@index([userBId, status])
+  @@index([userAId, userBId, status, expiresAt])
   @@index([expiresAt])
   @@map("matches")
 }

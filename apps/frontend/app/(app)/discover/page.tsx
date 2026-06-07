@@ -15,6 +15,11 @@ import { useLang } from "@/lib/lang-context"
 
 const distances = [3, 12, 7, 4, 9, 5]
 
+interface MatchOverlayProfile {
+  name: string
+  photoUrl: string
+}
+
 const copy = {
   ru: {
     eyebrow: "Для тебя",
@@ -418,7 +423,7 @@ export default function DiscoverPage() {
   const t = copy[lang]
 
   const [stack, setStack] = useState(DISCOVER_PROFILES)
-  const [matchProfile, setMatchProfile] = useState<typeof DISCOVER_PROFILES[0] | null>(null)
+  const [matchProfile, setMatchProfile] = useState<MatchOverlayProfile | null>(null)
   const [lastAction, setLastAction] = useState<SwipeAction | null>(null)
   const [toastKey, setToastKey] = useState(0)
   const [filterOpen, setFilterOpen] = useState(false)
@@ -460,7 +465,15 @@ export default function DiscoverPage() {
 
     try {
       if (action === "like") {
-        await likesApi.likeProfile(authenticatedRequest, targetProfileUserId)
+        const response = await likesApi.likeProfile(authenticatedRequest, targetProfileUserId)
+
+        if (response.match) {
+          const profile = response.match.matchedProfile
+          setMatchProfile({
+            name: profile.displayName ?? profile.handle,
+            photoUrl: profile.primaryPhotoUrl ?? current.photos[0] ?? "/hero-portrait.jpg",
+          })
+        }
       } else {
         await likesApi.skipProfile(authenticatedRequest, targetProfileUserId)
       }
@@ -965,7 +978,7 @@ export default function DiscoverPage() {
                 }}
               >
                 <img
-                  src={matchProfile.photos[0]}
+                  src={matchProfile.photoUrl}
                   alt={matchProfile.name}
                   className="w-full h-full object-cover"
                 />

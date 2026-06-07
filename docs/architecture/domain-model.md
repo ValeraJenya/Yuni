@@ -42,7 +42,15 @@ LIKE действует 3 days, SKIP/PASS действует 1 day. `expires_at`
 
 ## Matches
 
-`matches` представляет mutual relationship между двумя users. Unordered uniqueness не позволяет создать два match для одной пары. Status поддерживает `active`, `expired`, `unmatched`, `blocked`. Новые matches получают стандартный 7-дневный `expires_at`. Для MVP expiration делается request-time логикой: services считают active matches с `expires_at <= now()` истекшими и могут opportunistically обновлять status.
+`matches` представляет mutual relationship между двумя users. Step 13 создает match только при mutual active LIKE: обе directional записи `likes` должны быть `LikeKind.like`, и обе должны иметь `expires_at > now()`.
+
+Пара хранится в canonical order: `user_a_id < user_b_id`. Это не permission model, а стабильная нормализация пары, чтобы `A-B` и `B-A` не создавали разные active matches.
+
+Новые matches получают стандартный 7-day `expires_at`. Match считается active только если `status=active` и `expires_at > now()`. В Step 13 нет cron/job, который переводит status в `expired`; services фильтруют active matches по `expires_at`.
+
+Вечный unique на пару пользователей не используется, потому что он блокировал бы future rematch. Вместо него DB-level exclusion constraint запрещает overlapping active match windows for the same canonical pair. Expired match не блокирует future rematch.
+
+`conversations.match_id` остается nullable unique relation to match. Chat не реализуется в Step 13: если future conversation уже существует, она может оставаться в Messages после исчезновения match из `/matches/me`.
 
 ## Chat
 

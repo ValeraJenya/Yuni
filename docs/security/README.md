@@ -116,7 +116,7 @@ Known MVP limitations:
 
 ## Likes MVP security rules
 
-Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike, matches, chat, blocks/reports и full backend discovery не входят в Step 12: matches planned for Step 13, blocks/reports planned for Step 14.
+Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike, chat, blocks/reports и full backend discovery не входят в Step 12. Matches реализуются отдельно в Step 13 через `MatchesService`.
 
 Security rules:
 
@@ -138,7 +138,35 @@ Security rules:
 Known MVP limitations:
 
 - Race/exclusion constraint behavior should be covered by integration/e2e tests with a test database in a later step.
-- Backend discover feed, match creation, blocks/reports effects and superlike rules are intentionally outside Step 12.
+- Backend discover feed, blocks/reports effects and superlike rules are intentionally outside Step 12.
+
+## Matches MVP security rules
+
+Matches MVP реализует только mutual matches from active LIKE interactions. Full chat, messages, blocks/reports, notifications and moderation are outside Step 13.
+
+Security rules:
+
+- `GET /matches/me` requires authenticated `CurrentUser`.
+- Match creation is owned by `MatchesService`; `LikesService` delegates after successful LIKE.
+- A match can be created only when the new LIKE has a reciprocal active `LikeKind.like`.
+- Active LIKE means `kind=like` and `expiresAt > now`.
+- SKIP/PASS never creates a match.
+- Self-match is rejected.
+- Match pairs are normalized by stable user id order before write, so `A-B` and `B-A` cannot create separate active pairs.
+- Active match means `status=active` and `expiresAt > now`.
+- Active duplicate match is not created.
+- Expired match does not block future rematch.
+- DB overlap constraint conflicts are mapped to the existing active match or a safe conflict.
+- `/matches/me` returns only matches where the current user is a participant.
+- Match response shape is explicit and safe; raw Prisma `Match`, `User`, `Profile` and `ProfilePhoto` rows are never returned.
+- Match responses must not expose `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local path, original filename or private profile settings.
+- Conversation state is represented only as `conversationStarted`; chat is not implemented in Step 13.
+
+Known MVP limitations:
+
+- No cron/job marks expired matches. For MVP, services filter active matches by `status=active` and `expiresAt > now`.
+- Race/exclusion behavior should be smoke-tested on a temporary PostgreSQL database before PR; broader e2e coverage can follow later.
+- Blocks/reports effects are planned for Step 14 and are not applied in Step 13.
 
 ## Pagination and anti-abuse
 
@@ -158,7 +186,7 @@ List endpoints для discover, likes, matches, messages, reports и moderation 
 - Case-insensitive unique indexes запрещают дубли email/handle, отличающиеся только регистром.
 - Check constraints запрещают self-like, self-match, self-block и self-report.
 - Expiring likes use `expires_at` and an overlap exclusion constraint so active interactions cannot overlap, while expired interactions and future rematch flows remain possible.
-- Unordered unique match pair index запрещает duplicate matches для пар `A-B` и `B-A`.
+- Match pairs use canonical `user_a_id < user_b_id` ordering plus active-window overlap protection; expired matches do not block future rematch.
 - Photo constraints запрещают published photo без approved moderation state и несколько primary photos для одного пользователя.
 - Messages должны быть связаны с `conversation_participants`, чтобы sender был участником conversation.
 - Raw passwords и raw refresh tokens не должны появляться ни в migrations, ни в seeds, ни в logs.

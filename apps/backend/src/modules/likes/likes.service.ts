@@ -9,6 +9,10 @@ import { LikeKind, Prisma, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { assertCanAccessProfile } from '../../common/security/access-control';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import {
+  MatchesService,
+  type MatchResponse,
+} from '../matches/matches.service';
 
 const LIKE_COOLDOWN_DAYS = 3;
 const SKIP_COOLDOWN_DAYS = 1;
@@ -23,6 +27,7 @@ export interface LikeInteractionResponse {
     action: InteractionAction;
     expiresAt: Date;
   };
+  match?: MatchResponse;
 }
 
 const targetProfileSelect = {
@@ -47,7 +52,10 @@ type TargetProfileRecord = Prisma.ProfileGetPayload<{
 
 @Injectable()
 export class LikesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly matchesService: MatchesService,
+  ) {}
 
   likeProfile(
     currentUser: AuthenticatedUser,
@@ -125,8 +133,16 @@ export class LikesService {
           expiresAt: true,
         },
       });
+      const match =
+        kind === LikeKind.like
+          ? await this.matchesService.tryCreateMatchFromLike({
+              actorUserId: currentUser.id,
+              targetUserId: targetProfile.userId,
+              now,
+            })
+          : null;
 
-      return this.toInteractionResponse(interaction);
+      return this.toInteractionResponse(interaction, match);
     } catch (error) {
       if (this.isActiveInteractionConstraintError(error)) {
         throw this.activeInteractionConflict();
@@ -187,14 +203,20 @@ export class LikesService {
     likedUserId: string;
     kind: LikeKind;
     expiresAt: Date;
-  }): LikeInteractionResponse {
-    return {
+  }, match?: MatchResponse | null): LikeInteractionResponse {
+    const response: LikeInteractionResponse = {
       interaction: {
         targetProfileUserId: interaction.likedUserId,
         action: interaction.kind === LikeKind.pass ? 'skip' : 'like',
         expiresAt: interaction.expiresAt,
       },
     };
+
+    if (match) {
+      response.match = match;
+    }
+
+    return response;
   }
 
   private activeInteractionConflict(): ConflictException {
