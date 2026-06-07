@@ -18,8 +18,8 @@
 - `conversations` представляет chat threads, обычно связанные с match.
 - `conversation_participants` явно связывает пользователей с conversations и является основой chat owner checks.
 - `messages` хранит текстовые сообщения. Composite foreign key требует, чтобы sender был участником conversation.
-- `blocks` хранит directional user-to-user blocks.
-- `reports` хранит user-focused moderation reports с reason code, optional comment, review status и optional references на message/photo context.
+- `blocks` хранит directional user-to-user blocks. В Step 14 active block - это существующая row; unblock делает hard delete.
+- `reports` хранит user-focused moderation reports с reason code, optional comment, review status и optional references на message/photo context. Public API не раскрывает internal review status.
 - `privacy_settings` хранит privacy и visibility controls, включая open/private presentation и system anonymous avatar key.
 - `notification_settings` хранит notification preferences.
 
@@ -31,12 +31,13 @@
 
 `likes` directional and time-bound: LIKE действует 3 days, SKIP/PASS действует 1 day. Вечный unique `(liker_user_id, liked_user_id)` не используется, чтобы не блокировать future rematch. Active overlap для одной пары защищается PostgreSQL exclusion constraint. `matches` mutual, canonicalized by stable user id order, and protected by an active-window exclusion constraint rather than a permanent unique pair. Active matches истекают через `expires_at`; для MVP active означает `status='active'` и `expires_at > now()`. Expired matches не блокируют future rematch.
 
-`blocks` и `reports` отделены от profiles и matches, чтобы safety flows применялись к discovery, matching и chat без перегруза других таблиц.
+`blocks` и `reports` отделены от profiles и matches, чтобы safety flows применялись к discovery, profile visibility, likes, matching и future chat без перегруза других таблиц. Повторный block одной пары не создает дубль; unblock не восстанавливает старые matches.
 
 ## Fixed MVP Rules
 
 - Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, minimum profile completion, block filters и минимум одно approved published primary photo.
 - Private mode никогда не отдает user-uploaded photos. Backend presentation должен использовать `privacy_settings.anonymous_avatar_key` для системного rabbit avatar.
+- Blocks действуют в обе стороны для public profile visibility, LIKE/SKIP и matches. При block active match завершается `status='blocked'`.
 - Report reason codes: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.
 
 ## Security And Privacy Notes

@@ -155,9 +155,10 @@ Owns expiring LIKE/SKIP interactions:
 - LIKE cooldown of 3 days;
 - SKIP/PASS cooldown of 1 day;
 - active duplicate conflict handling;
+- block-aware rejection through `ModerationService`;
 - safe response shape.
 
-Superlike, matches, chat effects and blocks/reports are outside Step 12.
+Superlike and chat effects are outside Step 12. Matches are delegated to `MatchesService`; block effects are enforced by Step 14.
 
 ### `matches`
 
@@ -172,9 +173,10 @@ Owns mutual active LIKE matches:
 - canonical `userAId/userBId` pair normalization;
 - 7-day active window;
 - active filtering by `status=active` and `expiresAt > now`;
+- block-aware creation/list filtering through `ModerationService`;
 - safe active match list response.
 
-Chat, messages, blocks/reports, notifications and unmatch flows are outside Step 13.
+Chat, messages, notifications and unmatch flows are outside Step 13. Blocks/reports are handled by `moderation` in Step 14.
 
 ### `chat`
 
@@ -184,9 +186,14 @@ Future responsibility: conversations, participants, messages and membership chec
 
 ### `moderation`
 
-Scaffold-only.
+Implemented Step 14 MVP.
 
-Future responsibility: reports, blocks, abuse review and future admin moderation workflows.
+- `POST /blocks/:targetUserId`
+- `DELETE /blocks/:targetUserId`
+- `GET /blocks/me`
+- `POST /reports`
+
+Owns block/report API, self-block/self-report rejection, idempotent duplicate block/unblock behavior, ending active matches on block, safe public moderation response shapes and helper methods consumed by profiles/likes/matches. Future admin review workflow remains outside Step 14.
 
 ## Adding New Backend Work
 

@@ -66,7 +66,7 @@ Owns:
 
 `targetProfileUserId` means `profiles.user_id`; no separate profile id exists.
 
-LikesModule should not own matches, chats, blocks or reports. In Step 13 it may delegate after successful LIKE to `MatchesService.tryCreateMatchFromLike(...)`, but match lifecycle remains in MatchesModule. Superlike is not implemented.
+LikesModule should not own matches, chats, blocks or reports. It may call `ModerationService.assertNoBlockBetween(...)` to enforce the shared block boundary and may delegate after successful LIKE to `MatchesService.tryCreateMatchFromLike(...)`, but match lifecycle remains in MatchesModule. Superlike is not implemented.
 
 ### MatchesModule
 
@@ -82,7 +82,7 @@ Owns:
 - active match filtering by `status=active` and `expiresAt > now`;
 - safe match response shape.
 
-MatchesModule should not send messages, create full chat flows, implement blocks/reports, notifications or discovery ranking.
+MatchesModule should not send messages, create full chat flows, own reports, notifications or discovery ranking. It may call `ModerationService` to prevent and hide blocked matches.
 
 ### ChatModule
 
@@ -92,9 +92,9 @@ Owns conversations, participants, messages and conversation membership checks.
 
 ### ModerationModule
 
-Planned.
+Implemented Step 14 MVP.
 
-Owns reports, blocks, abuse handling and future admin review workflows.
+Owns blocks, reports and block-aware helper operations used by profiles, likes and matches. Future admin review workflows remain outside this MVP.
 
 ## Rules
 
@@ -167,6 +167,7 @@ Avoid:
 - loads target profile by `Profile.userId`;
 - verifies target user is active/not deleted;
 - uses `assertCanAccessProfile` for discoverable/open access;
+- asks `ModerationService` to reject blocked pairs in either direction;
 - blocks active duplicate interactions until `expiresAt`;
 - delegates to `MatchesService` only after successful `LikeKind.like`;
 - maps DB overlap conflicts to safe `409`;
@@ -184,10 +185,26 @@ Avoid:
 - never creates a match for SKIP/PASS;
 - normalizes `userAId/userBId` before writes;
 - treats active match as `status=active` and `expiresAt > now`;
+- refuses to create matches for blocked pairs;
+- filters blocked pairs from `/matches/me`;
 - does not create duplicate active matches;
 - allows future rematch after expiration;
 - returns compact public matched profile shape and `conversationStarted`;
 - does not expose raw Prisma rows or private media/profile fields.
+
+### ModerationModule
+
+`ModerationController` receives authenticated block/report requests and delegates to `ModerationService`.
+
+`ModerationService`:
+
+- reads blocker/reporter from `CurrentUser`;
+- rejects self-block and self-report;
+- stores one directional active block row per blocker/blocked pair;
+- returns idempotent duplicate block and unblock success;
+- ends active matches on block with `status=blocked` and `endedAt`;
+- creates reports with existing `ReportReasonCode`;
+- returns safe public block/report shapes and never returns raw Prisma moderation rows.
 
 ## Future Module Additions
 

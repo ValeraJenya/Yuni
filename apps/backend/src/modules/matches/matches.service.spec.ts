@@ -12,6 +12,7 @@ import {
 } from '@prisma/client';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import type { ModerationService } from '../moderation/moderation.service';
 import { MatchesService } from './matches.service';
 
 const ACTOR_USER_ID = '22222222-2222-4222-8222-222222222222';
@@ -38,6 +39,11 @@ interface PrismaMock {
     create: jest.Mock;
     findMany: jest.Mock;
   };
+}
+
+interface ModerationServiceMock {
+  hasBlockBetween: jest.Mock;
+  getBlockedUserIdsFor: jest.Mock;
 }
 
 interface MatchCreateArgs {
@@ -137,6 +143,27 @@ describe('MatchesService', () => {
       }),
     ).resolves.toBeNull();
 
+    expect(prisma.match.findFirst).not.toHaveBeenCalled();
+    expect(prisma.match.create).not.toHaveBeenCalled();
+  });
+
+  it('does not create a match when users are blocked in either direction', async () => {
+    const { service, prisma, moderationService } = createService();
+    moderationService.hasBlockBetween.mockResolvedValue(true);
+
+    await expect(
+      service.tryCreateMatchFromLike({
+        actorUserId: ACTOR_USER_ID,
+        targetUserId: TARGET_USER_ID,
+        now: FIXED_NOW,
+      }),
+    ).resolves.toBeNull();
+
+    expect(moderationService.hasBlockBetween).toHaveBeenCalledWith(
+      ACTOR_USER_ID,
+      TARGET_USER_ID,
+    );
+    expect(prisma.like.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.create).not.toHaveBeenCalled();
   });
@@ -358,6 +385,41 @@ describe('MatchesService', () => {
     expectNoRawMatchOrPrivateKeys(result);
   });
 
+  it('hides blocked pairs from getMyMatches', async () => {
+    const { service, prisma, moderationService } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.match.findMany.mockResolvedValue([
+      makeMatchRecord({
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        userAId: TARGET_USER_ID,
+        userBId: ACTOR_USER_ID,
+      }),
+      makeMatchRecord({
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        userAId: ACTOR_USER_ID,
+        userBId: THIRD_USER_ID,
+        userB: makeUser(THIRD_USER_ID, {
+          handle: 'third_user',
+          displayName: 'Third User',
+          photoUrl: '/uploads/profile-photos/third.jpg',
+        }),
+      }),
+    ]);
+    moderationService.getBlockedUserIdsFor.mockResolvedValue(
+      new Set([TARGET_USER_ID]),
+    );
+
+    const result = await service.getMyMatches(CURRENT_USER);
+
+    expect(moderationService.getBlockedUserIdsFor).toHaveBeenCalledWith(
+      ACTOR_USER_ID,
+      [TARGET_USER_ID, THIRD_USER_ID],
+    );
+    expect(result.matches.map((match) => match.id)).toEqual([
+      'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    ]);
+  });
+
   it('does not return inactive or deleted matched users', async () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
@@ -412,10 +474,18 @@ function createService() {
       findMany: jest.fn(),
     },
   };
+  const moderationService: ModerationServiceMock = {
+    hasBlockBetween: jest.fn().mockResolvedValue(false),
+    getBlockedUserIdsFor: jest.fn().mockResolvedValue(new Set()),
+  };
 
   return {
-    service: new MatchesService(prisma as unknown as PrismaService),
+    service: new MatchesService(
+      prisma as unknown as PrismaService,
+      moderationService as unknown as ModerationService,
+    ),
     prisma,
+    moderationService,
   };
 }
 

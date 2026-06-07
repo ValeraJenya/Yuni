@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Heart, Flame, Clock } from "lucide-react"
+import { Ban, Clock, Flag, Flame, Heart } from "lucide-react"
 import { ApiError } from "@/lib/auth-api"
+import { blocksApi } from "@/lib/blocks-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 import { matchesApi, type MatchSummary } from "@/lib/matches-api"
+import { reportsApi } from "@/lib/reports-api"
 
 const copy = {
   ru: {
@@ -18,6 +20,13 @@ const copy = {
     discoverCta: "Перейти в поиск",
     loading: "Загружаем матчи...",
     loadError: "Не удалось загрузить матчи.",
+    blockLabel: "Заблокировать",
+    reportLabel: "Пожаловаться",
+    blockConfirm: (name: string) => `Заблокировать ${name}? Матч исчезнет.`,
+    blockSuccess: "Пользователь заблокирован.",
+    blockError: "Не удалось заблокировать пользователя.",
+    reportSuccess: "Жалоба отправлена.",
+    reportError: "Не удалось отправить жалобу.",
     online: "В сети",
     expiresIn: (days: number, hours: number) =>
       days > 0 ? `Истекает через ${days} д` : `Истекает через ${hours} ч`,
@@ -37,6 +46,13 @@ const copy = {
     discoverCta: "Go to Discover",
     loading: "Loading matches...",
     loadError: "Could not load matches.",
+    blockLabel: "Block",
+    reportLabel: "Report",
+    blockConfirm: (name: string) => `Block ${name}? This match will disappear.`,
+    blockSuccess: "User blocked.",
+    blockError: "Could not block this user.",
+    reportSuccess: "Report sent.",
+    reportError: "Could not send report.",
     online: "Online",
     expiresIn: (days: number, hours: number) =>
       days > 0 ? `Expires in ${days}d` : `Expires in ${hours}h`,
@@ -73,6 +89,11 @@ export default function MatchesPage() {
   const [matches, setMatches] = useState<MatchSummary[]>([])
   const [isMatchesLoading, setIsMatchesLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [moderationError, setModerationError] = useState<string | null>(null)
+  const [moderationMessage, setModerationMessage] = useState<string | null>(null)
+  const [pendingModerationUserId, setPendingModerationUserId] = useState<
+    string | null
+  >(null)
   const [nowMs, setNowMs] = useState(0)
 
   useEffect(() => {
@@ -107,6 +128,56 @@ export default function MatchesPage() {
       active = false
     }
   }, [authLoading, authenticatedRequest, t.loadError])
+
+  async function blockMatch(match: MatchSummary) {
+    const targetUserId = match.matchedProfile.userId
+    const profileName = match.matchedProfile.displayName ?? match.matchedProfile.handle
+
+    if (
+      pendingModerationUserId ||
+      !window.confirm(t.blockConfirm(profileName))
+    ) {
+      return
+    }
+
+    setPendingModerationUserId(targetUserId)
+    setModerationError(null)
+    setModerationMessage(null)
+
+    try {
+      await blocksApi.blockUser(authenticatedRequest, targetUserId)
+      setMatches((current) => current.filter((item) => item.id !== match.id))
+      setModerationMessage(t.blockSuccess)
+    } catch (error) {
+      setModerationError(error instanceof ApiError ? error.message : t.blockError)
+    } finally {
+      setPendingModerationUserId(null)
+    }
+  }
+
+  async function reportMatch(match: MatchSummary) {
+    const targetUserId = match.matchedProfile.userId
+
+    if (pendingModerationUserId) {
+      return
+    }
+
+    setPendingModerationUserId(targetUserId)
+    setModerationError(null)
+    setModerationMessage(null)
+
+    try {
+      await reportsApi.reportUser(authenticatedRequest, {
+        targetUserId,
+        reason: "other",
+      })
+      setModerationMessage(t.reportSuccess)
+    } catch (error) {
+      setModerationError(error instanceof ApiError ? error.message : t.reportError)
+    } finally {
+      setPendingModerationUserId(null)
+    }
+  }
 
   const activeMatches = matches.filter(
     (match) =>
@@ -158,6 +229,24 @@ export default function MatchesPage() {
 
       {/* ── Content ──────────────────────────────────────── */}
       <div className="flex-1 px-4 md:px-8 pb-24 md:pb-12">
+        {(moderationError || moderationMessage) && (
+          <p
+            className="font-sans mb-4 rounded-xl px-4 py-3"
+            role="status"
+            style={{
+              fontSize: "12px",
+              color: moderationError
+                ? "oklch(0.60 0.18 25 / 0.85)"
+                : "oklch(0.62 0.15 145 / 0.85)",
+              background: "oklch(0.11 0.012 15 / 0.80)",
+              border: moderationError
+                ? "1px solid oklch(0.55 0.20 25 / 0.25)"
+                : "1px solid oklch(0.62 0.15 145 / 0.22)",
+            }}
+          >
+            {moderationError ?? moderationMessage}
+          </p>
+        )}
         {isMatchesLoading ? (
           <div className="flex flex-col items-center gap-4 text-center py-20">
             <div
@@ -227,13 +316,14 @@ export default function MatchesPage() {
               const profileName = match.matchedProfile.displayName ?? match.matchedProfile.handle
               const primaryPhotoUrl = match.matchedProfile.primaryPhotoUrl
               const expiry = timeUntilExpiry(match.expiresAt, nowMs, t)
+              const isModerationPending =
+                pendingModerationUserId === match.matchedProfile.userId
               const isExpiringSoon =
                 new Date(match.expiresAt).getTime() - nowMs < 2 * 24 * 60 * 60 * 1000
 
               return (
-                <Link
+                <div
                   key={match.id}
-                  href={`/messages?chat=${match.id}`}
                   className="group relative rounded-2xl overflow-hidden transition-all"
                   style={{
                     aspectRatio: "3/4",
@@ -259,6 +349,11 @@ export default function MatchesPage() {
                       : "0 4px 16px oklch(0.04 0.005 15 / 0.40)"
                   }}
                 >
+                  <Link
+                    href={`/messages?chat=${match.id}`}
+                    aria-label={profileName}
+                    className="absolute inset-0 z-10"
+                  />
                   {primaryPhotoUrl ? (
                     <Image
                       src={primaryPhotoUrl}
@@ -305,6 +400,43 @@ export default function MatchesPage() {
                       }}
                     />
                   )}
+
+                  <div className="absolute top-3 left-3 z-20 flex gap-1.5">
+                    <button
+                      type="button"
+                      title={t.reportLabel}
+                      aria-label={t.reportLabel}
+                      disabled={Boolean(pendingModerationUserId)}
+                      onClick={() => void reportMatch(match)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-45"
+                      style={{
+                        color: "oklch(0.88 0.005 60)",
+                        background: "oklch(0.07 0.012 15 / 0.78)",
+                        border: "1px solid oklch(0.28 0.012 15 / 0.58)",
+                        backdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <Flag size={12} strokeWidth={1.7} />
+                    </button>
+                    <button
+                      type="button"
+                      title={t.blockLabel}
+                      aria-label={t.blockLabel}
+                      disabled={Boolean(pendingModerationUserId)}
+                      onClick={() => void blockMatch(match)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-45"
+                      style={{
+                        color: isModerationPending
+                          ? "oklch(0.60 0.18 25 / 0.65)"
+                          : "oklch(0.88 0.005 60)",
+                        background: "oklch(0.07 0.012 15 / 0.78)",
+                        border: "1px solid oklch(0.55 0.20 25 / 0.34)",
+                        backdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <Ban size={12} strokeWidth={1.7} />
+                    </button>
+                  </div>
 
                   {/* Online indicator */}
                   {/* Expiry indicator — only shows when close to expiring */}
@@ -359,7 +491,7 @@ export default function MatchesPage() {
                       </p>
                     </div>
                   )}
-                </Link>
+                </div>
               )
             })}
           </div>

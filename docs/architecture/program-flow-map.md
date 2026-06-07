@@ -420,6 +420,7 @@ discover card action
   -> find target profile by Profile.userId
   -> assert target user active/not deleted
   -> assertCanAccessProfile for discoverable/open target
+  -> ModerationService.assertNoBlockBetween(actor, target)
   -> reject active duplicate Like where expiresAt > now
   -> create Like with expiresAt
   -> explicit safe interaction response
@@ -432,6 +433,7 @@ Security:
 - frontend never chooses actor user id;
 - self-like and self-skip are rejected;
 - target profile must be discoverable/open by current rules;
+- blocked pairs in either direction cannot LIKE/SKIP;
 - `like` maps to `LikeKind.like`;
 - `skip`/`pass` maps to `LikeKind.pass`;
 - LIKE cooldown is 3 days;
@@ -445,7 +447,6 @@ Out of scope for Step 12:
 
 - superlike;
 - match lifecycle ownership, implemented in Step 13 by `MatchesService`;
-- blocks/reports, planned for Step 14;
 - full backend discovery feed.
 
 ### Matches Flow - Step 13 MVP
@@ -481,6 +482,7 @@ discover LIKE action
   -> CurrentUser
   -> LikesService creates expiring LikeKind.like
   -> MatchesService.tryCreateMatchFromLike
+  -> return null if ModerationService detects block in either direction
   -> find reciprocal active LikeKind.like where expiresAt > now
   -> normalize pair to userAId < userBId
   -> find active match where status=active and expiresAt > now
@@ -500,6 +502,7 @@ Match list:
   -> MatchesService.getMyMatches
   -> assert active current user
   -> Prisma match findMany for current user where status=active and expiresAt > now
+  -> filter out matched users blocked in either direction
   -> compact public matched profile response
   -> frontend renders active matches
 ```
@@ -512,6 +515,7 @@ Security:
 - SKIP/PASS never creates a match;
 - one-sided LIKE never creates a match;
 - expired reciprocal LIKE never creates a match;
+- blocked pair never creates a match;
 - active duplicate match is not created;
 - expired match does not block rematch;
 - active means `status=active` and `expiresAt > now`;
@@ -522,7 +526,6 @@ Security:
 Out of scope for Step 13:
 
 - full chat and sending messages;
-- blocks/reports, planned for Step 14;
 - notifications;
 - full discovery ranking/filtering.
 
@@ -550,28 +553,81 @@ Expected serializers:
 - message list shape;
 - no internal deleted/moderation fields unless explicitly needed.
 
-### Moderation / Reports / Blocks Flow - Planned
+### Moderation / Reports / Blocks Flow - Step 14 MVP
 
-Expected module: `ModerationModule`.
+Implemented module: `ModerationModule`.
 
-Expected DB models already present:
+Frontend files:
+
+- `apps/frontend/app/(app)/matches/page.tsx`
+- `apps/frontend/lib/blocks-api.ts`
+- `apps/frontend/lib/reports-api.ts`
+
+Backend files:
+
+- `apps/backend/src/modules/moderation/moderation.controller.ts`
+- `apps/backend/src/modules/moderation/moderation.service.ts`
+- `apps/backend/src/modules/moderation/dto/create-report.dto.ts`
+
+DB models:
 
 - `Block`;
 - `Report`;
-- `ProfilePhoto`;
-- `Message`.
 
-Expected security:
+Block:
+
+```text
+matches page block action
+  -> blocksApi.blockUser(authenticatedRequest, targetUserId)
+  -> POST /blocks/:targetUserId
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> ModerationService.blockUser
+  -> reject self-block
+  -> assert active actor and active target
+  -> create Block or return existing block idempotently
+  -> update active Match between users to status=blocked and endedAt=now
+  -> safe block response
+  -> frontend removes match card only after successful response
+```
+
+Unblock:
+
+```text
+DELETE /blocks/:targetUserId
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> deleteMany where blockerUserId=CurrentUser.id and blockedUserId=targetUserId
+  -> idempotent success
+```
+
+Report:
+
+```text
+matches page report action
+  -> reportsApi.reportUser(authenticatedRequest, payload)
+  -> POST /reports
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> CreateReportDto validates targetUserId, reason and details
+  -> reject self-report
+  -> create Report with internal status default
+  -> safe public report response with status="received"
+```
+
+Security:
 
 - no self-block;
 - no self-report;
 - reports/blocks must be tied to authenticated `CurrentUser`;
-- block effects must be applied to discover/likes/matches/chat;
+- block effects are applied to public profile reads, likes and matches;
+- discovery must use the same block boundary when backend discovery is implemented;
 - admin review endpoints must be separate from public/self endpoints.
 
-Expected serializers:
+Serializers / response shapes:
 
-- self report/block confirmation shapes;
+- block response includes only `blockedUserId`, `createdAt`, public status `"blocked"`;
+- report response includes only `id`, `targetUserId`, `reason`, `createdAt`, public status `"received"`;
 - future admin moderation serializers documented separately.
 
 ### Discovery Flow - Planned

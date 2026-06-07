@@ -42,11 +42,11 @@ LIKE действует 3 days, SKIP/PASS действует 1 day. `expires_at`
 
 ## Matches
 
-`matches` представляет mutual relationship между двумя users. Step 13 создает match только при mutual active LIKE: обе directional записи `likes` должны быть `LikeKind.like`, и обе должны иметь `expires_at > now()`.
+`matches` представляет mutual relationship между двумя users. Step 13 создает match только при mutual active LIKE: обе directional записи `likes` должны быть `LikeKind.like`, и обе должны иметь `expires_at > now()`. Step 14 запрещает создание match, если между пользователями есть block в любую сторону.
 
 Пара хранится в canonical order: `user_a_id < user_b_id`. Это не permission model, а стабильная нормализация пары, чтобы `A-B` и `B-A` не создавали разные active matches.
 
-Новые matches получают стандартный 7-day `expires_at`. Match считается active только если `status=active` и `expires_at > now()`. В Step 13 нет cron/job, который переводит status в `expired`; services фильтруют active matches по `expires_at`.
+Новые matches получают стандартный 7-day `expires_at`. Match считается active только если `status=active` и `expires_at > now()`. В Step 13 нет cron/job, который переводит status в `expired`; services фильтруют active matches по `expires_at`. При block active match между пользователями завершается через `status=blocked` и `ended_at=now`; unblock не восстанавливает старый match.
 
 Вечный unique на пару пользователей не используется, потому что он блокировал бы future rematch. Вместо него DB-level exclusion constraint запрещает overlapping active match windows for the same canonical pair. Expired match не блокирует future rematch.
 
@@ -58,8 +58,8 @@ LIKE действует 3 days, SKIP/PASS действует 1 day. `expires_at`
 
 ## Moderation
 
-`blocks` и `reports` - first-class entities. Blocks directional, duplicate blocker/blocked pairs запрещены. Blocks должны влиять на discovery, likes, matches и chat visibility.
+`blocks` и `reports` - first-class entities. Blocks directional, duplicate blocker/blocked pairs запрещены. Step 14 использует hard delete для unblock: active block row существует только пока blocker держит block, а repeated block возвращает idempotent success. Blocks влияют в обе стороны на public profile visibility, LIKE/SKIP, match creation и `/matches/me`; discovery использует block state as future boundary.
 
-Reports user-focused для MVP: reporter, reported user, reason code, optional comment и review status. Optional message, conversation и photo references оставляют место для richer moderation context без превращения MVP в большую content moderation систему.
+Reports user-focused для MVP: reporter, reported user, reason code, optional comment и review status. Public API возвращает только safe `"received"` status, не internal moderation workflow. Optional message, conversation и photo references оставляют место для richer moderation context без превращения MVP в большую content moderation систему.
 
 MVP report reason codes: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.

@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP и Matches MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP и Blocks/Reports MVP.
 
 ## Подготовка
 
@@ -268,7 +268,7 @@ Step 12 реализует только `LIKE` и `SKIP/PASS`:
 - `skip`/`pass` сохраняется как `LikeKind.pass`;
 - superlike не реализован в Step 12;
 - matches реализованы отдельным Step 13 через optional `match` в LIKE response и `GET /matches/me`;
-- blocks/reports будут отдельным Step 14.
+- Step 14 добавляет block-aware enforcement: active block в любую сторону запрещает LIKE/SKIP.
 
 ### Like Profile
 
@@ -331,6 +331,7 @@ Security and conflict behavior:
 - inactive/deleted actor returns `401`;
 - missing, inactive or deleted target user returns `404`;
 - target profile must be discoverable/open by current profile access rules;
+- blocked pair in either direction returns safe `403`;
 - active duplicate interaction returns safe `409`;
 - DB overlap constraint conflicts are also mapped to safe `409`;
 - response is an explicit safe shape, not a raw Prisma `Like` row.
@@ -348,7 +349,7 @@ Step 13 реализует только взаимные matches на основ
 - match исчезает из `/matches/me` после `expiresAt`;
 - cron/job для перевода `status` в `expired` в Step 13 не нужен;
 - chat не реализуется в Step 13;
-- blocks/reports не реализуются в Step 13.
+- Step 14 blocks могут завершить active match через `status=blocked` и скрывают blocked pair из `/matches/me`.
 
 ### Get My Active Matches
 
@@ -379,7 +380,101 @@ Response shape:
 }
 ```
 
-Response contains only current user's active matches. It must not expose raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows, `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local file path, original filename or private profile settings.
+Response contains only current user's active matches and filters out blocked pairs in either direction. It must not expose raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows, `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local file path, original filename or private profile settings.
+
+## Blocks / Reports MVP
+
+Все moderation endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет actor только из `CurrentUser`; frontend не может передать blocker/reporter user id.
+
+### Block User
+
+```bash
+curl -i -X POST http://localhost:4000/blocks/<targetUserId> \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "block": {
+    "blockedUserId": "22222222-2222-4222-8222-222222222222",
+    "createdAt": "2026-06-07T12:00:00.000Z",
+    "status": "blocked"
+  }
+}
+```
+
+Self-block returns `400`. Duplicate block returns the same safe success shape and does not create duplicate rows. Creating a block ends any active match between the users with `status=blocked` and `endedAt=now`; unblock does not restore old matches.
+
+### Unblock User
+
+```bash
+curl -i -X DELETE http://localhost:4000/blocks/<targetUserId> \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "success": true,
+  "blockedUserId": "22222222-2222-4222-8222-222222222222"
+}
+```
+
+Unblock uses hard delete scoped to `blockerUserId=CurrentUser.id` and is idempotent.
+
+### Get My Blocks
+
+```bash
+curl -i "http://localhost:4000/blocks/me?limit=20" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "blocks": [
+    {
+      "blockedUserId": "22222222-2222-4222-8222-222222222222",
+      "createdAt": "2026-06-07T12:00:00.000Z",
+      "status": "blocked"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+Only the current user's own outgoing blocks are returned, with cursor pagination.
+
+### Report User
+
+```bash
+curl -i -X POST http://localhost:4000/reports \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"targetUserId":"22222222-2222-4222-8222-222222222222","reason":"other","details":"Optional context"}'
+```
+
+`reason` must be an existing `ReportReasonCode`: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`. `details` is optional, trimmed, empty string becomes `null`, max length is `1000`.
+
+Response shape:
+
+```json
+{
+  "report": {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "targetUserId": "22222222-2222-4222-8222-222222222222",
+    "reason": "other",
+    "createdAt": "2026-06-07T12:00:00.000Z",
+    "status": "received"
+  }
+}
+```
+
+Report response never exposes internal moderation status, notes or workflow. `GET /reports/me`, admin panel, full moderation workflow, chat/messages, notifications and discovery ranking are outside Step 14.
 
 ## Cookie Behavior
 

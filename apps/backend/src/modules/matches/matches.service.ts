@@ -17,6 +17,7 @@ import {
 } from '../../common/serializers/user-profile.serializer';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import { ModerationService } from '../moderation/moderation.service';
 
 const MATCH_DURATION_DAYS = 7;
 const ACTIVE_MATCH_CONFLICT_MESSAGE = 'Active match already exists';
@@ -117,7 +118,10 @@ export interface TryCreateMatchFromLikeInput {
 
 @Injectable()
 export class MatchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly moderationService: ModerationService,
+  ) {}
 
   async getMyMatches(
     currentUser: AuthenticatedUser,
@@ -146,9 +150,22 @@ export class MatchesService {
       },
     });
 
+    const participantMatches = matches.filter((match) =>
+      this.isMatchParticipant(match, currentUser.id),
+    );
+    const blockedUserIds = await this.moderationService.getBlockedUserIdsFor(
+      currentUser.id,
+      participantMatches.map((match) =>
+        this.getMatchedUserId(match, currentUser.id),
+      ),
+    );
+
     return {
-      matches: matches
-        .filter((match) => this.isMatchParticipant(match, currentUser.id))
+      matches: participantMatches
+        .filter(
+          (match) =>
+            !blockedUserIds.has(this.getMatchedUserId(match, currentUser.id)),
+        )
         .map((match) => this.toMatchResponse(match, currentUser.id))
         .filter((match): match is MatchResponse => Boolean(match)),
     };
@@ -160,6 +177,10 @@ export class MatchesService {
     now = new Date(),
   }: TryCreateMatchFromLikeInput): Promise<MatchResponse | null> {
     const pair = this.normalizePair(actorUserId, targetUserId);
+
+    if (await this.moderationService.hasBlockBetween(actorUserId, targetUserId)) {
+      return null;
+    }
 
     const reciprocalLike = await this.prisma.like.findFirst({
       where: {
@@ -266,6 +287,10 @@ export class MatchesService {
 
   private isMatchParticipant(match: MatchRecord, currentUserId: string): boolean {
     return match.userAId === currentUserId || match.userBId === currentUserId;
+  }
+
+  private getMatchedUserId(match: MatchRecord, currentUserId: string): string {
+    return match.userAId === currentUserId ? match.userBId : match.userAId;
   }
 
   private toMatchResponse(
