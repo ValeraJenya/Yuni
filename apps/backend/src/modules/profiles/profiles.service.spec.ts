@@ -10,6 +10,7 @@ import {
   UserStatus,
 } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import type { ModerationService } from '../moderation/moderation.service';
 import { ProfilesService } from './profiles.service';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -64,6 +65,10 @@ interface PrismaMock {
     findFirst: jest.Mock;
     update: jest.Mock;
   };
+}
+
+interface ModerationServiceMock {
+  hasBlockBetween: jest.Mock;
 }
 
 describe('ProfilesService', () => {
@@ -191,7 +196,7 @@ describe('ProfilesService', () => {
   });
 
   it('returns a public profile by case-insensitive handle with public privacy applied', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, moderationService } = createService();
     const profile = makePublicProfile();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profile.findFirst.mockResolvedValue(profile);
@@ -234,6 +239,22 @@ describe('ProfilesService', () => {
       ],
     });
     expect(result.profile).not.toHaveProperty('birthDate');
+    expect(moderationService.hasBlockBetween).toHaveBeenCalledWith(
+      CURRENT_USER.id,
+      profile.userId,
+    );
+  });
+
+  it('hides blocked public profiles behind a not-found style response', async () => {
+    const { service, prisma, moderationService } = createService();
+    const profile = makePublicProfile();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profile.findFirst.mockResolvedValue(profile);
+    moderationService.hasBlockBetween.mockResolvedValue(true);
+
+    await expect(
+      service.getByHandle(profile.handle, CURRENT_USER),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('rejects public access to private and non-discoverable profiles', async () => {
@@ -270,10 +291,17 @@ function createService() {
       update: jest.fn(),
     },
   };
+  const moderationService: ModerationServiceMock = {
+    hasBlockBetween: jest.fn().mockResolvedValue(false),
+  };
 
   return {
-    service: new ProfilesService(prisma as unknown as PrismaService),
+    service: new ProfilesService(
+      prisma as unknown as PrismaService,
+      moderationService as unknown as ModerationService,
+    ),
     prisma,
+    moderationService,
   };
 }
 

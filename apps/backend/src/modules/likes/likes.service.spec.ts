@@ -14,6 +14,7 @@ import {
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import type { MatchesService } from '../matches/matches.service';
+import type { ModerationService } from '../moderation/moderation.service';
 import { LikesService } from './likes.service';
 
 const CURRENT_USER: AuthenticatedUser = {
@@ -38,6 +39,10 @@ interface PrismaMock {
 
 interface MatchesServiceMock {
   tryCreateMatchFromLike: jest.Mock;
+}
+
+interface ModerationServiceMock {
+  assertNoBlockBetween: jest.Mock;
 }
 
 interface LikeCreateArgs {
@@ -282,6 +287,30 @@ describe('LikesService', () => {
     expect(prisma.like.create).not.toHaveBeenCalled();
   });
 
+  it('rejects LIKE and SKIP when a block exists in either direction', async () => {
+    const { service, prisma, moderationService, matchesService } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profile.findUnique.mockResolvedValue(makeTargetProfile());
+    moderationService.assertNoBlockBetween.mockRejectedValue(
+      new ForbiddenException('Forbidden'),
+    );
+
+    await expect(
+      service.likeProfile(CURRENT_USER, TARGET_PROFILE_USER_ID),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      service.skipProfile(CURRENT_USER, TARGET_PROFILE_USER_ID),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    expect(moderationService.assertNoBlockBetween).toHaveBeenCalledWith(
+      CURRENT_USER.id,
+      TARGET_PROFILE_USER_ID,
+    );
+    expect(prisma.like.findFirst).not.toHaveBeenCalled();
+    expect(prisma.like.create).not.toHaveBeenCalled();
+    expect(matchesService.tryCreateMatchFromLike).not.toHaveBeenCalled();
+  });
+
   it('allows a new interaction when older interactions are expired', async () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
@@ -353,14 +382,19 @@ function createService() {
   const matchesService: MatchesServiceMock = {
     tryCreateMatchFromLike: jest.fn().mockResolvedValue(null),
   };
+  const moderationService: ModerationServiceMock = {
+    assertNoBlockBetween: jest.fn().mockResolvedValue(undefined),
+  };
 
   return {
     service: new LikesService(
       prisma as unknown as PrismaService,
       matchesService as unknown as MatchesService,
+      moderationService as unknown as ModerationService,
     ),
     prisma,
     matchesService,
+    moderationService,
   };
 }
 

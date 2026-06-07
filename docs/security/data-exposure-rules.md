@@ -178,6 +178,49 @@ Matches responses must not expose:
 - deleted user/profile fields;
 - internal moderation fields.
 
+## Blocks Response Shapes
+
+Block responses may include only:
+
+- `block.blockedUserId`;
+- `block.createdAt`;
+- `block.status`, currently public value `"blocked"`;
+- `nextCursor` for `GET /blocks/me`.
+
+Block responses must not expose:
+
+- raw Prisma `Block` rows;
+- internal block id;
+- `blockerUserId`;
+- user email;
+- `birthDate`;
+- private profile fields;
+- report data;
+- password/session/token fields.
+
+`GET /blocks/me` may return only outgoing blocks owned by the authenticated user.
+
+## Reports Response Shapes
+
+Report responses may include only:
+
+- `report.id`;
+- `report.targetUserId`;
+- `report.reason`;
+- `report.createdAt`;
+- public `report.status`, currently `"received"`.
+
+Report responses must not expose:
+
+- raw Prisma `Report` rows;
+- `reporterUserId`;
+- internal `reportedUserId` outside documented `targetUserId`;
+- internal `ReportStatus`;
+- `comment` / submitted details;
+- `updatedAt`, `resolvedAt`, `resolutionNote`;
+- moderator identity, notes or workflow state;
+- target user email, `birthDate`, private profile fields or session/token data.
+
 ## Admin API Future Rule
 
 Admin API must be documented separately before implementation.

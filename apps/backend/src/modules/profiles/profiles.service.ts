@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Prisma, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
@@ -12,6 +12,7 @@ import {
   type SelfProfileView,
 } from '../../common/serializers';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import { ModerationService } from '../moderation/moderation.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 const selfProfileInclude = {
@@ -37,7 +38,10 @@ type PublicProfileRecord = Prisma.ProfileGetPayload<{
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly moderationService: ModerationService,
+  ) {}
 
   async getMe(
     currentUser: AuthenticatedUser,
@@ -102,6 +106,10 @@ export class ProfilesService {
       include: publicProfileInclude,
     });
     assertFound(profile);
+
+    if (await this.moderationService.hasBlockBetween(currentUser.id, profile.userId)) {
+      throw new NotFoundException('Resource not found');
+    }
 
     assertCanAccessProfile(this.toProfileAccessResource(profile), currentUser.id);
 

@@ -13,6 +13,7 @@ import {
   MatchesService,
   type MatchResponse,
 } from '../matches/matches.service';
+import { ModerationService } from '../moderation/moderation.service';
 
 const LIKE_COOLDOWN_DAYS = 3;
 const SKIP_COOLDOWN_DAYS = 1;
@@ -55,6 +56,7 @@ export class LikesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly matchesService: MatchesService,
+    private readonly moderationService: ModerationService,
   ) {}
 
   likeProfile(
@@ -97,6 +99,10 @@ export class LikesService {
     const targetProfile = await this.findAccessibleTargetProfile(
       targetProfileUserId,
       currentUser.id,
+    );
+    await this.moderationService.assertNoBlockBetween(
+      currentUser.id,
+      targetProfile.userId,
     );
 
     const activeInteraction = await this.prisma.like.findFirst({
