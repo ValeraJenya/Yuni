@@ -444,32 +444,87 @@ Security:
 Out of scope for Step 12:
 
 - superlike;
-- match creation, planned for Step 13;
+- match lifecycle ownership, implemented in Step 13 by `MatchesService`;
 - blocks/reports, planned for Step 14;
 - full backend discovery feed.
 
-### Matches Flow - Planned
+### Matches Flow - Step 13 MVP
 
-Expected module: `MatchesModule`.
+Implemented module: `MatchesModule`.
 
-Expected DB models already present:
+Frontend files:
 
-- `Match`;
-- `Like`;
-- `Block`.
+- `apps/frontend/app/(app)/matches/page.tsx`
+- `apps/frontend/app/(app)/discover/page.tsx`
+- `apps/frontend/lib/matches-api.ts`
+- `apps/frontend/lib/likes-api.ts`
 
-Expected security:
+Backend files:
 
-- authenticated user from `CurrentUser`;
-- no self-match;
-- unordered duplicate pair prevention is DB-backed;
-- match participant checks for match-scoped reads/actions;
-- atomic match creation.
+- `apps/backend/src/modules/matches/matches.controller.ts`
+- `apps/backend/src/modules/matches/matches.service.ts`
+- `apps/backend/src/modules/matches/matches.module.ts`
+- `apps/backend/src/modules/likes/likes.service.ts`
 
-Expected serializers:
+Database models:
 
-- public/compact participant profile serializer;
-- match response must not expose private profile fields.
+- `Like`
+- `Match`
+- `Conversation` only as nullable relation marker; chat is not implemented in Step 13.
+
+Match creation:
+
+```text
+discover LIKE action
+  -> POST /likes/:targetProfileUserId
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> LikesService creates expiring LikeKind.like
+  -> MatchesService.tryCreateMatchFromLike
+  -> find reciprocal active LikeKind.like where expiresAt > now
+  -> normalize pair to userAId < userBId
+  -> find active match where status=active and expiresAt > now
+  -> create Match with matchedAt=now and expiresAt=now+7 days if no active duplicate
+  -> return optional safe match shape in LIKE response
+  -> frontend shows match overlay only if backend returned match
+```
+
+Match list:
+
+```text
+/matches page
+  -> matchesApi.getMyMatches(authenticatedRequest)
+  -> GET /matches/me
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> MatchesService.getMyMatches
+  -> assert active current user
+  -> Prisma match findMany for current user where status=active and expiresAt > now
+  -> compact public matched profile response
+  -> frontend renders active matches
+```
+
+Security:
+
+- authenticated user comes from `CurrentUser`;
+- frontend never decides match participants;
+- self-match is rejected;
+- SKIP/PASS never creates a match;
+- one-sided LIKE never creates a match;
+- expired reciprocal LIKE never creates a match;
+- active duplicate match is not created;
+- expired match does not block rematch;
+- active means `status=active` and `expiresAt > now`;
+- no cron/job is required in Step 13;
+- response does not expose raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows;
+- response does not expose email, birthDate, password/session fields, `storageKey`, local file paths, original filenames or private settings.
+
+Out of scope for Step 13:
+
+- full chat and sending messages;
+- blocks/reports, planned for Step 14;
+- notifications;
+- full discovery ranking/filtering.
 
 ### Chat Flow - Planned
 

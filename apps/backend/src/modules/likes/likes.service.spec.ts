@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import type { MatchesService } from '../matches/matches.service';
 import { LikesService } from './likes.service';
 
 const CURRENT_USER: AuthenticatedUser = {
@@ -33,6 +34,10 @@ interface PrismaMock {
     findFirst: jest.Mock;
     create: jest.Mock;
   };
+}
+
+interface MatchesServiceMock {
+  tryCreateMatchFromLike: jest.Mock;
 }
 
 interface LikeCreateArgs {
@@ -66,7 +71,7 @@ describe('LikesService', () => {
   });
 
   it('creates a LIKE interaction that expires in 3 days', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, matchesService } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profile.findUnique.mockResolvedValue(makeTargetProfile());
     prisma.like.findFirst.mockResolvedValue(null);
@@ -109,11 +114,16 @@ describe('LikesService', () => {
         expiresAt: addDays(FIXED_NOW, 3),
       },
     });
+    expect(matchesService.tryCreateMatchFromLike).toHaveBeenCalledWith({
+      actorUserId: CURRENT_USER.id,
+      targetUserId: TARGET_PROFILE_USER_ID,
+      now: FIXED_NOW,
+    });
     expectNoRawLikeOrPrivateKeys(result);
   });
 
   it('creates a SKIP/PASS interaction that expires in 1 day', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, matchesService } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profile.findUnique.mockResolvedValue(makeTargetProfile());
     prisma.like.findFirst.mockResolvedValue(null);
@@ -139,6 +149,44 @@ describe('LikesService', () => {
         action: 'skip',
         expiresAt: addDays(FIXED_NOW, 1),
       },
+    });
+    expect(matchesService.tryCreateMatchFromLike).not.toHaveBeenCalled();
+  });
+
+  it('includes a match only when a backend mutual LIKE created one', async () => {
+    const { service, prisma, matchesService } = createService();
+    const match = {
+      id: '33333333-3333-4333-8333-333333333333',
+      matchedProfile: {
+        userId: TARGET_PROFILE_USER_ID,
+        handle: 'target_user',
+        displayName: 'Target',
+        primaryPhotoUrl: null,
+      },
+      matchedAt: FIXED_NOW,
+      expiresAt: addDays(FIXED_NOW, 7),
+      status: 'active',
+      conversationStarted: false,
+    };
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profile.findUnique.mockResolvedValue(makeTargetProfile());
+    prisma.like.findFirst.mockResolvedValue(null);
+    prisma.like.create.mockImplementation(async (args: LikeCreateArgs) => ({
+      likedUserId: args.data.likedUserId,
+      kind: args.data.kind,
+      expiresAt: args.data.expiresAt,
+    }));
+    matchesService.tryCreateMatchFromLike.mockResolvedValue(match);
+
+    await expect(
+      service.likeProfile(CURRENT_USER, TARGET_PROFILE_USER_ID),
+    ).resolves.toEqual({
+      interaction: {
+        targetProfileUserId: TARGET_PROFILE_USER_ID,
+        action: 'like',
+        expiresAt: addDays(FIXED_NOW, 3),
+      },
+      match,
     });
   });
 
@@ -302,10 +350,17 @@ function createService() {
       create: jest.fn(),
     },
   };
+  const matchesService: MatchesServiceMock = {
+    tryCreateMatchFromLike: jest.fn().mockResolvedValue(null),
+  };
 
   return {
-    service: new LikesService(prisma as unknown as PrismaService),
+    service: new LikesService(
+      prisma as unknown as PrismaService,
+      matchesService as unknown as MatchesService,
+    ),
     prisma,
+    matchesService,
   };
 }
 

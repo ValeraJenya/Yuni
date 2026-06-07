@@ -66,13 +66,23 @@ Owns:
 
 `targetProfileUserId` means `profiles.user_id`; no separate profile id exists.
 
-LikesModule should not create matches, chats, blocks or reports. Superlike is not implemented in Step 12.
+LikesModule should not own matches, chats, blocks or reports. In Step 13 it may delegate after successful LIKE to `MatchesService.tryCreateMatchFromLike(...)`, but match lifecycle remains in MatchesModule. Superlike is not implemented.
 
 ### MatchesModule
 
-Planned.
+Implemented Step 13 MVP for mutual active LIKE matches.
 
-Owns match state, match participant checks and match lifecycle.
+Owns:
+
+- `GET /matches/me`;
+- mutual active LIKE detection;
+- canonical pair normalization;
+- active duplicate match prevention;
+- 7-day match expiry window;
+- active match filtering by `status=active` and `expiresAt > now`;
+- safe match response shape.
+
+MatchesModule should not send messages, create full chat flows, implement blocks/reports, notifications or discovery ranking.
 
 ### ChatModule
 
@@ -158,12 +168,30 @@ Avoid:
 - verifies target user is active/not deleted;
 - uses `assertCanAccessProfile` for discoverable/open access;
 - blocks active duplicate interactions until `expiresAt`;
+- delegates to `MatchesService` only after successful `LikeKind.like`;
 - maps DB overlap conflicts to safe `409`;
 - returns explicit interaction shape instead of raw Prisma `Like`.
 
+### MatchesModule
+
+`MatchesController` receives authenticated match list requests and delegates to `MatchesService`.
+
+`MatchesService`:
+
+- reads actor from `CurrentUser` for list requests;
+- verifies current user is active;
+- creates a match only when reciprocal active LIKE exists;
+- never creates a match for SKIP/PASS;
+- normalizes `userAId/userBId` before writes;
+- treats active match as `status=active` and `expiresAt > now`;
+- does not create duplicate active matches;
+- allows future rematch after expiration;
+- returns compact public matched profile shape and `conversationStarted`;
+- does not expose raw Prisma rows or private media/profile fields.
+
 ## Future Module Additions
 
-When implementing matches, chat, moderation or discovery:
+When implementing chat, moderation or discovery:
 
 1. Add the endpoint to the owning module.
 2. Define DTOs before accepting input.

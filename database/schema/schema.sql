@@ -158,13 +158,22 @@ CREATE TABLE matches (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT matches_no_self_match CHECK (user_a_id <> user_b_id),
+  CONSTRAINT matches_user_pair_order CHECK (user_a_id < user_b_id),
   CONSTRAINT matches_expires_after_matched CHECK (expires_at > matched_at)
 );
 
-CREATE UNIQUE INDEX matches_pair_unique_idx
-  ON matches (LEAST(user_a_id, user_b_id), GREATEST(user_a_id, user_b_id));
+ALTER TABLE matches
+  ADD CONSTRAINT matches_no_overlapping_active_pairs
+  EXCLUDE USING gist (
+    user_a_id WITH =,
+    user_b_id WITH =,
+    tstzrange(matched_at, expires_at, '[)') WITH &&
+  )
+  WHERE (status = 'active');
+
 CREATE INDEX matches_user_a_idx ON matches (user_a_id, status);
 CREATE INDEX matches_user_b_idx ON matches (user_b_id, status);
+CREATE INDEX matches_pair_status_expires_idx ON matches (user_a_id, user_b_id, status, expires_at);
 CREATE INDEX matches_active_expires_idx ON matches (expires_at)
   WHERE status = 'active';
 

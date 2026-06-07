@@ -161,9 +161,20 @@ Superlike, matches, chat effects and blocks/reports are outside Step 12.
 
 ### `matches`
 
-Scaffold-only.
+Implemented Step 13 MVP.
 
-Future responsibility: match state and match participant operations.
+- `GET /matches/me`
+
+Owns mutual active LIKE matches:
+
+- match creation after successful LIKE via `MatchesService`;
+- reciprocal active LIKE detection;
+- canonical `userAId/userBId` pair normalization;
+- 7-day active window;
+- active filtering by `status=active` and `expiresAt > now`;
+- safe active match list response.
+
+Chat, messages, blocks/reports, notifications and unmatch flows are outside Step 13.
 
 ### `chat`
 

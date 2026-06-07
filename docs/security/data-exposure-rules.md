@@ -147,6 +147,37 @@ Likes responses must not expose:
 - private profile settings;
 - password/session/token fields.
 
+## Matches Response Shapes
+
+Matches MVP responses may include only explicit active match fields:
+
+- `match.id`;
+- `match.matchedProfile.userId`;
+- `match.matchedProfile.handle`;
+- `match.matchedProfile.displayName`;
+- `match.matchedProfile.primaryPhotoUrl`;
+- `match.matchedAt`;
+- `match.expiresAt`;
+- `match.status`;
+- `match.conversationStarted`.
+
+Matches responses must not expose:
+
+- raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows;
+- `userAId`;
+- `userBId`;
+- raw `userA` or `userB` relation objects;
+- email;
+- `birthDate`;
+- password or `passwordHash`;
+- refresh/session/token fields;
+- `storageKey`;
+- local file path;
+- original uploaded filename;
+- private profile settings;
+- deleted user/profile fields;
+- internal moderation fields.
+
 ## Admin API Future Rule
 
 Admin API must be documented separately before implementation.

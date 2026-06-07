@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP и Likes MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP и Matches MVP.
 
 ## Подготовка
 
@@ -267,7 +267,7 @@ Step 12 реализует только `LIKE` и `SKIP/PASS`:
 - `like` сохраняется как `LikeKind.like`;
 - `skip`/`pass` сохраняется как `LikeKind.pass`;
 - superlike не реализован в Step 12;
-- matches будут отдельным Step 13;
+- matches реализованы отдельным Step 13 через optional `match` в LIKE response и `GET /matches/me`;
 - blocks/reports будут отдельным Step 14.
 
 ### Like Profile
@@ -285,11 +285,24 @@ Response shape:
     "targetProfileUserId": "22222222-2222-4222-8222-222222222222",
     "action": "like",
     "expiresAt": "2026-06-10T12:00:00.000Z"
+  },
+  "match": {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "matchedProfile": {
+      "userId": "22222222-2222-4222-8222-222222222222",
+      "handle": "target_user",
+      "displayName": "Target",
+      "primaryPhotoUrl": "/uploads/profile-photos/photo.jpg"
+    },
+    "matchedAt": "2026-06-07T12:00:00.000Z",
+    "expiresAt": "2026-06-14T12:00:00.000Z",
+    "status": "active",
+    "conversationStarted": false
   }
 }
 ```
 
-LIKE cooldown: 3 days. Active LIKE/SKIP for the same actor and target blocks another LIKE/SKIP until `expiresAt`. Expired interactions do not block a new action.
+LIKE cooldown: 3 days. Active LIKE/SKIP for the same actor and target blocks another LIKE/SKIP until `expiresAt`. Expired interactions do not block a new action. `match` is present only when the backend detected a mutual active LIKE and created or found an active match; clients must not show fake/random match UI when `match` is absent.
 
 ### Skip / Pass Profile
 
@@ -321,6 +334,52 @@ Security and conflict behavior:
 - active duplicate interaction returns safe `409`;
 - DB overlap constraint conflicts are also mapped to safe `409`;
 - response is an explicit safe shape, not a raw Prisma `Like` row.
+
+## Matches MVP
+
+Все matches endpoints требуют `Authorization: Bearer <accessToken>`.
+
+Step 13 реализует только взаимные matches на основе active LIKE:
+
+- match появляется при mutual active LIKE;
+- mutual active LIKE означает `A -> B` и `B -> A`, оба `LikeKind.like`, оба `expiresAt > now`;
+- match active only when `status=active` and `expiresAt > now`;
+- match активен 7 days from `matchedAt`;
+- match исчезает из `/matches/me` после `expiresAt`;
+- cron/job для перевода `status` в `expired` в Step 13 не нужен;
+- chat не реализуется в Step 13;
+- blocks/reports не реализуются в Step 13.
+
+### Get My Active Matches
+
+```bash
+curl -i http://localhost:4000/matches/me \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "matches": [
+    {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "matchedProfile": {
+        "userId": "22222222-2222-4222-8222-222222222222",
+        "handle": "target_user",
+        "displayName": "Target",
+        "primaryPhotoUrl": "/uploads/profile-photos/photo.jpg"
+      },
+      "matchedAt": "2026-06-07T12:00:00.000Z",
+      "expiresAt": "2026-06-14T12:00:00.000Z",
+      "status": "active",
+      "conversationStarted": false
+    }
+  ]
+}
+```
+
+Response contains only current user's active matches. It must not expose raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows, `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local file path, original filename or private profile settings.
 
 ## Cookie Behavior
 

@@ -1,12 +1,13 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Heart, Star, Flame, Clock } from "lucide-react"
-import { MATCHES, CHATS } from "@/mock-data/matches"
+import { Heart, Flame, Clock } from "lucide-react"
+import { ApiError } from "@/lib/auth-api"
+import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
-
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+import { matchesApi, type MatchSummary } from "@/lib/matches-api"
 
 const copy = {
   ru: {
@@ -15,8 +16,9 @@ const copy = {
     empty: "Пока нет матчей.",
     emptySub: "Зайди в поиск и поставь несколько лайков.",
     discoverCta: "Перейти в поиск",
+    loading: "Загружаем матчи...",
+    loadError: "Не удалось загрузить матчи.",
     online: "В сети",
-    superlike: "Суперлайк",
     expiresIn: (days: number, hours: number) =>
       days > 0 ? `Истекает через ${days} д` : `Истекает через ${hours} ч`,
     justMatched: "Только что",
@@ -25,7 +27,7 @@ const copy = {
     daysAgo: (d: number) => `${d} д назад`,
     inMessages: "Продолжается в чате",
     activeNote: (n: number) =>
-      n === 1 ? "1 матч исчезнет через 7 дней" : `${n} матча исчезнут через 7 дней`,
+      n === 1 ? "1 активный матч" : `${n} активных матча`,
   },
   en: {
     eyebrow: "Mutual interest",
@@ -33,8 +35,9 @@ const copy = {
     empty: "No matches yet.",
     emptySub: "Head to Discover and start liking profiles.",
     discoverCta: "Go to Discover",
+    loading: "Loading matches...",
+    loadError: "Could not load matches.",
     online: "Online",
-    superlike: "Super like",
     expiresIn: (days: number, hours: number) =>
       days > 0 ? `Expires in ${days}d` : `Expires in ${hours}h`,
     justMatched: "Just now",
@@ -43,45 +46,72 @@ const copy = {
     daysAgo: (d: number) => `${d}d ago`,
     inMessages: "Ongoing in Messages",
     activeNote: (n: number) =>
-      n === 1 ? "1 match expires in 7 days" : `${n} matches expire in 7 days`,
+      n === 1 ? "1 active match" : `${n} active matches`,
   },
 }
 
-function relativeTime(isoDate: string, t: typeof copy["ru"]) {
-  const diff = (Date.now() - new Date(isoDate).getTime()) / 1000
+function relativeTime(isoDate: string, nowMs: number, t: typeof copy["ru"]) {
+  const diff = (nowMs - new Date(isoDate).getTime()) / 1000
   if (diff < 120) return t.justMatched
   if (diff < 3600) return t.minutesAgo(Math.floor(diff / 60))
   if (diff < 86400) return t.hoursAgo(Math.floor(diff / 3600))
   return t.daysAgo(Math.floor(diff / 86400))
 }
 
-function timeUntilExpiry(matchedAt: string, t: typeof copy["ru"]) {
-  const expiresAt = new Date(matchedAt).getTime() + SEVEN_DAYS_MS
-  const remaining = expiresAt - Date.now()
+function timeUntilExpiry(expiresAt: string, nowMs: number, t: typeof copy["ru"]) {
+  const remaining = new Date(expiresAt).getTime() - nowMs
   if (remaining <= 0) return null
   const days = Math.floor(remaining / (1000 * 60 * 60 * 24))
   const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
   return t.expiresIn(days, hours)
 }
 
-// A match "lives in Messages" if the user has sent at least one message in the chat
-function hasStartedConversation(matchId: string): boolean {
-  const chat = CHATS.find((c) => c.id === matchId)
-  if (!chat) return false
-  return chat.messages.some((m) => m.senderId === "me")
-}
-
 export default function MatchesPage() {
   const { lang } = useLang()
+  const { authenticatedRequest, isLoading: authLoading } = useAuth()
   const t = copy[lang]
+  const [matches, setMatches] = useState<MatchSummary[]>([])
+  const [isMatchesLoading, setIsMatchesLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [nowMs, setNowMs] = useState(0)
 
-  // Filter: within 7-day window AND not already an active conversation in Messages
-  const activeMatches = MATCHES.filter((m) => {
-    const age = Date.now() - new Date(m.matchedAt).getTime()
-    const withinWindow = age < SEVEN_DAYS_MS
-    const inMessages = hasStartedConversation(m.id)
-    return withinWindow && !inMessages
-  })
+  useEffect(() => {
+    if (authLoading) {
+      return
+    }
+
+    let active = true
+    const requestStartedAt = Date.now()
+
+    matchesApi
+      .getMyMatches(authenticatedRequest)
+      .then((response) => {
+        if (active) {
+          setNowMs(requestStartedAt)
+          setLoadError(null)
+          setMatches(response.matches)
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setLoadError(error instanceof ApiError ? error.message : t.loadError)
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsMatchesLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [authLoading, authenticatedRequest, t.loadError])
+
+  const activeMatches = matches.filter(
+    (match) =>
+      match.status === "active" && new Date(match.expiresAt).getTime() > nowMs,
+  )
 
   return (
     <div className="min-h-screen flex flex-col md:pl-[220px]">
@@ -128,7 +158,31 @@ export default function MatchesPage() {
 
       {/* ── Content ──────────────────────────────────────── */}
       <div className="flex-1 px-4 md:px-8 pb-24 md:pb-12">
-        {activeMatches.length === 0 ? (
+        {isMatchesLoading ? (
+          <div className="flex flex-col items-center gap-4 text-center py-20">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center"
+              style={{
+                background: "oklch(0.65 0.26 12 / 0.07)",
+                border: "1px solid oklch(0.65 0.26 12 / 0.14)",
+              }}
+            >
+              <Heart size={20} style={{ color: "oklch(0.65 0.26 12 / 0.55)" }} strokeWidth={1.5} />
+            </div>
+            <p className="font-sans" style={{ fontSize: "13px", color: "oklch(0.42 0.008 15)" }}>
+              {t.loading}
+            </p>
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center gap-4 text-center py-20">
+            <p className="font-display font-light" style={{ fontSize: "1.4rem", color: "oklch(0.72 0.005 60)" }}>
+              {t.loadError}
+            </p>
+            <p className="font-sans max-w-xs" style={{ fontSize: "13px", color: "oklch(0.45 0.008 15)" }}>
+              {loadError}
+            </p>
+          </div>
+        ) : activeMatches.length === 0 ? (
           /* Empty state */
           <div className="flex flex-col items-center gap-6 text-center py-20">
             <div
@@ -170,9 +224,11 @@ export default function MatchesPage() {
           /* Match grid */
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {activeMatches.map((match) => {
-              const expiry = timeUntilExpiry(match.matchedAt, t)
+              const profileName = match.matchedProfile.displayName ?? match.matchedProfile.handle
+              const primaryPhotoUrl = match.matchedProfile.primaryPhotoUrl
+              const expiry = timeUntilExpiry(match.expiresAt, nowMs, t)
               const isExpiringSoon =
-                Date.now() - new Date(match.matchedAt).getTime() > SEVEN_DAYS_MS - 2 * 24 * 60 * 60 * 1000
+                new Date(match.expiresAt).getTime() - nowMs < 2 * 24 * 60 * 60 * 1000
 
               return (
                 <Link
@@ -182,10 +238,10 @@ export default function MatchesPage() {
                   style={{
                     aspectRatio: "3/4",
                     background: "oklch(0.10 0.012 15)",
-                    border: match.hasUnread
+                    border: match.conversationStarted
                       ? "1px solid oklch(0.65 0.26 12 / 0.28)"
                       : "1px solid oklch(0.18 0.012 15 / 0.65)",
-                    boxShadow: match.hasUnread
+                    boxShadow: match.conversationStarted
                       ? "0 4px 24px oklch(0.65 0.26 12 / 0.12), 0 0 0 1px oklch(0.65 0.26 12 / 0.06)"
                       : "0 4px 16px oklch(0.04 0.005 15 / 0.40)",
                   }}
@@ -195,22 +251,34 @@ export default function MatchesPage() {
                       "0 8px 36px oklch(0.65 0.26 12 / 0.16), 0 0 0 1px oklch(0.65 0.26 12 / 0.10)"
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = match.hasUnread
+                    e.currentTarget.style.borderColor = match.conversationStarted
                       ? "oklch(0.65 0.26 12 / 0.28)"
                       : "oklch(0.18 0.012 15 / 0.65)"
-                    e.currentTarget.style.boxShadow = match.hasUnread
+                    e.currentTarget.style.boxShadow = match.conversationStarted
                       ? "0 4px 24px oklch(0.65 0.26 12 / 0.12), 0 0 0 1px oklch(0.65 0.26 12 / 0.06)"
                       : "0 4px 16px oklch(0.04 0.005 15 / 0.40)"
                   }}
                 >
-                  <Image
-                    src={match.profile.photos[0]}
-                    alt={match.profile.name}
-                    fill
-                    draggable={false}
-                    className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
+                  {primaryPhotoUrl ? (
+                    <Image
+                      src={primaryPhotoUrl}
+                      alt={profileName}
+                      fill
+                      draggable={false}
+                      className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.04]"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{
+                        background: "oklch(0.13 0.012 15)",
+                        color: "oklch(0.65 0.26 12 / 0.70)",
+                      }}
+                    >
+                      <Heart size={28} strokeWidth={1.5} />
+                    </div>
+                  )}
 
                   {/* Vignette */}
                   <div
@@ -224,7 +292,7 @@ export default function MatchesPage() {
                   />
 
                   {/* Unread badge */}
-                  {match.hasUnread && (
+                  {match.conversationStarted && (
                     <div
                       className="absolute top-3 right-3"
                       style={{
@@ -239,48 +307,6 @@ export default function MatchesPage() {
                   )}
 
                   {/* Online indicator */}
-                  {match.profile.isOnline && (
-                    <div className="absolute top-3 left-3">
-                      <span
-                        className="flex items-center gap-1.5 rounded-full px-2 py-1 font-sans"
-                        style={{
-                          fontSize: "9px",
-                          color: "oklch(0.80 0.18 145)",
-                          background: "oklch(0.07 0.010 15 / 0.75)",
-                          border: "1px solid oklch(0.78 0.20 145 / 0.22)",
-                          backdropFilter: "blur(8px)",
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: "5px",
-                            height: "5px",
-                            borderRadius: "50%",
-                            background: "oklch(0.78 0.20 145)",
-                            display: "inline-block",
-                            boxShadow: "0 0 5px oklch(0.78 0.20 145 / 0.75)",
-                          }}
-                        />
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Superlike badge */}
-                  {match.isSuperLike && (
-                    <div
-                      className="absolute top-3 left-3 flex items-center justify-center rounded-full"
-                      style={{
-                        width: "22px",
-                        height: "22px",
-                        background: "oklch(0.65 0.20 220)",
-                        border: "1.5px solid oklch(0.07 0.010 15)",
-                        boxShadow: "0 0 10px oklch(0.65 0.20 220 / 0.45)",
-                      }}
-                    >
-                      <Star size={10} strokeWidth={2} color="white" />
-                    </div>
-                  )}
-
                   {/* Expiry indicator — only shows when close to expiring */}
                   {isExpiringSoon && expiry && (
                     <div
@@ -296,7 +322,7 @@ export default function MatchesPage() {
                             textShadow: "0 2px 12px oklch(0.04 0.005 15 / 0.80)",
                           }}
                         >
-                          {match.profile.name}
+                          {profileName}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <Clock size={9} style={{ color: "oklch(0.65 0.26 12 / 0.70)" }} />
@@ -323,19 +349,13 @@ export default function MatchesPage() {
                           textShadow: "0 2px 12px oklch(0.04 0.005 15 / 0.80)",
                         }}
                       >
-                        {match.profile.name}
-                        <span
-                          className="font-sans font-light ml-1.5"
-                          style={{ fontSize: "0.82rem", color: "oklch(0.56 0.006 60)" }}
-                        >
-                          {match.profile.age}
-                        </span>
+                        {profileName}
                       </p>
                       <p
                         className="font-sans mt-0.5"
                         style={{ fontSize: "10px", color: "oklch(0.36 0.008 15)" }}
                       >
-                        {relativeTime(match.matchedAt, t)}
+                        {relativeTime(match.matchedAt, nowMs, t)}
                       </p>
                     </div>
                   )}
