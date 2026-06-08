@@ -23,6 +23,8 @@
 - `privacy_settings` хранит privacy и visibility controls, включая open/private presentation и system anonymous avatar key.
 - `notification_settings` хранит notification preferences.
 
+Step 15 Discovery MVP uses the existing `users`, `profiles`, `profile_photos`, `privacy_settings`, `likes`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
+
 ## Связи
 
 У каждого `user` может быть один `profile`, один `privacy_settings`, один `notification_settings`, много `refresh_tokens`, много photos через profile, много likes, matches и conversation memberships.
@@ -35,7 +37,7 @@
 
 ## Fixed MVP Rules
 
-- Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, minimum profile completion, block filters и минимум одно approved published primary photo.
+- Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, minimum profile completion, block filters и минимум одно approved published public photo.
 - Private mode никогда не отдает user-uploaded photos. Backend presentation должен использовать `privacy_settings.anonymous_avatar_key` для системного rabbit avatar.
 - Blocks действуют в обе стороны для public profile visibility, LIKE/SKIP и matches. При block active match завершается `status='blocked'`.
 - Report reason codes: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.
@@ -49,5 +51,5 @@
 - Owner checks строить через `user_id` и conversation membership joins.
 - Чтение сообщений должно идти через `conversation_participants` для текущего пользователя.
 - Фото хранят object storage keys и metadata, не бинарники. В profile responses можно отдавать только approved и published photos.
-- Discovery visibility должна проверять `users.status`, `profiles.is_discoverable`, `privacy_settings.discoverable`, `profiles.completed_at`, block state и approved published primary photo.
+- Discovery visibility должна проверять `users.status`, `profiles.is_discoverable`, `privacy_settings.discoverable`, `profiles.completed_at`, block state, active LIKE/SKIP cooldowns, active matches и approved published public photo.
 - Private profile mode должен enforced на backend serializers. User photos в private mode не показываются.

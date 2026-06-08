@@ -108,6 +108,33 @@ Public profile must not include:
 - local file path;
 - unpublished or unapproved photos.
 
+## Discovery Response Shapes
+
+Discovery cards may include only:
+
+- `userId`;
+- `handle`;
+- `displayName`;
+- public `bio`, `gender`, `lookingFor`, `city` and `country`;
+- computed `age`;
+- `primaryPhotoUrl`;
+- `photos[].publicUrl`;
+- `nextCursor`.
+
+Discovery cards must not include:
+
+- raw `birthDate`;
+- email;
+- password or `passwordHash`;
+- refresh/session/token fields;
+- private profile or privacy settings;
+- `storageKey`;
+- local file path;
+- original uploaded filename;
+- internal moderation fields;
+- block/report data;
+- raw Prisma `User`, `Profile`, `ProfilePhoto`, `Like`, `Match` or `Block` relation objects.
+
 ## Media Response Shapes
 
 Public photo response may include:

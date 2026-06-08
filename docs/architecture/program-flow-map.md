@@ -447,7 +447,7 @@ Out of scope for Step 12:
 
 - superlike;
 - match lifecycle ownership, implemented in Step 13 by `MatchesService`;
-- full backend discovery feed.
+- backend discovery feed ownership, implemented in Step 15 by `DiscoveryModule`.
 
 ### Matches Flow - Step 13 MVP
 
@@ -621,7 +621,7 @@ Security:
 - no self-report;
 - reports/blocks must be tied to authenticated `CurrentUser`;
 - block effects are applied to public profile reads, likes and matches;
-- discovery must use the same block boundary when backend discovery is implemented;
+- discovery uses the same block boundary;
 - admin review endpoints must be separate from public/self endpoints.
 
 Serializers / response shapes:
@@ -630,32 +630,89 @@ Serializers / response shapes:
 - report response includes only `id`, `targetUserId`, `reason`, `createdAt`, public status `"received"`;
 - future admin moderation serializers documented separately.
 
-### Discovery Flow - Planned
+### Discovery Flow - Step 15 MVP
 
-Expected module: to be defined. It may live in `ProfilesModule` first or become its own `DiscoverModule` only when the boundary is clear.
+Implemented module: `DiscoveryModule`.
 
-Expected DB models already present:
+Frontend files:
+
+- `apps/frontend/app/(app)/discover/page.tsx`
+- `apps/frontend/lib/discovery-api.ts`
+- `apps/frontend/lib/likes-api.ts`
+- `apps/frontend/lib/auth-context.tsx`
+
+Backend files:
+
+- `apps/backend/src/modules/discovery/discovery.controller.ts`
+- `apps/backend/src/modules/discovery/discovery.service.ts`
+- `apps/backend/src/modules/discovery/dto/discovery-cards-query.dto.ts`
+- `apps/backend/src/modules/discovery/discovery.module.ts`
+
+DB models already present:
 
 - `Profile`;
 - `ProfilePhoto`;
+- `User`;
 - `PrivacySettings`;
 - `Block`;
 - `Like`;
-- possibly `Match`.
+- `Match`.
 
-Expected security:
+Discovery list:
+
+```text
+/discover page
+  -> discoveryApi.getCards(authenticatedRequest, { limit, cursor })
+  -> GET /discovery/cards
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> DiscoveryService.getCards
+  -> assert active current user
+  -> Prisma profile findMany with eligibility filters
+  -> stable order createdAt desc + userId desc
+  -> explicit safe DiscoveryCard response
+  -> frontend maps cards to existing card UI
+```
+
+LIKE/SKIP from discovery:
+
+```text
+discover card action
+  -> likesApi.likeProfile or likesApi.skipProfile
+  -> backend likes flow
+  -> remove card only after successful response
+  -> if LIKE response contains match, show existing match overlay
+  -> if cards run low and nextCursor exists, load next page
+```
+
+Security:
 
 - exclude current user;
-- respect profile privacy and discoverability;
+- exclude inactive/deleted users;
+- require completed and discoverable profiles;
+- require explicit open/discoverable privacy settings;
 - return only approved/published public photos;
-- respect blocks;
-- use cursor pagination;
-- apply anti-scraping limits.
+- require at least one public photo;
+- respect blocks in both directions;
+- exclude active LIKE/SKIP cooldowns where `expiresAt > now`;
+- exclude active matches where `status=active` and `expiresAt > now`;
+- expired LIKE/SKIP and expired matches do not block rediscovery;
+- use cursor pagination with max limit `20`;
+- apply anti-scraping limits;
+- do not expose raw `birthDate`, email, password/session fields, storage internals, private settings, moderation internals or raw Prisma rows.
 
-Expected serializers:
+Response shape:
 
-- compact public profile card;
-- no email;
-- no birthDate;
-- no private settings;
-- no raw Prisma profile rows.
+- `{ cards, nextCursor }`;
+- card fields: `userId`, `handle`, `displayName`, public profile fields, computed `age`, `primaryPhotoUrl`, `photos[].publicUrl`;
+- `nextCursor` is `Profile.userId`, because Profile primary key is `profiles.user_id`.
+
+Out of scope for Step 15:
+
+- complex recommendation algorithm;
+- random ranking;
+- geolocation/radius;
+- premium filters;
+- chat/messages;
+- notifications;
+- admin/moderation panel.

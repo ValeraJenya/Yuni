@@ -1,6 +1,6 @@
 # Module Boundaries
 
-Yuni is currently a modular monolith. The goal is to keep product development simple for a small team while preventing auth, profiles, media, likes, matches, chat and moderation from bleeding into each other.
+Yuni is currently a modular monolith. The goal is to keep product development simple for a small team while preventing auth, profiles, media, discovery, likes, matches, chat and moderation from bleeding into each other.
 
 ## Core Rule
 
@@ -83,6 +83,20 @@ Owns:
 - safe match response shape.
 
 MatchesModule should not send messages, create full chat flows, own reports, notifications or discovery ranking. It may call `ModerationService` to prevent and hide blocked matches.
+
+### DiscoveryModule
+
+Implemented Step 15 MVP for backend-owned discovery cards.
+
+Owns:
+
+- `GET /discovery/cards`;
+- cursor pagination with max limit `20`;
+- eligibility query across existing User/Profile/ProfilePhoto/PrivacySettings/Like/Match/Block models;
+- safe public discovery card response shape;
+- stable non-random ordering.
+
+DiscoveryModule should not create likes, matches, blocks, reports, chats, notifications or ranking algorithms. It reads existing state to decide which public cards may be shown.
 
 ### ChatModule
 
@@ -192,6 +206,23 @@ Avoid:
 - returns compact public matched profile shape and `conversationStarted`;
 - does not expose raw Prisma rows or private media/profile fields.
 
+### DiscoveryModule
+
+`DiscoveryController` receives authenticated discovery list requests and delegates to `DiscoveryService`.
+
+`DiscoveryService`:
+
+- reads actor from `CurrentUser`;
+- verifies current user is active;
+- excludes self, inactive/deleted users and incomplete profiles;
+- requires discoverable profile plus explicit open/discoverable privacy settings;
+- requires approved/published `publicUrl` photos;
+- excludes blocked pairs in either direction;
+- excludes active LIKE/SKIP cooldowns and active matches;
+- allows expired LIKE/SKIP and expired matches to rediscover;
+- returns computed age and public photo URLs only;
+- does not expose raw Prisma rows or private profile/media/moderation fields.
+
 ### ModerationModule
 
 `ModerationController` receives authenticated block/report requests and delegates to `ModerationService`.
@@ -208,7 +239,7 @@ Avoid:
 
 ## Future Module Additions
 
-When implementing chat, moderation or discovery:
+When implementing future chat, moderation expansion or discovery ranking:
 
 1. Add the endpoint to the owning module.
 2. Define DTOs before accepting input.

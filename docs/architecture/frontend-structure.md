@@ -40,9 +40,9 @@ Current examples:
 
 - `features/auth` - sign-in/sign-up UI and birthdate field;
 - `features/app-shell` - protected app shell and navigation;
-- `features/discover` - current discover prototype UI.
+- `features/discover` - discover card UI and reveal interactions.
 
-`features/discover` still uses mock/demo data. That is acceptable for prototype UI, but it is not a production source of truth.
+`app/(app)/discover/page.tsx` uses `lib/discovery-api.ts` as the primary source for cards. Mock/demo data may remain for prototype-only areas, but it is not a production source of truth.
 
 ### `lib/`
 
@@ -53,6 +53,10 @@ Current files:
 - `auth-api.ts` - base `fetch` wrapper and auth endpoints;
 - `auth-context.tsx` - frontend auth state, refresh bootstrap, shared refresh promise and `authenticatedRequest`;
 - `profile-api.ts` - profile and media/profile-photo API client;
+- `discovery-api.ts` - discovery card API client and UI mapping;
+- `likes-api.ts` - LIKE/SKIP API client;
+- `matches-api.ts` - active matches API client;
+- `blocks-api.ts` and `reports-api.ts` - moderation action clients;
 - `lang-context.tsx` - language state;
 - `demo-session.tsx` - demo-only session helper.
 
