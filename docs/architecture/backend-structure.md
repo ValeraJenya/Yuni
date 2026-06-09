@@ -197,9 +197,24 @@ Ranking, random ordering, geolocation/radius, premium filters, chat/messages, no
 
 ### `chat`
 
-Scaffold-only.
+Implemented Step 16 MVP.
 
-Future responsibility: conversations, participants, messages and membership checks.
+- `GET /chat/conversations`
+- `GET /chat/conversations/:conversationId/messages`
+- `POST /chat/conversations/:conversationId/messages`
+- `POST /matches/:matchId/conversation`
+
+Owns conversations, participants, messages and membership checks:
+
+- actor/sender identity from `CurrentUser`;
+- start conversation only from an existing match;
+- idempotent existing conversation return;
+- transaction for conversation plus participant rows;
+- active participant checks for list/read/send;
+- block-aware list/read/send behavior through `ModerationService`;
+- plain text message validation and safe response shapes.
+
+Realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16.
 
 ### `moderation`
 

@@ -20,7 +20,7 @@
 - Access token передается как Bearer token и не должен логироваться.
 - Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
-- Доступ к чатам должен проверяться через membership в `conversation_participants`.
+- Доступ к чатам должен проверяться через membership в `conversation_participants`; `conversationId` сам по себе не является правом доступа.
 - Доступ к профилям, фото, discovery, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
 - Likes MVP принимает target profile только как `targetProfileUserId`, то есть `profiles.user_id`. У профиля нет отдельного публичного id.
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
@@ -144,7 +144,7 @@ Known MVP limitations:
 
 ## Likes MVP security rules
 
-Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike и chat не входят в Step 12. Matches реализуются отдельно в Step 13 через `MatchesService`; Step 14 добавляет block-aware enforcement; Step 15 подключает backend discovery feed.
+Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike не входит в Step 12. Matches реализуются отдельно в Step 13 через `MatchesService`; Step 14 добавляет block-aware enforcement; Step 15 подключает backend discovery feed; Step 16 добавляет chat только между участниками match.
 
 Security rules:
 
@@ -171,7 +171,7 @@ Known MVP limitations:
 
 ## Matches MVP security rules
 
-Matches MVP реализует только mutual matches from active LIKE interactions. Full chat, messages, notifications and moderation review are outside Step 13; Step 14 adds block-aware match enforcement.
+Matches MVP реализует mutual matches from active LIKE interactions. Chat creation and messages are owned by Step 16 `ChatModule`; notifications and moderation review remain outside Step 13.
 
 Security rules:
 
@@ -188,15 +188,45 @@ Security rules:
 - Expired match does not block future rematch.
 - DB overlap constraint conflicts are mapped to the existing active match or a safe conflict.
 - `/matches/me` returns only matches where the current user is a participant and filters out blocked pairs.
-- Match response shape is explicit and safe; raw Prisma `Match`, `User`, `Profile` and `ProfilePhoto` rows are never returned.
+- Match response shape is explicit and safe, including nullable `conversationId`; raw Prisma `Match`, `User`, `Profile` and `ProfilePhoto` rows are never returned.
 - Match responses must not expose `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local path, original filename or private profile settings.
-- Conversation state is represented only as `conversationStarted`; chat is not implemented in Step 13.
+- Conversation state is represented as `conversationId` plus `conversationStarted`; starting/opening the conversation is done by `POST /matches/:matchId/conversation`.
 
 Known MVP limitations:
 
 - No cron/job marks expired matches. For MVP, services filter active matches by `status=active` and `expiresAt > now`.
 - Race/exclusion behavior should be smoke-tested on a temporary PostgreSQL database before PR; broader e2e coverage can follow later.
 - Blocks can end active matches with `status=blocked`; unblocking does not restore old matches.
+
+## Chat MVP security rules
+
+Chat MVP owns one-to-one text conversations between match participants.
+
+Security rules:
+
+- `GET /chat/conversations`, `GET /chat/conversations/:conversationId/messages`, `POST /chat/conversations/:conversationId/messages` and `POST /matches/:matchId/conversation` require authenticated `CurrentUser`.
+- Actor and sender identity always come from `CurrentUser`; frontend cannot choose sender user id.
+- Conversation creation is allowed only through `POST /matches/:matchId/conversation`.
+- Only match participants can create/open a conversation for that match.
+- Active match (`status=active`, `expiresAt > now`) can create a new conversation.
+- Expired match without an existing conversation cannot create a new chat.
+- Existing conversation remains available after match expiration.
+- Conversation creation writes `Conversation` and both `ConversationParticipant` rows in a transaction.
+- Race on unique `conversation.matchId` maps to reading and returning the existing conversation.
+- List returns only conversations where current user is an active participant.
+- Message reads require current user active membership and use not-found style if an active block exists in either direction.
+- Sends require current user active membership, active conversation status and one other active participant.
+- Active block in either direction prevents sends with safe `403`.
+- Inactive/deleted current user cannot list/start/send.
+- Inactive/deleted other participant blocks new messages.
+- Message `text` is trimmed on backend, whitespace-only text returns `400`, max length is `2000`.
+- Chat supports plain text only in Step 16; no attachments/media messages.
+- Message body must not be logged with PII or tokens.
+- Responses use explicit safe shapes and never raw Prisma rows.
+
+Known MVP limitations:
+
+- WebSocket/realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16.
 
 ## Blocks / Reports MVP security rules
 

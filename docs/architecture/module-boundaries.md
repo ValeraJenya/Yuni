@@ -100,9 +100,20 @@ DiscoveryModule should not create likes, matches, blocks, reports, chats, notifi
 
 ### ChatModule
 
-Planned.
+Implemented Step 16 MVP.
 
-Owns conversations, participants, messages and conversation membership checks.
+Owns:
+
+- `GET /chat/conversations`;
+- `GET /chat/conversations/:conversationId/messages`;
+- `POST /chat/conversations/:conversationId/messages`;
+- `POST /matches/:matchId/conversation`;
+- conversation creation from existing matches;
+- conversation participant membership checks;
+- plain-text message validation;
+- safe conversation/message response shapes.
+
+ChatModule may read `Match` state to create/open conversations and may call `ModerationService.assertNoBlockBetween(...)` to enforce block-aware chat restrictions. It should not own match creation, likes, reports, notifications or realtime delivery.
 
 ### ModerationModule
 
@@ -203,7 +214,7 @@ Avoid:
 - filters blocked pairs from `/matches/me`;
 - does not create duplicate active matches;
 - allows future rematch after expiration;
-- returns compact public matched profile shape and `conversationStarted`;
+- returns compact public matched profile shape, nullable `conversationId` and `conversationStarted`;
 - does not expose raw Prisma rows or private media/profile fields.
 
 ### DiscoveryModule
@@ -237,9 +248,28 @@ Avoid:
 - creates reports with existing `ReportReasonCode`;
 - returns safe public block/report shapes and never returns raw Prisma moderation rows.
 
+### ChatModule
+
+`ChatController` and `MatchConversationsController` receive authenticated chat requests and delegate to `ChatService`.
+
+`ChatService`:
+
+- reads actor/sender from `CurrentUser`;
+- lists only conversations where the current user is an active participant;
+- hides blocked conversations from the list;
+- reads messages only through active membership and not-found style blocked reads;
+- sends only in active conversations with a second active participant;
+- rejects sends on active block with safe `403`;
+- starts conversations only for match participants;
+- creates `Conversation` and both `ConversationParticipant` rows in a transaction;
+- returns existing conversation idempotently, including after match expiration;
+- maps unique `matchId` race to reading the existing conversation;
+- trims plain text and rejects empty message body;
+- returns explicit safe conversation/message shapes, not raw Prisma rows.
+
 ## Future Module Additions
 
-When implementing future chat, moderation expansion or discovery ranking:
+When implementing future moderation expansion, chat realtime or discovery ranking:
 
 1. Add the endpoint to the owning module.
 2. Define DTOs before accepting input.

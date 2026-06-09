@@ -186,6 +186,7 @@ Matches MVP responses may include only explicit active match fields:
 - `match.matchedAt`;
 - `match.expiresAt`;
 - `match.status`;
+- `match.conversationId`, nullable safe conversation identifier;
 - `match.conversationStarted`.
 
 Matches responses must not expose:
@@ -204,6 +205,53 @@ Matches responses must not expose:
 - private profile settings;
 - deleted user/profile fields;
 - internal moderation fields.
+
+## Chat Response Shapes
+
+Conversation list responses may include only:
+
+- `conversationId`;
+- `otherParticipant.userId`;
+- `otherParticipant.handle`;
+- `otherParticipant.displayName`;
+- `otherParticipant.primaryPhotoUrl`;
+- `lastMessage.id`;
+- `lastMessage.conversationId`;
+- `lastMessage.senderUserId`;
+- `lastMessage.text`;
+- `lastMessage.status`;
+- `lastMessage.createdAt`;
+- `updatedAt`;
+- `status`;
+- `nextCursor`.
+
+Message list and send responses may include only:
+
+- `message.id`;
+- `message.conversationId`;
+- `message.senderUserId`;
+- `message.text`;
+- `message.status`;
+- `message.createdAt`;
+- `nextCursor` for list responses.
+
+Chat responses must not expose:
+
+- raw Prisma `Conversation`, `ConversationParticipant` or `Message` rows;
+- `body` under the DB field name;
+- `lastReadMessageId`;
+- `deletedAt`;
+- `editedAt`;
+- participant relation objects;
+- email;
+- `birthDate`;
+- password or `passwordHash`;
+- refresh/session/token fields;
+- `storageKey`;
+- local file path;
+- original uploaded filename;
+- private profile/privacy fields;
+- block/report/moderation internals.
 
 ## Blocks Response Shapes
 

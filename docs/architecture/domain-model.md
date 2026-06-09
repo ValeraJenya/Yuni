@@ -64,6 +64,16 @@ LIKE действует 3 days, SKIP/PASS действует 1 day. `expires_at`
 
 `conversations` - chat thread. `conversation_participants` - access-control boundary для chat reads/writes. `messages` требует, чтобы sender был участником conversation через composite foreign key, что делает owner checks понятными.
 
+Step 16 Chat MVP использует уже существующие `Conversation`, `ConversationParticipant`, `Message`, `Match` и `Block`. Новая Prisma migration не нужна.
+
+Conversation создается только из match через `POST /matches/:matchId/conversation`. Active match (`status=active`, `expires_at > now`) может создать новую conversation. Если match expired и conversation еще нет, новый чат не создается. Если conversation уже была создана раньше, она остается доступной через `/chat/conversations` даже после истечения match.
+
+`conversations.match_id` уникален, поэтому repeated start возвращает existing conversation idempotently. Race на unique `match_id` должен обрабатываться application service как safe read-existing path.
+
+Messages MVP - plain text only. API принимает поле `text`, а DB хранит его в `messages.body`. Backend trim-ит текст, запрещает пустые сообщения и ограничивает длину `2000` символов. Realtime, typing, read receipts, notifications, attachments/media messages, encryption and complex search are future work.
+
+Blocks apply to chat in both directions: blocked conversations are hidden from list, message read uses not-found style, and send returns safe `403`.
+
 ## Moderation
 
 `blocks` и `reports` - first-class entities. Blocks directional, duplicate blocker/blocked pairs запрещены. Step 14 использует hard delete для unblock: active block row существует только пока blocker держит block, а repeated block возвращает idempotent success. Blocks влияют в обе стороны на public profile visibility, discovery, LIKE/SKIP, match creation и `/matches/me`.
