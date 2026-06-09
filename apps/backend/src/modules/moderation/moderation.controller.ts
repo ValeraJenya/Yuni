@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CursorPaginationQueryDto } from '../../common/pagination';
+import { RATE_LIMIT_POLICIES, UseRateLimit } from '../../common/rate-limit';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
@@ -45,6 +46,7 @@ export class ModerationController {
     return this.moderationService.getMyBlocks(currentUser, query);
   }
 
+  @UseRateLimit(RATE_LIMIT_POLICIES.reportCreate)
   @Post('reports')
   reportUser(
     @CurrentUser() currentUser: AuthenticatedUser,

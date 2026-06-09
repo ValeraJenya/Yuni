@@ -6,6 +6,7 @@ import { appConfig } from './config/app.config';
 import { authConfig } from './config/auth.config';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { RateLimitModule } from './common/rate-limit';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
@@ -27,11 +28,12 @@ import { UsersModule } from './modules/users/users.module';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60_000,
-        limit: 20,
+        ttl: 10 * 60_000,
+        limit: 300,
       },
     ]),
     PrismaModule,
+    RateLimitModule,
     HealthModule,
     AuthModule,
     UsersModule,

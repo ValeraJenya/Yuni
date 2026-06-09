@@ -45,11 +45,51 @@ Frontend использует тот же contract через `NEXT_PUBLIC_API_U
 - `403` - пользователь аутентифицирован, но не имеет доступа к ресурсу.
 - `404` - ресурс отсутствует.
 - `409` - конфликт уникальности или доменного состояния.
+- `429` - rate limit exceeded.
 - `400` - request validation error.
 
 Backend не должен раскрывать security-sensitive details в ошибках. Например, публичный ответ не должен объяснять, что "user exists but you are not owner".
 
 Owner checks, conversation membership checks, match participant checks и profile/photo visibility checks должны выполняться на backend через common security helpers. Frontend flags не считаются доказательством доступа.
+
+## Rate Limits / Anti-Spam MVP
+
+Backend использует два слоя ограничений:
+
+- coarse global fallback через `@nestjs/throttler`: `300` requests / `10 minutes` / IP;
+- endpoint-specific in-memory limiter для anti-spam сценариев.
+
+Endpoint-specific limiter является local single-instance MVP. Он подходит для development и раннего MVP, но не является distributed limit для нескольких backend-инстансов. Production/multi-instance путь: заменить in-memory store на Redis/Valkey/shared store без изменения публичного API contract.
+
+`429` response shape:
+
+```json
+{
+  "statusCode": 429,
+  "message": "Too many requests",
+  "retryAfterSeconds": 60
+}
+```
+
+Rate-limit responses не раскрывают raw email, IP, user id, tokens, cookies, internal policy name или limiter key.
+
+Current endpoint policies:
+
+| Endpoint | Limit key | Limit |
+| --- | --- | --- |
+| `POST /auth/register` | IP | `3 / hour` |
+| `POST /auth/login` | IP | `20 / 10 minutes` |
+| `POST /auth/login` | IP + normalized email hash | `5 / 10 minutes` |
+| `POST /auth/refresh` | IP | `30 / 10 minutes` |
+| `POST /auth/logout` | IP | `30 / 10 minutes` |
+| `POST /likes/:targetProfileUserId` | authenticated user | `60 / hour` shared with SKIP |
+| `POST /likes/:targetProfileUserId/skip` | authenticated user | `60 / hour` shared with LIKE |
+| `POST /chat/conversations/:conversationId/messages` | authenticated user | `30 / minute` and `120 / 10 minutes` |
+| `POST /reports` | authenticated user | `10 / hour` |
+| `GET /discovery/cards` | authenticated user | `120 / 10 minutes` |
+| `GET /profiles/:handle` | authenticated user | `120 / 10 minutes` |
+
+Limiter не заменяет auth, owner checks, block checks, profile visibility checks, conversation membership checks или service-level business rules.
 
 ## Pagination Conventions
 

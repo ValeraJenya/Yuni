@@ -23,6 +23,8 @@ Owns auth/session/token lifecycle only:
 
 AuthModule should not own profile questionnaire behavior, media storage, likes, matches or chat business rules.
 
+Auth endpoints may declare rate-limit policies for register/login/refresh/logout, but limiter state and `429` shaping live in `common/rate-limit`.
+
 ### ProfilesModule
 
 Owns profile questionnaire and profile visibility:
@@ -33,6 +35,8 @@ Owns profile questionnaire and profile visibility:
 - public/self profile serializers.
 
 ProfilesModule should not upload files, create matches or send messages.
+
+ProfilesModule may declare a public-profile lookup rate limit. Profile visibility and block-aware access remain service/security-helper responsibilities, not limiter responsibilities.
 
 ### MediaModule
 
@@ -68,6 +72,8 @@ Owns:
 
 LikesModule should not own matches, chats, blocks or reports. It may call `ModerationService.assertNoBlockBetween(...)` to enforce the shared block boundary and may delegate after successful LIKE to `MatchesService.tryCreateMatchFromLike(...)`, but match lifecycle remains in MatchesModule. Superlike is not implemented.
 
+LIKE and SKIP share one rate-limit bucket by authenticated user. The limiter only gates request volume; duplicate interaction, cooldown, block and profile access checks remain in `LikesService`.
+
 ### MatchesModule
 
 Implemented Step 13 MVP for mutual active LIKE matches.
@@ -98,6 +104,8 @@ Owns:
 
 DiscoveryModule should not create likes, matches, blocks, reports, chats, notifications or ranking algorithms. It reads existing state to decide which public cards may be shown.
 
+DiscoveryModule may declare a cards rate limit for anti-scraping. Eligibility filtering, block checks and safe serialization remain in `DiscoveryService`.
+
 ### ChatModule
 
 Implemented Step 16 MVP.
@@ -115,11 +123,28 @@ Owns:
 
 ChatModule may read `Match` state to create/open conversations and may call `ModerationService.assertNoBlockBetween(...)` to enforce block-aware chat restrictions. It should not own match creation, likes, reports, notifications or realtime delivery.
 
+ChatModule may declare send-message rate limits. Conversation membership, participant status and block-aware send checks remain in `ChatService`.
+
 ### ModerationModule
 
 Implemented Step 14 MVP.
 
 Owns blocks, reports and block-aware helper operations used by profiles, likes and matches. Future admin review workflows remain outside this MVP.
+
+ModerationModule may declare a report-creation rate limit. Self-report rejection, target validation and safe report response shape remain in `ModerationService`.
+
+### RateLimitModule
+
+Implemented Step 17 anti-spam MVP in `apps/backend/src/common/rate-limit`.
+
+Owns:
+
+- endpoint policy metadata and decorators;
+- in-memory fixed-window counters;
+- safe `429 Too many requests` exception shape;
+- internal key construction using IP, authenticated user id or IP plus normalized email hash.
+
+RateLimitModule should not own product authorization or access rules. It must not replace `JwtAccessGuard`, `CurrentUser`, owner checks, block checks, profile visibility checks, conversation membership checks, cooldown rules or database constraints. The in-memory store is single-instance only; production/multi-instance deployments need Redis/Valkey or another shared store.
 
 ## Rules
 
@@ -143,6 +168,7 @@ Allowed patterns:
 - Simple read via Prisma inside a service when the rule is local and clear.
 - Common security helper for shared access checks.
 - Common serializer when the response shape is shared across modules.
+- Common rate-limit decorator for endpoint-specific anti-spam policies.
 - Exported service only when it represents a real business operation that another module must invoke.
 - Future event/worker path for heavy async operations such as media processing, notification delivery or moderation jobs.
 
