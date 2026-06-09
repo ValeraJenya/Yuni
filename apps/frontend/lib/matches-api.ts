@@ -1,4 +1,5 @@
 import type { ApiRequestMethod } from "@/lib/auth-api"
+import type { StartConversationResponse } from "@/lib/chat-api"
 
 export interface MatchProfileSummary {
   userId: string
@@ -13,6 +14,7 @@ export interface MatchSummary {
   matchedAt: string
   expiresAt: string
   status: "active" | "expired" | "unmatched" | "blocked"
+  conversationId: string | null
   conversationStarted: boolean
 }
 
@@ -28,5 +30,14 @@ type AuthenticatedRequest = <T>(
 export const matchesApi = {
   getMyMatches(request: AuthenticatedRequest) {
     return request<MatchesListResponse>("/matches/me")
+  },
+
+  startConversation(request: AuthenticatedRequest, matchId: string) {
+    return request<StartConversationResponse>(
+      `/matches/${encodeURIComponent(matchId)}/conversation`,
+      {
+        method: "POST",
+      },
+    )
   },
 }

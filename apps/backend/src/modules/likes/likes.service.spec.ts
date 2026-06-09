@@ -171,6 +171,7 @@ describe('LikesService', () => {
       matchedAt: FIXED_NOW,
       expiresAt: addDays(FIXED_NOW, 7),
       status: 'active',
+      conversationId: null,
       conversationStarted: false,
     };
     prisma.user.findUnique.mockResolvedValue(activeUser());

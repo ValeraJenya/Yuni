@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Ban, Clock, Flag, Flame, Heart } from "lucide-react"
 import { ApiError } from "@/lib/auth-api"
 import { blocksApi } from "@/lib/blocks-api"
@@ -27,6 +28,7 @@ const copy = {
     blockError: "Не удалось заблокировать пользователя.",
     reportSuccess: "Жалоба отправлена.",
     reportError: "Не удалось отправить жалобу.",
+    conversationError: "Не удалось открыть чат.",
     online: "В сети",
     expiresIn: (days: number, hours: number) =>
       days > 0 ? `Истекает через ${days} д` : `Истекает через ${hours} ч`,
@@ -53,6 +55,7 @@ const copy = {
     blockError: "Could not block this user.",
     reportSuccess: "Report sent.",
     reportError: "Could not send report.",
+    conversationError: "Could not open chat.",
     online: "Online",
     expiresIn: (days: number, hours: number) =>
       days > 0 ? `Expires in ${days}d` : `Expires in ${hours}h`,
@@ -85,13 +88,18 @@ function timeUntilExpiry(expiresAt: string, nowMs: number, t: typeof copy["ru"])
 export default function MatchesPage() {
   const { lang } = useLang()
   const { authenticatedRequest, isLoading: authLoading } = useAuth()
+  const router = useRouter()
   const t = copy[lang]
   const [matches, setMatches] = useState<MatchSummary[]>([])
   const [isMatchesLoading, setIsMatchesLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [moderationError, setModerationError] = useState<string | null>(null)
   const [moderationMessage, setModerationMessage] = useState<string | null>(null)
+  const [conversationError, setConversationError] = useState<string | null>(null)
   const [pendingModerationUserId, setPendingModerationUserId] = useState<
+    string | null
+  >(null)
+  const [pendingConversationMatchId, setPendingConversationMatchId] = useState<
     string | null
   >(null)
   const [nowMs, setNowMs] = useState(0)
@@ -110,6 +118,7 @@ export default function MatchesPage() {
         if (active) {
           setNowMs(requestStartedAt)
           setLoadError(null)
+          setConversationError(null)
           setMatches(response.matches)
         }
       })
@@ -143,6 +152,7 @@ export default function MatchesPage() {
     setPendingModerationUserId(targetUserId)
     setModerationError(null)
     setModerationMessage(null)
+    setConversationError(null)
 
     try {
       await blocksApi.blockUser(authenticatedRequest, targetUserId)
@@ -165,6 +175,7 @@ export default function MatchesPage() {
     setPendingModerationUserId(targetUserId)
     setModerationError(null)
     setModerationMessage(null)
+    setConversationError(null)
 
     try {
       await reportsApi.reportUser(authenticatedRequest, {
@@ -176,6 +187,54 @@ export default function MatchesPage() {
       setModerationError(error instanceof ApiError ? error.message : t.reportError)
     } finally {
       setPendingModerationUserId(null)
+    }
+  }
+
+  async function openConversation(match: MatchSummary) {
+    if (pendingConversationMatchId) {
+      return
+    }
+
+    setModerationError(null)
+    setModerationMessage(null)
+    setConversationError(null)
+
+    if (match.conversationId) {
+      router.push(
+        `/messages?conversation=${encodeURIComponent(match.conversationId)}`,
+      )
+      return
+    }
+
+    setPendingConversationMatchId(match.id)
+
+    try {
+      const response = await matchesApi.startConversation(
+        authenticatedRequest,
+        match.id,
+      )
+      setMatches((current) =>
+        current.map((item) =>
+          item.id === match.id
+            ? {
+                ...item,
+                conversationId: response.conversation.conversationId,
+                conversationStarted: true,
+              }
+            : item,
+        ),
+      )
+      router.push(
+        `/messages?conversation=${encodeURIComponent(
+          response.conversation.conversationId,
+        )}`,
+      )
+    } catch (error) {
+      setConversationError(
+        error instanceof ApiError ? error.message : t.conversationError,
+      )
+    } finally {
+      setPendingConversationMatchId(null)
     }
   }
 
@@ -229,22 +288,22 @@ export default function MatchesPage() {
 
       {/* ── Content ──────────────────────────────────────── */}
       <div className="flex-1 px-4 md:px-8 pb-24 md:pb-12">
-        {(moderationError || moderationMessage) && (
+        {(moderationError || conversationError || moderationMessage) && (
           <p
             className="font-sans mb-4 rounded-xl px-4 py-3"
             role="status"
             style={{
               fontSize: "12px",
-              color: moderationError
+              color: moderationError || conversationError
                 ? "oklch(0.60 0.18 25 / 0.85)"
                 : "oklch(0.62 0.15 145 / 0.85)",
               background: "oklch(0.11 0.012 15 / 0.80)",
-              border: moderationError
+              border: moderationError || conversationError
                 ? "1px solid oklch(0.55 0.20 25 / 0.25)"
                 : "1px solid oklch(0.62 0.15 145 / 0.22)",
             }}
           >
-            {moderationError ?? moderationMessage}
+            {moderationError ?? conversationError ?? moderationMessage}
           </p>
         )}
         {isMatchesLoading ? (
@@ -318,6 +377,8 @@ export default function MatchesPage() {
               const expiry = timeUntilExpiry(match.expiresAt, nowMs, t)
               const isModerationPending =
                 pendingModerationUserId === match.matchedProfile.userId
+              const isConversationPending =
+                pendingConversationMatchId === match.id
               const isExpiringSoon =
                 new Date(match.expiresAt).getTime() - nowMs < 2 * 24 * 60 * 60 * 1000
 
@@ -349,10 +410,12 @@ export default function MatchesPage() {
                       : "0 4px 16px oklch(0.04 0.005 15 / 0.40)"
                   }}
                 >
-                  <Link
-                    href={`/messages?chat=${match.id}`}
+                  <button
+                    type="button"
+                    onClick={() => void openConversation(match)}
+                    disabled={Boolean(pendingConversationMatchId)}
                     aria-label={profileName}
-                    className="absolute inset-0 z-10"
+                    className="absolute inset-0 z-10 disabled:cursor-wait"
                   />
                   {primaryPhotoUrl ? (
                     <Image
@@ -399,6 +462,26 @@ export default function MatchesPage() {
                         border: "1.5px solid oklch(0.07 0.008 15)",
                       }}
                     />
+                  )}
+
+                  {isConversationPending && (
+                    <div
+                      className="absolute inset-0 z-10 flex items-center justify-center"
+                      style={{ background: "oklch(0.05 0.010 15 / 0.30)" }}
+                    >
+                      <span
+                        className="rounded-full px-3 py-1.5 font-sans"
+                        style={{
+                          fontSize: "11px",
+                          color: "oklch(0.86 0.005 60)",
+                          background: "oklch(0.09 0.012 15 / 0.76)",
+                          border: "1px solid oklch(0.24 0.012 15 / 0.70)",
+                          backdropFilter: "blur(10px)",
+                        }}
+                      >
+                        {lang === "ru" ? "Открываем..." : "Opening..."}
+                      </span>
+                    </div>
                   )}
 
                   <div className="absolute top-3 left-3 z-20 flex gap-1.5">

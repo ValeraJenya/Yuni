@@ -55,7 +55,8 @@ Current files:
 - `profile-api.ts` - profile and media/profile-photo API client;
 - `discovery-api.ts` - discovery card API client and UI mapping;
 - `likes-api.ts` - LIKE/SKIP API client;
-- `matches-api.ts` - active matches API client;
+- `matches-api.ts` - active matches API client plus start conversation action;
+- `chat-api.ts` - conversations/messages API client;
 - `blocks-api.ts` and `reports-api.ts` - moderation action clients;
 - `lang-context.tsx` - language state;
 - `demo-session.tsx` - demo-only session helper.
@@ -115,6 +116,16 @@ page/component
 - `GET /profiles/:handle`;
 - profile photos upload/set-primary/delete calls;
 - conversion of backend relative `publicUrl` into frontend image URL.
+
+Current protected product API clients:
+
+- `discovery-api.ts` loads `/discovery/cards` as the source of truth for discover cards.
+- `likes-api.ts` sends backend LIKE/SKIP actions and removes cards only after success.
+- `matches-api.ts` loads `/matches/me` and starts a chat with `POST /matches/:matchId/conversation`.
+- `chat-api.ts` loads `/chat/conversations`, loads messages for a selected conversation and sends plain text messages.
+- `blocks-api.ts` and `reports-api.ts` perform moderation actions from protected UI.
+
+`app/(app)/messages/page.tsx` must use `chat-api.ts` as its primary source. Mock chat data can remain only as prototype-only data, not as the protected messages source of truth.
 
 ## Future Recommended API Layout
 

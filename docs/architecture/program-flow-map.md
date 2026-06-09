@@ -471,7 +471,7 @@ Database models:
 
 - `Like`
 - `Match`
-- `Conversation` only as nullable relation marker; chat is not implemented in Step 13.
+- `Conversation` as nullable relation marker; full chat creation and messages are implemented in Step 16.
 
 Match creation:
 
@@ -529,29 +529,133 @@ Out of scope for Step 13:
 - notifications;
 - full discovery ranking/filtering.
 
-### Chat Flow - Planned
+### Chat Flow - Step 16 MVP
 
-Expected module: `ChatModule`.
+Implemented module: `ChatModule`.
 
-Expected DB models already present:
+Frontend files:
+
+- `apps/frontend/app/(app)/matches/page.tsx`
+- `apps/frontend/app/(app)/messages/page.tsx`
+- `apps/frontend/lib/matches-api.ts`
+- `apps/frontend/lib/chat-api.ts`
+- `apps/frontend/lib/auth-context.tsx`
+
+Backend files:
+
+- `apps/backend/src/modules/chat/chat.controller.ts`
+- `apps/backend/src/modules/chat/match-conversations.controller.ts`
+- `apps/backend/src/modules/chat/chat.service.ts`
+- `apps/backend/src/modules/chat/chat.module.ts`
+- `apps/backend/src/modules/chat/dto/create-message.dto.ts`
+
+DB models already present:
 
 - `Conversation`;
 - `ConversationParticipant`;
 - `Message`.
 
-Expected security:
+Start conversation:
+
+```text
+matches page card action
+  -> matchesApi.startConversation(authenticatedRequest, match.id)
+  -> POST /matches/:matchId/conversation
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> ChatService.startConversationFromMatch
+  -> assert active current user
+  -> find Match by id
+  -> verify CurrentUser is a match participant
+  -> ModerationService.assertNoBlockBetween(current, other)
+  -> return existing conversation if present
+  -> reject expired match if conversation does not exist
+  -> transaction: create Conversation + two ConversationParticipant rows
+  -> map unique matchId race to existing conversation
+  -> safe conversation response
+  -> router.push(/messages?conversation=<conversationId>)
+```
+
+Conversation list:
+
+```text
+/messages page
+  -> chatApi.getConversations(authenticatedRequest)
+  -> GET /chat/conversations
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> ChatService.getConversations
+  -> assert active current user
+  -> Prisma conversation findMany where current user active participant
+  -> hide blocked pairs in either direction
+  -> cursor pagination by updatedAt/id
+  -> safe conversation summaries
+```
+
+Messages read:
+
+```text
+/messages page selects conversation
+  -> chatApi.getMessages(authenticatedRequest, conversationId)
+  -> GET /chat/conversations/:conversationId/messages
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> ChatService.getMessages
+  -> verify current user active participant
+  -> blocked pair returns not-found style
+  -> message findMany scoped to selected conversation
+  -> safe message list
+```
+
+Send message:
+
+```text
+composer submit
+  -> chatApi.sendMessage(authenticatedRequest, conversationId, text)
+  -> POST /chat/conversations/:conversationId/messages
+  -> CreateMessageDto trims and validates text
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> ChatService.sendMessage
+  -> assert active current user
+  -> verify active conversation and active membership
+  -> require one other active participant
+  -> ModerationService.assertNoBlockBetween(current, other)
+  -> transaction: create Message(body=text) + bump Conversation.updatedAt
+  -> safe message response
+  -> frontend appends message only after successful response
+```
+
+Security:
 
 - reads/writes only through conversation membership;
-- sender must be a participant;
-- cursor pagination for messages;
+- sender always comes from `CurrentUser`;
+- cursor pagination for conversation and message lists;
 - no unbounded message lists;
-- no reading conversation by id alone.
+- no reading conversation by id alone;
+- active block in either direction hides list/read and prevents send;
+- expired match without existing conversation cannot create chat;
+- existing conversation remains available after match expiration;
+- plain text only, max `2000`, no attachments/media messages;
+- no `dangerouslySetInnerHTML` on frontend message rendering;
+- no message body logging.
 
-Expected serializers:
+Response shapes:
 
-- conversation list shape;
-- message list shape;
-- no internal deleted/moderation fields unless explicitly needed.
+- conversation list: `conversationId`, safe `otherParticipant`, `lastMessage`, `updatedAt`, `status`, `nextCursor`;
+- messages: `id`, `conversationId`, `senderUserId`, `text`, `status`, `createdAt`, `nextCursor`;
+- no email, raw `birthDate`, password/session fields, storage internals, private settings, block/report internals, raw Prisma rows, `lastReadMessageId`, `deletedAt` or `editedAt`.
+
+Out of scope for Step 16:
+
+- WebSocket/realtime;
+- typing indicators;
+- read receipts;
+- notifications;
+- attachments/media messages;
+- encryption;
+- admin panel;
+- complex chat search.
 
 ### Moderation / Reports / Blocks Flow - Step 14 MVP
 

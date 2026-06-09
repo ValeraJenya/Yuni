@@ -126,6 +126,7 @@ describe('MatchesService', () => {
       matchedAt: FIXED_NOW,
       expiresAt: addDays(FIXED_NOW, 7),
       status: MatchStatus.active,
+      conversationId: null,
       conversationStarted: false,
     });
     expectNoRawMatchOrPrivateKeys(result);
@@ -229,6 +230,7 @@ describe('MatchesService', () => {
       }),
     ).resolves.toMatchObject({
       id: MATCH_ID,
+      conversationId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
       conversationStarted: true,
     });
 

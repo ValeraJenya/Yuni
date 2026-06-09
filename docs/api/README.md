@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP и Discovery MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP и Chat MVP.
 
 ## Подготовка
 
@@ -356,6 +356,7 @@ Response shape:
     "matchedAt": "2026-06-07T12:00:00.000Z",
     "expiresAt": "2026-06-14T12:00:00.000Z",
     "status": "active",
+    "conversationId": null,
     "conversationStarted": false
   }
 }
@@ -407,7 +408,7 @@ Step 13 реализует только взаимные matches на основ
 - match активен 7 days from `matchedAt`;
 - match исчезает из `/matches/me` после `expiresAt`;
 - cron/job для перевода `status` в `expired` в Step 13 не нужен;
-- chat не реализуется в Step 13;
+- chat создается отдельным Step 16 через `POST /matches/:matchId/conversation`;
 - Step 14 blocks могут завершить active match через `status=blocked` и скрывают blocked pair из `/matches/me`.
 
 ### Get My Active Matches
@@ -433,6 +434,7 @@ Response shape:
       "matchedAt": "2026-06-07T12:00:00.000Z",
       "expiresAt": "2026-06-14T12:00:00.000Z",
       "status": "active",
+      "conversationId": null,
       "conversationStarted": false
     }
   ]
@@ -440,6 +442,133 @@ Response shape:
 ```
 
 Response contains only current user's active matches and filters out blocked pairs in either direction. It must not expose raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows, `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local file path, original filename or private profile settings.
+
+## Chat MVP
+
+Все chat endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет actor только из `CurrentUser`; frontend не может передать sender/participant user id.
+
+Step 16 реализует только текстовую one-to-one переписку между участниками match:
+
+- conversation создается только через `POST /matches/:matchId/conversation`;
+- только участники match могут создать или открыть conversation;
+- active match (`status=active`, `expiresAt > now`) может создать новую conversation;
+- expired match без conversation не создает новый чат;
+- expired match с уже созданной conversation остается доступен через `/chat/conversations`;
+- repeated start для уже созданной conversation возвращает existing conversation idempotently;
+- send разрешен только active participant (`leftAt=null`) в active conversation;
+- active block в любую сторону скрывает conversation из списка, read возвращает not-found style, send возвращает safe `403`;
+- current user должен быть active/not deleted для list/start/send;
+- inactive/deleted other participant blocks new messages.
+
+### Start Conversation From Match
+
+```bash
+curl -i -X POST http://localhost:4000/matches/<matchId>/conversation \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "conversation": {
+    "conversationId": "44444444-4444-4444-8444-444444444444",
+    "otherParticipant": {
+      "userId": "22222222-2222-4222-8222-222222222222",
+      "handle": "target_user",
+      "displayName": "Target",
+      "primaryPhotoUrl": "/uploads/profile-photos/photo.jpg"
+    },
+    "lastMessage": null,
+    "updatedAt": "2026-06-09T12:00:00.000Z",
+    "status": "active"
+  }
+}
+```
+
+### Get Conversations
+
+```bash
+curl -i "http://localhost:4000/chat/conversations?limit=20" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "conversations": [
+    {
+      "conversationId": "44444444-4444-4444-8444-444444444444",
+      "otherParticipant": {
+        "userId": "22222222-2222-4222-8222-222222222222",
+        "handle": "target_user",
+        "displayName": "Target",
+        "primaryPhotoUrl": "/uploads/profile-photos/photo.jpg"
+      },
+      "lastMessage": {
+        "id": "55555555-5555-4555-8555-555555555555",
+        "conversationId": "44444444-4444-4444-8444-444444444444",
+        "senderUserId": "22222222-2222-4222-8222-222222222222",
+        "text": "Hi",
+        "status": "sent",
+        "createdAt": "2026-06-09T12:01:00.000Z"
+      },
+      "updatedAt": "2026-06-09T12:01:00.000Z",
+      "status": "active"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+### Get Messages
+
+```bash
+curl -i "http://localhost:4000/chat/conversations/<conversationId>/messages?limit=20" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "messages": [
+    {
+      "id": "55555555-5555-4555-8555-555555555555",
+      "conversationId": "44444444-4444-4444-8444-444444444444",
+      "senderUserId": "11111111-1111-4111-8111-111111111111",
+      "text": "Plain text only",
+      "status": "sent",
+      "createdAt": "2026-06-09T12:01:00.000Z"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+### Send Message
+
+```bash
+curl -i -X POST http://localhost:4000/chat/conversations/<conversationId>/messages \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Hello"}'
+```
+
+Message input rules:
+
+- API field is `text`; DB field is `messages.body`;
+- backend trims `text`;
+- empty or whitespace-only text returns `400`;
+- max length is `2000`;
+- MVP supports plain text only;
+- frontend renders text as React text, not `dangerouslySetInnerHTML`;
+- message body must not be logged.
+
+Chat responses must not expose email, raw `birthDate`, password/passwordHash, refresh/session fields, `storageKey`, local paths, original filenames, private profile/privacy fields, block/report/moderation internals, raw Prisma rows, `lastReadMessageId`, `deletedAt` or `editedAt`.
+
+Out of scope for Step 16: WebSocket/realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search.
 
 ## Blocks / Reports MVP
 

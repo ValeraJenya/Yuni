@@ -1,4 +1,13 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { ModerationModule } from '../moderation/moderation.module';
+import { ChatController } from './chat.controller';
+import { ChatService } from './chat.service';
+import { MatchConversationsController } from './match-conversations.controller';
 
-@Module({})
+@Module({
+  imports: [JwtModule.register({}), ModerationModule],
+  controllers: [ChatController, MatchConversationsController],
+  providers: [ChatService],
+})
 export class ChatModule {}

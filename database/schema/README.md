@@ -25,6 +25,8 @@
 
 Step 15 Discovery MVP uses the existing `users`, `profiles`, `profile_photos`, `privacy_settings`, `likes`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
 
+Step 16 Chat MVP uses the existing `conversations`, `conversation_participants`, `messages`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
+
 ## Связи
 
 У каждого `user` может быть один `profile`, один `privacy_settings`, один `notification_settings`, много `refresh_tokens`, много photos через profile, много likes, matches и conversation memberships.
@@ -35,9 +37,14 @@ Step 15 Discovery MVP uses the existing `users`, `profiles`, `profile_photos`, `
 
 `blocks` и `reports` отделены от profiles и matches, чтобы safety flows применялись к discovery, profile visibility, likes, matching и future chat без перегруза других таблиц. Повторный block одной пары не создает дубль; unblock не восстанавливает старые matches.
 
+`conversations.match_id` is nullable unique so a match can have at most one conversation. `conversation_participants` is the access-control boundary for reads and sends. `messages.body` stores backend-trimmed plain text from API `text`; sender must exist as a conversation participant through the composite foreign key.
+
 ## Fixed MVP Rules
 
 - Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, minimum profile completion, block filters и минимум одно approved published public photo.
+- Chat creation requires a match participant and active match unless an existing conversation already exists. Existing conversations remain available after match expiration.
+- Active block in either direction hides chat list/read access and prevents new messages.
+- Message text is plain text only for MVP, trimmed by backend, non-empty and max `2000` characters.
 - Private mode никогда не отдает user-uploaded photos. Backend presentation должен использовать `privacy_settings.anonymous_avatar_key` для системного rabbit avatar.
 - Blocks действуют в обе стороны для public profile visibility, LIKE/SKIP и matches. При block active match завершается `status='blocked'`.
 - Report reason codes: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.

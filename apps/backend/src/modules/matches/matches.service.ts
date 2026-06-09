@@ -103,6 +103,7 @@ export interface MatchResponse {
   matchedAt: Date;
   expiresAt: Date;
   status: MatchStatus;
+  conversationId: string | null;
   conversationStarted: boolean;
 }
 
@@ -313,6 +314,7 @@ export class MatchesService {
       matchedAt: match.matchedAt,
       expiresAt: match.expiresAt,
       status: match.status,
+      conversationId: match.conversation?.id ?? null,
       conversationStarted: Boolean(match.conversation),
       matchedProfile: toCompactProfile(
         matchedUser.profile,
