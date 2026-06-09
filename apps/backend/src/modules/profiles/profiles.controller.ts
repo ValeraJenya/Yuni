@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { RATE_LIMIT_POLICIES, UseRateLimit } from '../../common/rate-limit';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
@@ -23,6 +24,7 @@ export class ProfilesController {
     return this.profilesService.updateMe(currentUser, dto);
   }
 
+  @UseRateLimit(RATE_LIMIT_POLICIES.publicProfileLookup)
   @Get(':handle')
   getByHandle(
     @Param('handle') handle: string,

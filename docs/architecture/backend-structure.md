@@ -20,7 +20,8 @@ apps/backend/src/
 `app.module.ts` собирает корневое приложение:
 
 - `ConfigModule` с env validation;
-- global `ThrottlerGuard`;
+- global `ThrottlerGuard` fallback: `300` requests / `10 minutes` / IP;
+- `RateLimitModule` для endpoint-specific anti-spam policies;
 - `PrismaModule`;
 - domain modules: `AuthModule`, `UsersModule`, `ProfilesModule`, `MediaModule`, `LikesModule`, `MatchesModule`, `DiscoveryModule`, `ChatModule`, `ModerationModule`;
 - `HealthModule`.
@@ -54,8 +55,11 @@ apps/backend/src/
 - `common/security` - shared access-control helpers like `assertOwner`, `assertCanAccessProfile`, `assertConversationMember`.
 - `common/serializers` - public/self response shapes such as `toSafeAuthUser`, `toSelfProfile`, `toPublicProfile`, `toPublicProfilePhotos`.
 - `common/pagination` - cursor pagination DTO/helpers for future list endpoints.
+- `common/rate-limit` - in-memory endpoint-specific anti-spam limiter, guard and decorator.
 
 `common` не должен становиться свалкой бизнес-логики. Если правило относится к конкретному домену, оно должно жить в соответствующем module service.
+
+`common/rate-limit` is cross-cutting infrastructure only. It owns counters, window calculation, safe `429` shaping and decorator metadata. It must not own auth decisions, block rules, profile visibility, conversation membership or product-specific state transitions.
 
 ## Standard Module Shape
 
@@ -110,7 +114,8 @@ Owns auth/session/token lifecycle:
 - refresh token hashing;
 - atomic single-use refresh rotation;
 - HttpOnly refresh cookie;
-- safe auth user response.
+- safe auth user response;
+- register/login/refresh/logout endpoint-specific anti-spam limits.
 
 ### `users`
 
@@ -157,6 +162,7 @@ Owns expiring LIKE/SKIP interactions:
 - active duplicate conflict handling;
 - block-aware rejection through `ModerationService`;
 - safe response shape.
+- shared LIKE/SKIP anti-spam limit of `60 / hour / user`.
 
 Superlike and chat effects are outside Step 12. Matches are delegated to `MatchesService`; block effects are enforced by Step 14.
 
@@ -192,6 +198,7 @@ Owns backend discovery card listing:
 - filtering out self, inactive/deleted users, incomplete/non-discoverable/private profiles, blocked pairs, active LIKE/SKIP cooldowns and active matches;
 - allowing rediscovery after LIKE/SKIP or match expiration;
 - safe public card response with computed age and public photo URLs only.
+- discovery cards anti-scraping limit of `120 / 10 minutes / user`.
 
 Ranking, random ordering, geolocation/radius, premium filters, chat/messages, notifications and admin/moderation panel behavior are outside Step 15.
 
@@ -213,6 +220,7 @@ Owns conversations, participants, messages and membership checks:
 - active participant checks for list/read/send;
 - block-aware list/read/send behavior through `ModerationService`;
 - plain text message validation and safe response shapes.
+- send-message anti-spam limits of `30 / minute / user` and `120 / 10 minutes / user`.
 
 Realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16.
 
@@ -226,6 +234,8 @@ Implemented Step 14 MVP.
 - `POST /reports`
 
 Owns block/report API, self-block/self-report rejection, idempotent duplicate block/unblock behavior, ending active matches on block, safe public moderation response shapes and helper methods consumed by profiles/likes/matches. Future admin review workflow remains outside Step 14.
+
+Report creation has an endpoint-specific anti-spam limit of `10 / hour / user`.
 
 ## Adding New Backend Work
 

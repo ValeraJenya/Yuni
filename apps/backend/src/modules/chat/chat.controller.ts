@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CursorPaginationQueryDto } from '../../common/pagination';
+import { RATE_LIMIT_POLICIES, UseRateLimit } from '../../common/rate-limit';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
@@ -37,6 +38,7 @@ export class ChatController {
     return this.chatService.getMessages(currentUser, conversationId, query);
   }
 
+  @UseRateLimit(RATE_LIMIT_POLICIES.chatSend)
   @Post('conversations/:conversationId/messages')
   sendMessage(
     @CurrentUser() currentUser: AuthenticatedUser,

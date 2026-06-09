@@ -9,8 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
+import { RATE_LIMIT_POLICIES, UseRateLimit } from '../../common/rate-limit';
 import { REFRESH_TOKEN_COOKIE_PATH } from './auth.constants';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -26,7 +26,7 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @UseRateLimit(RATE_LIMIT_POLICIES.authRegister)
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -42,7 +42,7 @@ export class AuthController {
     };
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @UseRateLimit(RATE_LIMIT_POLICIES.authLogin)
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -58,7 +58,7 @@ export class AuthController {
     };
   }
 
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @UseRateLimit(RATE_LIMIT_POLICIES.authRefresh)
   @HttpCode(200)
   @Post('refresh')
   async refresh(
@@ -77,6 +77,7 @@ export class AuthController {
     };
   }
 
+  @UseRateLimit(RATE_LIMIT_POLICIES.authLogout)
   @HttpCode(200)
   @Post('logout')
   async logout(

@@ -64,6 +64,30 @@ Auth responses must not return:
 - token hash;
 - internal refresh token row.
 
+## Rate Limit Error Shape
+
+Rate-limit errors may return only:
+
+- `statusCode`, fixed to `429`;
+- `message`, fixed to `"Too many requests"`;
+- `retryAfterSeconds`, rounded up to whole seconds.
+
+Rate-limit errors must not expose:
+
+- raw email;
+- normalized email;
+- normalized email hash;
+- IP address;
+- authenticated user id;
+- access or refresh token;
+- cookie value;
+- password;
+- limiter bucket key;
+- internal policy name;
+- request body or message body.
+
+The login composite limiter may use `IP + normalizedEmailHash` internally, but neither the raw email nor the hash may appear in API responses or logs.
+
 ## Profile Response Shapes
 
 ### Self Profile

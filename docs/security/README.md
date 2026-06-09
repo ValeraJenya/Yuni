@@ -24,7 +24,7 @@
 - Доступ к профилям, фото, discovery, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
 - Likes MVP принимает target profile только как `targetProfileUserId`, то есть `profiles.user_id`. У профиля нет отдельного публичного id.
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
-- Auth endpoints имеют базовый throttling foundation. Production rate limits можно уточнить позже.
+- Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs.
 
 ## Frontend is not a security boundary
 
@@ -61,6 +61,39 @@ Backend security boundary для будущих product modules строится
 - `assertCanAccessPhoto(photo, currentUserId)` - для own photos или approved+published public photos.
 
 Отсутствующий ресурс возвращает `404 Resource not found`. Недостаточные права возвращают `403 Forbidden`. Ошибки не должны раскрывать детали вроде "user exists but you are not owner".
+
+## Rate limiting and anti-spam
+
+Step 17 добавляет anti-spam слой поверх существующих service-level checks:
+
+- global fallback через `@nestjs/throttler`: `300` requests / `10 minutes` / IP;
+- endpoint-specific in-memory limiter в `apps/backend/src/common/rate-limit`.
+
+Endpoint-specific limits:
+
+- register: `3 / hour / IP`;
+- login: `20 / 10 minutes / IP` plus `5 / 10 minutes / IP + normalizedEmailHash`;
+- refresh: `30 / 10 minutes / IP`;
+- logout: `30 / 10 minutes / IP`;
+- LIKE/SKIP combined: `60 / hour / authenticated user`;
+- chat send: `30 / minute / authenticated user` and `120 / 10 minutes / authenticated user`;
+- report create: `10 / hour / authenticated user`;
+- discovery cards: `120 / 10 minutes / authenticated user`;
+- public profile lookup: `120 / 10 minutes / authenticated user`.
+
+Authenticated policies must use `CurrentUser` populated by `JwtAccessGuard`; actor identity never comes from body, query, params or frontend state. Login's composite key uses a normalized email hash, not raw email. `429` responses return only:
+
+```json
+{
+  "statusCode": 429,
+  "message": "Too many requests",
+  "retryAfterSeconds": 60
+}
+```
+
+Limiter keys, policy names, raw email, IP, user id, token and cookie values must not be exposed in responses or logs.
+
+The current endpoint-specific limiter is local in-memory and single-instance only. Production or multi-instance deployments must use a shared Redis/Valkey-backed store to avoid per-instance bypass. Rate limiting is an anti-abuse layer only; it does not replace authentication, owner checks, block checks, profile visibility checks, conversation membership checks or database constraints.
 
 ## Serializer rules
 

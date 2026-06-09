@@ -9,7 +9,7 @@ frontend page/component
   -> frontend API client
   -> AuthProvider/authenticatedRequest when protected
   -> backend controller
-  -> DTO / guards / CurrentUser
+  -> guards / DTO / CurrentUser
   -> service
   -> Prisma/PostgreSQL
   -> serializer or explicit response shape
@@ -17,6 +17,18 @@ frontend page/component
 ```
 
 Frontend is not a security boundary. Backend must enforce auth, ownership, membership, validation and visibility.
+
+Rate-limit flow:
+
+```text
+HTTP request
+  -> global ThrottlerGuard fallback by IP (300 / 10 minutes)
+  -> route JwtAccessGuard when protected
+  -> route RateLimitGuard when a policy is declared
+  -> controller/service
+```
+
+Protected endpoint-specific policies must run with `CurrentUser` available, so user-scoped limits use the authenticated backend user id, never body/query/frontend state. Unauthenticated auth policies use IP; login also uses an internal normalized email hash. `429` responses expose only `statusCode`, `message` and `retryAfterSeconds`.
 
 ## A. Auth Flow
 
@@ -57,6 +69,7 @@ SignUpForm
   -> useAuth().register
   -> authApi.register
   -> POST /auth/register
+  -> RateLimitGuard register IP policy
   -> RegisterDto
   -> AuthService.register
   -> User/Profile/PrivacySettings/NotificationSettings create
@@ -69,6 +82,7 @@ SignUpForm
 Security:
 
 - frontend age validation is UX only;
+- register is limited to `3 / hour / IP`;
 - backend independently enforces `birthDate` format and 18+;
 - raw password is hashed and not stored;
 - raw refresh token is not stored;
@@ -81,6 +95,7 @@ SignInForm
   -> useAuth().login
   -> authApi.login
   -> POST /auth/login
+  -> RateLimitGuard login IP + normalized email hash policies
   -> LoginDto
   -> AuthService.login
   -> password verify
@@ -93,6 +108,7 @@ SignInForm
 Security:
 
 - invalid credentials use safe error;
+- login is limited to `20 / 10 minutes / IP` and `5 / 10 minutes / IP + normalizedEmailHash`;
 - password is never returned;
 - refresh token is cookie-only.
 
@@ -103,6 +119,7 @@ AuthProvider bootstrap or authenticatedRequest 401 retry
   -> shared refresh promise
   -> authApi.refresh
   -> POST /auth/refresh with credentials include
+  -> RateLimitGuard refresh IP policy
   -> AuthController reads refresh cookie
   -> AuthService.refresh
   -> verify hashed refresh token
@@ -115,6 +132,7 @@ AuthProvider bootstrap or authenticatedRequest 401 retry
 Security:
 
 - refresh rotation is single-use;
+- refresh is limited to `30 / 10 minutes / IP`;
 - parallel refresh with same cookie can only create one new valid session;
 - reused/revoked/expired refresh returns `401`;
 - frontend access token remains memory-only.
@@ -126,6 +144,7 @@ UI logout
   -> useAuth().logout
   -> authApi.logout
   -> POST /auth/logout
+  -> RateLimitGuard logout IP policy
   -> AuthService.logout
   -> revoke refresh session if present
   -> clear refresh cookie
@@ -135,6 +154,7 @@ UI logout
 Security:
 
 - logout is idempotent from frontend perspective;
+- logout is limited to `30 / 10 minutes / IP`;
 - cookie is cleared by backend;
 - frontend state is cleared even if logout request fails.
 
@@ -243,6 +263,7 @@ future public profile/discover UI
   -> profileApi.byHandle(authenticatedRequest, handle)
   -> GET /profiles/:handle
   -> JwtAccessGuard
+  -> RateLimitGuard public profile lookup policy
   -> CurrentUser
   -> ProfilesService.getByHandle
   -> Prisma profile findFirst handle case-insensitive
@@ -254,6 +275,7 @@ future public profile/discover UI
 Security:
 
 - public profile lookup still requires authenticated user in current MVP;
+- lookup is limited to `120 / 10 minutes / authenticated user`;
 - no email;
 - no birthDate;
 - no private settings;
@@ -414,6 +436,7 @@ discover card action
   -> authenticatedRequest attaches Bearer access token
   -> POST /likes/:targetProfileUserId or /likes/:targetProfileUserId/skip
   -> JwtAccessGuard
+  -> RateLimitGuard shared LIKE/SKIP user policy
   -> CurrentUser
   -> LikesService
   -> assert active actor
@@ -431,6 +454,7 @@ Security:
 
 - authenticated user comes from `CurrentUser`;
 - frontend never chooses actor user id;
+- LIKE and SKIP share `60 / hour / authenticated user`;
 - self-like and self-skip are rejected;
 - target profile must be discoverable/open by current rules;
 - blocked pairs in either direction cannot LIKE/SKIP;
@@ -615,6 +639,7 @@ composer submit
   -> POST /chat/conversations/:conversationId/messages
   -> CreateMessageDto trims and validates text
   -> JwtAccessGuard
+  -> RateLimitGuard chat send user policies
   -> CurrentUser
   -> ChatService.sendMessage
   -> assert active current user
@@ -630,6 +655,7 @@ Security:
 
 - reads/writes only through conversation membership;
 - sender always comes from `CurrentUser`;
+- send is limited to `30 / minute / authenticated user` and `120 / 10 minutes / authenticated user`;
 - cursor pagination for conversation and message lists;
 - no unbounded message lists;
 - no reading conversation by id alone;
@@ -712,6 +738,7 @@ matches page report action
   -> reportsApi.reportUser(authenticatedRequest, payload)
   -> POST /reports
   -> JwtAccessGuard
+  -> RateLimitGuard report create user policy
   -> CurrentUser
   -> CreateReportDto validates targetUserId, reason and details
   -> reject self-report
@@ -724,6 +751,7 @@ Security:
 - no self-block;
 - no self-report;
 - reports/blocks must be tied to authenticated `CurrentUser`;
+- report creation is limited to `10 / hour / authenticated user`;
 - block effects are applied to public profile reads, likes and matches;
 - discovery uses the same block boundary;
 - admin review endpoints must be separate from public/self endpoints.
@@ -769,6 +797,7 @@ Discovery list:
   -> discoveryApi.getCards(authenticatedRequest, { limit, cursor })
   -> GET /discovery/cards
   -> JwtAccessGuard
+  -> RateLimitGuard discovery cards user policy
   -> CurrentUser
   -> DiscoveryService.getCards
   -> assert active current user
@@ -803,6 +832,7 @@ Security:
 - expired LIKE/SKIP and expired matches do not block rediscovery;
 - use cursor pagination with max limit `20`;
 - apply anti-scraping limits;
+- cards are limited to `120 / 10 minutes / authenticated user`;
 - do not expose raw `birthDate`, email, password/session fields, storage internals, private settings, moderation internals or raw Prisma rows.
 
 Response shape:
