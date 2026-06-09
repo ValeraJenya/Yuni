@@ -21,7 +21,7 @@
 - Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
 - Доступ к чатам должен проверяться через membership в `conversation_participants`; `conversationId` сам по себе не является правом доступа.
-- Доступ к профилям, фото, discovery, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
+- Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
 - Likes MVP принимает target profile только как `targetProfileUserId`, то есть `profiles.user_id`. У профиля нет отдельного публичного id.
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
 - Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs.
@@ -79,7 +79,10 @@ Endpoint-specific limits:
 - chat send: `30 / minute / authenticated user` and `120 / 10 minutes / authenticated user`;
 - report create: `10 / hour / authenticated user`;
 - discovery cards: `120 / 10 minutes / authenticated user`;
-- public profile lookup: `120 / 10 minutes / authenticated user`.
+- public profile lookup: `120 / 10 minutes / authenticated user`;
+- notifications list: `120 / 10 minutes / authenticated user`;
+- notifications unread count: `240 / 10 minutes / authenticated user`;
+- notifications mark read/read all: `120 / 10 minutes / authenticated user`.
 
 Authenticated policies must use `CurrentUser` populated by `JwtAccessGuard`; actor identity never comes from body, query, params or frontend state. Login's composite key uses a normalized email hash, not raw email. `429` responses return only:
 
@@ -259,7 +262,32 @@ Security rules:
 
 Known MVP limitations:
 
-- WebSocket/realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16.
+- WebSocket/realtime, typing indicators, read receipts, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16. In-app notifications are implemented separately in Step 18 without realtime delivery.
+
+## Notifications MVP security rules
+
+Notifications MVP реализует только in-app уведомления внутри приложения.
+
+Security rules:
+
+- `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/:notificationId/read` и `POST /notifications/read-all` require authenticated `CurrentUser`.
+- Recipient/owner identity always comes from `CurrentUser`; frontend cannot choose which user's notifications to read or mark.
+- Notification events are created from backend-owned match/message flows, not from frontend requests.
+- `match_created` notifications are created only after a new `Match` row is created and only for both participants with the other participant as actor.
+- Existing active match and race-existing match paths must not create duplicate notifications.
+- `message_received` notifications are created only for the other active participant after successful message send.
+- Sender never receives their own message notification.
+- Active block in either direction prevents creating new visible notifications and hides existing actor notifications from list/count.
+- `NotificationSettings.matchesEnabled` and `NotificationSettings.messagesEnabled` are respected when creating events.
+- Notification rows store message keys and references only; raw message body is not stored.
+- Match/message notifications require a safe actor. Unsafe actorless match/message notifications are hidden; system notifications may have `actor=null`.
+- Responses use explicit safe shapes and never raw Prisma rows.
+
+Notifications responses must not expose email, raw `birthDate`, password/passwordHash, refresh/session fields, storage keys, local paths, original filenames, private profile/privacy fields, block/report internals or raw message body.
+
+Known MVP limitations:
+
+- Push notifications, email notifications, WebSocket/realtime, background workers/queues, Redis/Valkey, mobile notifications, notification preferences UI, admin notification tools and complex templates are outside Step 18.
 
 ## Blocks / Reports MVP security rules
 

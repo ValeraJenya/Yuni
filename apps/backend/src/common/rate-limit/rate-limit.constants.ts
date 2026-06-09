@@ -93,4 +93,28 @@ export const RATE_LIMIT_POLICIES = {
       key: 'user',
     },
   ],
+  notificationsList: [
+    {
+      name: 'notifications.list.user',
+      limit: 120,
+      windowMs: RATE_LIMIT_WINDOW_MS.tenMinutes,
+      key: 'user',
+    },
+  ],
+  notificationsUnreadCount: [
+    {
+      name: 'notifications.unreadCount.user',
+      limit: 240,
+      windowMs: RATE_LIMIT_WINDOW_MS.tenMinutes,
+      key: 'user',
+    },
+  ],
+  notificationsMarkRead: [
+    {
+      name: 'notifications.markRead.user',
+      limit: 120,
+      windowMs: RATE_LIMIT_WINDOW_MS.tenMinutes,
+      key: 'user',
+    },
+  ],
 } as const satisfies Record<string, RateLimitPolicy>;

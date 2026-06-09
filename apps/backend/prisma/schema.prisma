@@ -72,6 +72,12 @@ enum ProfileVisibilityMode {
   private
 }
 
+enum NotificationType {
+  match_created
+  message_received
+  system
+}
+
 model User {
   id                   String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                String                @unique
@@ -97,6 +103,8 @@ model User {
   reportsReceived      Report[]              @relation("ReportsReceived")
   privacySettings      PrivacySettings?
   notificationSettings NotificationSettings?
+  notificationsReceived Notification[]       @relation("NotificationsReceived")
+  notificationsActed    Notification[]       @relation("NotificationsActed")
 
   @@index([status])
   @@map("users")
@@ -232,6 +240,7 @@ model Match {
   userA         User           @relation("MatchesUserA", fields: [userAId], references: [id], onDelete: Cascade)
   userB         User           @relation("MatchesUserB", fields: [userBId], references: [id], onDelete: Cascade)
   conversation  Conversation?
+  notifications Notification[]
 
   @@index([userAId, status])
   @@index([userBId, status])
@@ -251,6 +260,7 @@ model Conversation {
   participants ConversationParticipant[]
   messages     Message[]
   reports      Report[]
+  notifications Notification[]
 
   @@index([matchId])
   @@map("conversations")
@@ -288,6 +298,7 @@ model Message {
   senderMember   ConversationParticipant    @relation("ParticipantMessages", fields: [conversationId, senderUserId], references: [conversationId, userId], onDelete: Cascade)
   readBy         ConversationParticipant[]  @relation("LastReadMessage")
   reports        Report[]
+  notifications  Notification[]
 
   @@index([conversationId, createdAt])
   @@index([senderUserId])
@@ -370,4 +381,31 @@ model NotificationSettings {
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_settings")
+}
+
+model Notification {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientUserId String           @map("recipient_user_id") @db.Uuid
+  type            NotificationType
+  actorUserId     String?          @map("actor_user_id") @db.Uuid
+  matchId         String?          @map("match_id") @db.Uuid
+  conversationId  String?          @map("conversation_id") @db.Uuid
+  messageId       String?          @map("message_id") @db.Uuid
+  messageKey      String           @map("message_key")
+  readAt          DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipient       User             @relation("NotificationsReceived", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  actor           User?            @relation("NotificationsActed", fields: [actorUserId], references: [id], onDelete: SetNull)
+  match           Match?           @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  conversation    Conversation?    @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  message         Message?         @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([recipientUserId, readAt, createdAt])
+  @@index([recipientUserId, createdAt])
+  @@index([actorUserId])
+  @@index([matchId])
+  @@index([conversationId])
+  @@index([messageId])
+  @@map("notifications")
 }

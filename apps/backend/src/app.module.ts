@@ -15,6 +15,7 @@ import { LikesModule } from './modules/likes/likes.module';
 import { MatchesModule } from './modules/matches/matches.module';
 import { MediaModule } from './modules/media/media.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -44,6 +45,7 @@ import { UsersModule } from './modules/users/users.module';
     DiscoveryModule,
     ChatModule,
     ModerationModule,
+    NotificationsModule,
   ],
   providers: [
     {

@@ -23,7 +23,7 @@ apps/backend/src/
 - global `ThrottlerGuard` fallback: `300` requests / `10 minutes` / IP;
 - `RateLimitModule` для endpoint-specific anti-spam policies;
 - `PrismaModule`;
-- domain modules: `AuthModule`, `UsersModule`, `ProfilesModule`, `MediaModule`, `LikesModule`, `MatchesModule`, `DiscoveryModule`, `ChatModule`, `ModerationModule`;
+- domain modules: `AuthModule`, `UsersModule`, `ProfilesModule`, `MediaModule`, `LikesModule`, `MatchesModule`, `DiscoveryModule`, `ChatModule`, `ModerationModule`, `NotificationsModule`;
 - `HealthModule`.
 
 ### `main.ts`
@@ -182,7 +182,7 @@ Owns mutual active LIKE matches:
 - block-aware creation/list filtering through `ModerationService`;
 - safe active match list response.
 
-Chat, messages, notifications and unmatch flows are outside Step 13. Blocks/reports are handled by `moderation` in Step 14.
+Chat and unmatch flows are outside Step 13. Blocks/reports are handled by `moderation` in Step 14. In-app notifications are handled by `NotificationsModule` in Step 18.
 
 ### `discovery`
 
@@ -222,7 +222,7 @@ Owns conversations, participants, messages and membership checks:
 - plain text message validation and safe response shapes.
 - send-message anti-spam limits of `30 / minute / user` and `120 / 10 minutes / user`.
 
-Realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16.
+Realtime, typing indicators, read receipts, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16. In-app message notifications are handled by Step 18.
 
 ### `moderation`
 
@@ -236,6 +236,27 @@ Implemented Step 14 MVP.
 Owns block/report API, self-block/self-report rejection, idempotent duplicate block/unblock behavior, ending active matches on block, safe public moderation response shapes and helper methods consumed by profiles/likes/matches. Future admin review workflow remains outside Step 14.
 
 Report creation has an endpoint-specific anti-spam limit of `10 / hour / user`.
+
+### `notifications`
+
+Implemented Step 18 MVP.
+
+- `GET /notifications`
+- `GET /notifications/unread-count`
+- `POST /notifications/:notificationId/read`
+- `POST /notifications/read-all`
+
+Owns in-app notification events and lifecycle:
+
+- actor/recipient identity from backend domain events and `CurrentUser`;
+- match-created notifications for both match participants after a new match row is created;
+- message-received notifications for the other active conversation participant after successful send;
+- unread/read state through `readAt`;
+- cursor pagination and unread count scoped to current user;
+- block-aware creation and visibility;
+- safe response shape without message body, raw Prisma rows or private profile/media fields.
+
+Push/email notifications, WebSocket/realtime, queues/workers, Redis/Valkey, notification preferences UI and admin notification tools are outside Step 18.
 
 ## Adding New Backend Work
 

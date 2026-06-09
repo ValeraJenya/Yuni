@@ -277,6 +277,40 @@ Chat responses must not expose:
 - private profile/privacy fields;
 - block/report/moderation internals.
 
+## Notifications Response Shapes
+
+Notification list and read responses may include only:
+
+- `id`;
+- `type`;
+- `messageKey`;
+- `createdAt`;
+- `readAt`;
+- `actor.userId`;
+- `actor.handle`;
+- `actor.displayName`;
+- `actor.primaryPhotoUrl`;
+- nullable `matchId`;
+- nullable `conversationId`;
+- nullable `messageId`;
+- `nextCursor` for list responses.
+
+System notifications may return `actor: null`. Match and message notifications require a safe actor; unsafe actorless rows should be hidden from public responses.
+
+Notification responses must not expose:
+
+- raw message body;
+- email;
+- raw `birthDate`;
+- password or `passwordHash`;
+- refresh/session/token fields;
+- `storageKey`;
+- local file path;
+- original uploaded filename;
+- private profile or privacy settings;
+- block/report/moderation internals;
+- raw Prisma `Notification`, `User`, `Profile`, `Message`, `Match` or `Conversation` rows.
+
 ## Blocks Response Shapes
 
 Block responses may include only:

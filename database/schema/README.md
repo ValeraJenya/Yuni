@@ -22,10 +22,13 @@
 - `reports` хранит user-focused moderation reports с reason code, optional comment, review status и optional references на message/photo context. Public API не раскрывает internal review status.
 - `privacy_settings` хранит privacy и visibility controls, включая open/private presentation и system anonymous avatar key.
 - `notification_settings` хранит notification preferences.
+- `notifications` хранит in-app notification events с recipient, optional actor, type, message key, read state и optional references на match/conversation/message.
 
 Step 15 Discovery MVP uses the existing `users`, `profiles`, `profile_photos`, `privacy_settings`, `likes`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
 
 Step 16 Chat MVP uses the existing `conversations`, `conversation_participants`, `messages`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
+
+Step 18 Notifications MVP adds the `notifications` table and `NotificationType` enum through a new Prisma migration. Notifications are in-app only and store message keys plus references, not raw message bodies, email, birth date, profile snapshots, storage keys, private settings or moderation internals.
 
 ## Связи
 
@@ -39,12 +42,16 @@ Step 16 Chat MVP uses the existing `conversations`, `conversation_participants`,
 
 `conversations.match_id` is nullable unique so a match can have at most one conversation. `conversation_participants` is the access-control boundary for reads and sends. `messages.body` stores backend-trimmed plain text from API `text`; sender must exist as a conversation participant through the composite foreign key.
 
+`notifications.recipient_user_id` is the owner boundary. `actor_user_id` is nullable for safe deleted-actor handling, but public serializers hide actorless match/message notifications and allow `actor=null` only for system notifications. `read_at` tracks unread/read state. Active blocks in either direction prevent new visible notification events and hide existing actor notifications from list/count.
+
 ## Fixed MVP Rules
 
 - Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, minimum profile completion, block filters и минимум одно approved published public photo.
 - Chat creation requires a match participant and active match unless an existing conversation already exists. Existing conversations remain available after match expiration.
 - Active block in either direction hides chat list/read access and prevents new messages.
 - Message text is plain text only for MVP, trimmed by backend, non-empty and max `2000` characters.
+- Notification events are in-app only for MVP. Push/email/WebSocket/realtime delivery, queues/workers, Redis/Valkey, mobile notifications, notification preferences UI, admin notification tools and complex templates are outside Step 18.
+- Notification rows must not store raw message body.
 - Private mode никогда не отдает user-uploaded photos. Backend presentation должен использовать `privacy_settings.anonymous_avatar_key` для системного rabbit avatar.
 - Blocks действуют в обе стороны для public profile visibility, LIKE/SKIP и matches. При block active match завершается `status='blocked'`.
 - Report reason codes: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.
@@ -60,3 +67,4 @@ Step 16 Chat MVP uses the existing `conversations`, `conversation_participants`,
 - Фото хранят object storage keys и metadata, не бинарники. В profile responses можно отдавать только approved и published photos.
 - Discovery visibility должна проверять `users.status`, `profiles.is_discoverable`, `privacy_settings.discoverable`, `profiles.completed_at`, block state, active LIKE/SKIP cooldowns, active matches и approved published public photo.
 - Private profile mode должен enforced на backend serializers. User photos в private mode не показываются.
+- Notification responses must use explicit safe shapes and must not expose message bodies, private profile fields, media storage internals, block/report internals or raw Prisma rows.
