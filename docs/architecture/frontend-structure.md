@@ -27,7 +27,7 @@ apps/frontend/
 Current route groups:
 
 - `app/(auth)` - auth pages such as `/signin`, `/join`, `/forgot-password`;
-- `app/(app)` - protected application routes such as `/discover`, `/matches`, `/messages`, `/profile`;
+- `app/(app)` - protected application routes such as `/discover`, `/matches`, `/messages`, `/notifications`, `/profile`;
 - `app/page.tsx` - landing page.
 
 Pages should compose UI and call feature/API abstractions. They should not duplicate backend auth/session rules.
@@ -57,6 +57,7 @@ Current files:
 - `likes-api.ts` - LIKE/SKIP API client;
 - `matches-api.ts` - active matches API client plus start conversation action;
 - `chat-api.ts` - conversations/messages API client;
+- `notifications-api.ts` - in-app notification list/count/read API client;
 - `blocks-api.ts` and `reports-api.ts` - moderation action clients;
 - `lang-context.tsx` - language state;
 - `demo-session.tsx` - demo-only session helper.
@@ -123,9 +124,12 @@ Current protected product API clients:
 - `likes-api.ts` sends backend LIKE/SKIP actions and removes cards only after success.
 - `matches-api.ts` loads `/matches/me` and starts a chat with `POST /matches/:matchId/conversation`.
 - `chat-api.ts` loads `/chat/conversations`, loads messages for a selected conversation and sends plain text messages.
+- `notifications-api.ts` loads `/notifications`, `/notifications/unread-count`, and marks notifications read.
 - `blocks-api.ts` and `reports-api.ts` perform moderation actions from protected UI.
 
 `app/(app)/messages/page.tsx` must use `chat-api.ts` as its primary source. Mock chat data can remain only as prototype-only data, not as the protected messages source of truth.
+
+`app/(app)/notifications/page.tsx` must use `notifications-api.ts` as its source of truth. App navigation may show unread count from `/notifications/unread-count` and refresh it on mount, route changes and the local `yuni:notifications-updated` browser event. There is no realtime/WebSocket or polling loop in Step 18.
 
 ## Future Recommended API Layout
 

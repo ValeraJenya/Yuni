@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP и Chat MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP, Chat MVP и Notifications MVP.
 
 ## Подготовка
 
@@ -88,6 +88,10 @@ Current endpoint policies:
 | `POST /reports` | authenticated user | `10 / hour` |
 | `GET /discovery/cards` | authenticated user | `120 / 10 minutes` |
 | `GET /profiles/:handle` | authenticated user | `120 / 10 minutes` |
+| `GET /notifications` | authenticated user | `120 / 10 minutes` |
+| `GET /notifications/unread-count` | authenticated user | `240 / 10 minutes` |
+| `POST /notifications/:notificationId/read` | authenticated user | `120 / 10 minutes` |
+| `POST /notifications/read-all` | authenticated user | `120 / 10 minutes` |
 
 Limiter не заменяет auth, owner checks, block checks, profile visibility checks, conversation membership checks или service-level business rules.
 
@@ -608,7 +612,98 @@ Message input rules:
 
 Chat responses must not expose email, raw `birthDate`, password/passwordHash, refresh/session fields, `storageKey`, local paths, original filenames, private profile/privacy fields, block/report/moderation internals, raw Prisma rows, `lastReadMessageId`, `deletedAt` or `editedAt`.
 
-Out of scope for Step 16: WebSocket/realtime, typing indicators, read receipts, notifications, attachments/media messages, encryption, admin panel and complex chat search.
+Notifications are implemented separately in Step 18. Out of scope for Step 16: WebSocket/realtime, typing indicators, read receipts, attachments/media messages, encryption, admin panel and complex chat search.
+
+## Notifications MVP
+
+Все notifications endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет actor/recipient только из `CurrentUser` и persisted domain events; frontend не может выбрать владельца уведомления.
+
+Notifications are in-app only for Step 18. Push notifications, email notifications, WebSocket/realtime delivery, queues/workers, Redis/Valkey, mobile notifications, notification preferences UI, admin notification tools and complex templates are outside this MVP.
+
+Notification types:
+
+- `match_created`;
+- `message_received`;
+- `system`.
+
+### Get Notifications
+
+```bash
+curl -i "http://localhost:4000/notifications?limit=20" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response shape:
+
+```json
+{
+  "notifications": [
+    {
+      "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "type": "message_received",
+      "messageKey": "notifications.message_received",
+      "createdAt": "2026-06-10T12:00:00.000Z",
+      "readAt": null,
+      "actor": {
+        "userId": "22222222-2222-4222-8222-222222222222",
+        "handle": "target_user",
+        "displayName": "Target",
+        "primaryPhotoUrl": "/uploads/profile-photos/photo.jpg"
+      },
+      "matchId": null,
+      "conversationId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "messageId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+Only current user's visible notifications are returned. Notifications involving an active block in either direction are hidden. `match_created` and `message_received` notifications require a safe actor; unsafe actorless rows are hidden. `system` notifications may return `actor: null`.
+
+Notification responses must not expose raw message body, email, raw `birthDate`, password/passwordHash, refresh/session fields, storage keys, local paths, original filenames, private profile/privacy fields, block/report internals or raw Prisma rows.
+
+### Get Unread Count
+
+```bash
+curl -i http://localhost:4000/notifications/unread-count \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response:
+
+```json
+{
+  "unreadCount": 3
+}
+```
+
+The count includes only the current user's visible unread notifications.
+
+### Mark One Read
+
+```bash
+curl -i -X POST http://localhost:4000/notifications/<notificationId>/read \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Only the notification owner can mark it as read. Missing, hidden or foreign notifications return not-found style response.
+
+### Mark All Read
+
+```bash
+curl -i -X POST http://localhost:4000/notifications/read-all \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "markedReadCount": 2
+}
+```
 
 ## Blocks / Reports MVP
 

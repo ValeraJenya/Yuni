@@ -20,6 +20,7 @@ import type { CursorPaginationQueryDto } from '../../common/pagination';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import type { ModerationService } from '../moderation/moderation.service';
+import type { NotificationsService } from '../notifications/notifications.service';
 import { ChatService } from './chat.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 
@@ -59,6 +60,10 @@ interface PrismaMock {
 
 interface ModerationServiceMock {
   assertNoBlockBetween: jest.Mock;
+}
+
+interface NotificationsServiceMock {
+  createMessageNotification: jest.Mock;
 }
 
 describe('ChatService', () => {
@@ -357,7 +362,8 @@ describe('ChatService', () => {
   });
 
   it('blocks message sends when either participant has an active block', async () => {
-    const { service, prisma, moderationService } = createService();
+    const { service, prisma, moderationService, notificationsService } =
+      createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.conversation.findFirst.mockResolvedValue(makeConversation());
     moderationService.assertNoBlockBetween.mockRejectedValue(
@@ -373,6 +379,7 @@ describe('ChatService', () => {
       OTHER_USER_ID,
     );
     expect(prisma.message.create).not.toHaveBeenCalled();
+    expect(notificationsService.createMessageNotification).not.toHaveBeenCalled();
   });
 
   it('blocks new messages when the other participant is inactive or deleted', async () => {
@@ -413,7 +420,7 @@ describe('ChatService', () => {
   });
 
   it('trims and sends a plain-text message in a transaction', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, notificationsService } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.conversation.findFirst.mockResolvedValue(makeConversation());
     prisma.message.create.mockImplementation(async (args) =>
@@ -449,6 +456,13 @@ describe('ChatService', () => {
       select: {
         id: true,
       },
+    });
+    expect(notificationsService.createMessageNotification).toHaveBeenCalledWith({
+      recipientUserId: OTHER_USER_ID,
+      actorUserId: CURRENT_USER_ID,
+      conversationId: CONVERSATION_ID,
+      messageId: MESSAGE_ID,
+      now: FIXED_NOW,
     });
     expect(result).toEqual({
       message: {
@@ -667,14 +681,19 @@ function createService() {
   const moderationService: ModerationServiceMock = {
     assertNoBlockBetween: jest.fn().mockResolvedValue(undefined),
   };
+  const notificationsService: NotificationsServiceMock = {
+    createMessageNotification: jest.fn().mockResolvedValue(undefined),
+  };
 
   return {
     service: new ChatService(
       prisma as unknown as PrismaService,
       moderationService as unknown as ModerationService,
+      notificationsService as unknown as NotificationsService,
     ),
     prisma,
     moderationService,
+    notificationsService,
   };
 }
 

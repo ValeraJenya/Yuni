@@ -6,6 +6,7 @@ import { ChatController } from '../../modules/chat/chat.controller';
 import { DiscoveryController } from '../../modules/discovery/discovery.controller';
 import { LikesController } from '../../modules/likes/likes.controller';
 import { ModerationController } from '../../modules/moderation/moderation.controller';
+import { NotificationsController } from '../../modules/notifications/notifications.controller';
 import { ProfilesController } from '../../modules/profiles/profiles.controller';
 
 describe('rate limit endpoint decorators', () => {
@@ -45,6 +46,21 @@ describe('rate limit endpoint decorators', () => {
     );
     expect(getPolicy(ProfilesController.prototype.getByHandle)).toEqual(
       RATE_LIMIT_POLICIES.publicProfileLookup,
+    );
+  });
+
+  it('attaches notification policies', () => {
+    expect(getPolicy(NotificationsController.prototype.listNotifications)).toEqual(
+      RATE_LIMIT_POLICIES.notificationsList,
+    );
+    expect(getPolicy(NotificationsController.prototype.getUnreadCount)).toEqual(
+      RATE_LIMIT_POLICIES.notificationsUnreadCount,
+    );
+    expect(getPolicy(NotificationsController.prototype.markOneRead)).toEqual(
+      RATE_LIMIT_POLICIES.notificationsMarkRead,
+    );
+    expect(getPolicy(NotificationsController.prototype.markAllRead)).toEqual(
+      RATE_LIMIT_POLICIES.notificationsMarkRead,
     );
   });
 });

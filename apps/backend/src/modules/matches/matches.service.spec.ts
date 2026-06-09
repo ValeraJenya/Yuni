@@ -13,6 +13,7 @@ import {
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import type { ModerationService } from '../moderation/moderation.service';
+import type { NotificationsService } from '../notifications/notifications.service';
 import { MatchesService } from './matches.service';
 
 const ACTOR_USER_ID = '22222222-2222-4222-8222-222222222222';
@@ -46,6 +47,10 @@ interface ModerationServiceMock {
   getBlockedUserIdsFor: jest.Mock;
 }
 
+interface NotificationsServiceMock {
+  createMatchNotifications: jest.Mock;
+}
+
 interface MatchCreateArgs {
   data: {
     userAId: string;
@@ -67,7 +72,7 @@ describe('MatchesService', () => {
   });
 
   it('creates a match when the new LIKE has a reciprocal active LIKE', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, notificationsService } = createService();
     prisma.like.findFirst.mockResolvedValue({ id: 'reciprocal-like-id' });
     prisma.match.findFirst.mockResolvedValue(null);
     prisma.match.create.mockImplementation(async (args: MatchCreateArgs) =>
@@ -115,6 +120,12 @@ describe('MatchesService', () => {
       },
       select: expect.any(Object),
     });
+    expect(notificationsService.createMatchNotifications).toHaveBeenCalledWith({
+      matchId: MATCH_ID,
+      userAId: TARGET_USER_ID,
+      userBId: ACTOR_USER_ID,
+      now: FIXED_NOW,
+    });
     expect(result).toEqual({
       id: MATCH_ID,
       matchedProfile: {
@@ -133,7 +144,7 @@ describe('MatchesService', () => {
   });
 
   it('does not create a match for one-sided LIKE', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, notificationsService } = createService();
     prisma.like.findFirst.mockResolvedValue(null);
 
     await expect(
@@ -146,10 +157,12 @@ describe('MatchesService', () => {
 
     expect(prisma.match.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.create).not.toHaveBeenCalled();
+    expect(notificationsService.createMatchNotifications).not.toHaveBeenCalled();
   });
 
   it('does not create a match when users are blocked in either direction', async () => {
-    const { service, prisma, moderationService } = createService();
+    const { service, prisma, moderationService, notificationsService } =
+      createService();
     moderationService.hasBlockBetween.mockResolvedValue(true);
 
     await expect(
@@ -167,6 +180,7 @@ describe('MatchesService', () => {
     expect(prisma.like.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.create).not.toHaveBeenCalled();
+    expect(notificationsService.createMatchNotifications).not.toHaveBeenCalled();
   });
 
   it('does not create a match for SKIP/PASS interactions', async () => {
@@ -212,7 +226,7 @@ describe('MatchesService', () => {
   });
 
   it('returns the existing active match instead of creating a duplicate', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, notificationsService } = createService();
     const existingMatch = makeMatchRecord({
       id: MATCH_ID,
       conversation: {
@@ -235,6 +249,7 @@ describe('MatchesService', () => {
     });
 
     expect(prisma.match.create).not.toHaveBeenCalled();
+    expect(notificationsService.createMatchNotifications).not.toHaveBeenCalled();
   });
 
   it('allows a future rematch when older matches are expired', async () => {
@@ -301,7 +316,7 @@ describe('MatchesService', () => {
   });
 
   it('maps active overlap DB conflicts to the existing active match', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, notificationsService } = createService();
     const existingMatch = makeMatchRecord({ id: MATCH_ID });
     prisma.like.findFirst.mockResolvedValue({ id: 'reciprocal-like-id' });
     prisma.match.findFirst
@@ -329,6 +344,7 @@ describe('MatchesService', () => {
     ).resolves.toMatchObject({
       id: MATCH_ID,
     });
+    expect(notificationsService.createMatchNotifications).not.toHaveBeenCalled();
   });
 
   it('returns only current user active matches from getMyMatches', async () => {
@@ -480,14 +496,19 @@ function createService() {
     hasBlockBetween: jest.fn().mockResolvedValue(false),
     getBlockedUserIdsFor: jest.fn().mockResolvedValue(new Set()),
   };
+  const notificationsService: NotificationsServiceMock = {
+    createMatchNotifications: jest.fn().mockResolvedValue(undefined),
+  };
 
   return {
     service: new MatchesService(
       prisma as unknown as PrismaService,
       moderationService as unknown as ModerationService,
+      notificationsService as unknown as NotificationsService,
     ),
     prisma,
     moderationService,
+    notificationsService,
   };
 }
 

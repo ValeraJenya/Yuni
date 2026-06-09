@@ -88,7 +88,7 @@ Owns:
 - active match filtering by `status=active` and `expiresAt > now`;
 - safe match response shape.
 
-MatchesModule should not send messages, create full chat flows, own reports, notifications or discovery ranking. It may call `ModerationService` to prevent and hide blocked matches.
+MatchesModule should not send messages, create full chat flows, own reports or discovery ranking. It may call `ModerationService` to prevent and hide blocked matches and `NotificationsService` after a newly created match row.
 
 ### DiscoveryModule
 
@@ -121,7 +121,7 @@ Owns:
 - plain-text message validation;
 - safe conversation/message response shapes.
 
-ChatModule may read `Match` state to create/open conversations and may call `ModerationService.assertNoBlockBetween(...)` to enforce block-aware chat restrictions. It should not own match creation, likes, reports, notifications or realtime delivery.
+ChatModule may read `Match` state to create/open conversations and may call `ModerationService.assertNoBlockBetween(...)` to enforce block-aware chat restrictions. It may call `NotificationsService` after successful message sends. It should not own match creation, likes, reports or realtime delivery.
 
 ChatModule may declare send-message rate limits. Conversation membership, participant status and block-aware send checks remain in `ChatService`.
 
@@ -132,6 +132,23 @@ Implemented Step 14 MVP.
 Owns blocks, reports and block-aware helper operations used by profiles, likes and matches. Future admin review workflows remain outside this MVP.
 
 ModerationModule may declare a report-creation rate limit. Self-report rejection, target validation and safe report response shape remain in `ModerationService`.
+
+### NotificationsModule
+
+Implemented Step 18 MVP.
+
+Owns:
+
+- `GET /notifications`;
+- `GET /notifications/unread-count`;
+- `POST /notifications/:notificationId/read`;
+- `POST /notifications/read-all`;
+- notification event writes for `match_created` and `message_received`;
+- unread/read lifecycle;
+- safe notification response shape;
+- block-aware notification creation and visibility.
+
+NotificationsModule exports `NotificationsService` for MatchesModule and ChatModule. It must not import MatchesModule or ChatModule, which keeps event integration acyclic. NotificationsModule should not send push/email, own realtime delivery, own notification preferences UI or expose admin notification tools in Step 18.
 
 ### RateLimitModule
 

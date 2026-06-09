@@ -18,6 +18,7 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { ModerationService } from '../moderation/moderation.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const MATCH_DURATION_DAYS = 7;
 const ACTIVE_MATCH_CONFLICT_MESSAGE = 'Active match already exists';
@@ -122,6 +123,7 @@ export class MatchesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly moderationService: ModerationService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getMyMatches(
@@ -217,6 +219,13 @@ export class MatchesService {
           expiresAt: this.getExpiryDate(now),
         },
         select: matchResponseSelect,
+      });
+
+      await this.notificationsService.createMatchNotifications({
+        matchId: match.id,
+        userAId: match.userAId,
+        userBId: match.userBId,
+        now,
       });
 
       return this.toMatchResponse(match, actorUserId);

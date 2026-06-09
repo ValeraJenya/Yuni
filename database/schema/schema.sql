@@ -303,3 +303,28 @@ CREATE TABLE notification_settings (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE TABLE notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type text NOT NULL
+    CHECK (type IN ('match_created', 'message_received', 'system')),
+  actor_user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+  match_id uuid REFERENCES matches(id) ON DELETE SET NULL,
+  conversation_id uuid REFERENCES conversations(id) ON DELETE SET NULL,
+  message_id uuid REFERENCES messages(id) ON DELETE SET NULL,
+  message_key text NOT NULL,
+  read_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT notifications_message_key_not_blank CHECK (length(trim(message_key)) > 0),
+  CONSTRAINT notifications_no_self_actor CHECK (actor_user_id IS NULL OR actor_user_id <> recipient_user_id)
+);
+
+CREATE INDEX notifications_recipient_read_created_idx
+  ON notifications (recipient_user_id, read_at, created_at DESC);
+CREATE INDEX notifications_recipient_created_idx
+  ON notifications (recipient_user_id, created_at DESC);
+CREATE INDEX notifications_actor_user_id_idx ON notifications (actor_user_id);
+CREATE INDEX notifications_match_id_idx ON notifications (match_id);
+CREATE INDEX notifications_conversation_id_idx ON notifications (conversation_id);
+CREATE INDEX notifications_message_id_idx ON notifications (message_id);

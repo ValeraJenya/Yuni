@@ -511,6 +511,7 @@ discover LIKE action
   -> normalize pair to userAId < userBId
   -> find active match where status=active and expiresAt > now
   -> create Match with matchedAt=now and expiresAt=now+7 days if no active duplicate
+  -> NotificationsService creates match_created notifications for both users
   -> return optional safe match shape in LIKE response
   -> frontend shows match overlay only if backend returned match
 ```
@@ -540,6 +541,8 @@ Security:
 - one-sided LIKE never creates a match;
 - expired reciprocal LIKE never creates a match;
 - blocked pair never creates a match;
+- new match creates in-app notifications for both participants;
+- existing active/race-existing match does not create duplicate notifications;
 - active duplicate match is not created;
 - expired match does not block rematch;
 - active means `status=active` and `expiresAt > now`;
@@ -550,7 +553,7 @@ Security:
 Out of scope for Step 13:
 
 - full chat and sending messages;
-- notifications;
+- notification delivery ownership, implemented separately by Step 18;
 - full discovery ranking/filtering.
 
 ### Chat Flow - Step 16 MVP
@@ -647,6 +650,7 @@ composer submit
   -> require one other active participant
   -> ModerationService.assertNoBlockBetween(current, other)
   -> transaction: create Message(body=text) + bump Conversation.updatedAt
+  -> NotificationsService creates message_received notification for other participant
   -> safe message response
   -> frontend appends message only after successful response
 ```
@@ -660,6 +664,7 @@ Security:
 - no unbounded message lists;
 - no reading conversation by id alone;
 - active block in either direction hides list/read and prevents send;
+- active block in either direction prevents new message notifications;
 - expired match without existing conversation cannot create chat;
 - existing conversation remains available after match expiration;
 - plain text only, max `2000`, no attachments/media messages;
@@ -677,11 +682,95 @@ Out of scope for Step 16:
 - WebSocket/realtime;
 - typing indicators;
 - read receipts;
-- notifications;
 - attachments/media messages;
 - encryption;
 - admin panel;
 - complex chat search.
+
+### Notifications Flow - Step 18 MVP
+
+Implemented module: `NotificationsModule`.
+
+Frontend files:
+
+- `apps/frontend/app/(app)/notifications/page.tsx`
+- `apps/frontend/features/app-shell/components/app-nav.tsx`
+- `apps/frontend/lib/notifications-api.ts`
+- `apps/frontend/lib/auth-context.tsx`
+
+Backend files:
+
+- `apps/backend/src/modules/notifications/notifications.controller.ts`
+- `apps/backend/src/modules/notifications/notifications.service.ts`
+- `apps/backend/src/modules/notifications/notifications.module.ts`
+- `apps/backend/src/modules/matches/matches.service.ts`
+- `apps/backend/src/modules/chat/chat.service.ts`
+
+DB models:
+
+- `Notification`;
+- `NotificationSettings`;
+- `User`;
+- optional references to `Match`, `Conversation` and `Message`.
+
+List and unread count:
+
+```text
+notifications page or app nav
+  -> notificationsApi.getNotifications/getUnreadCount
+  -> authenticatedRequest attaches Bearer access token
+  -> GET /notifications or /notifications/unread-count
+  -> JwtAccessGuard
+  -> RateLimitGuard notification user policy
+  -> CurrentUser
+  -> NotificationsService
+  -> assert active current user
+  -> query Notification rows scoped to CurrentUser.id
+  -> hide blocked actor notifications and unsafe actorless match/message rows
+  -> safe notification response / unread count
+```
+
+Mark read:
+
+```text
+notification row or mark-all action
+  -> notificationsApi.markRead/markAllRead
+  -> POST /notifications/:id/read or /notifications/read-all
+  -> JwtAccessGuard
+  -> CurrentUser
+  -> NotificationsService
+  -> update only visible notifications owned by CurrentUser.id
+  -> frontend dispatches yuni:notifications-updated
+  -> AppNav refreshes unread count
+```
+
+Event creation:
+
+```text
+new match row created
+  -> MatchesService after match.create
+  -> NotificationsService.createMatchNotifications
+  -> respect NotificationSettings.matchesEnabled
+  -> skip self-notification and blocked pairs
+  -> create one notification for each participant
+
+message send succeeds
+  -> ChatService after message.create
+  -> NotificationsService.createMessageNotification
+  -> respect NotificationSettings.messagesEnabled
+  -> skip sender and blocked pairs
+  -> create notification for other participant only
+```
+
+Security:
+
+- notification endpoints require authenticated `CurrentUser`;
+- users can only list/count/read their own notifications;
+- match/message notifications require safe actor; system may have `actor=null`;
+- no raw message body is stored or returned;
+- no email, raw `birthDate`, password/session fields, storage internals, private settings, block/report internals or raw Prisma rows;
+- active block in either direction prevents new visible notifications and hides existing actor notifications;
+- Step 18 is in-app only: no push/email/WebSocket/realtime, queues/workers, Redis/Valkey, mobile notifications, notification preferences UI, admin tools or complex templates.
 
 ### Moderation / Reports / Blocks Flow - Step 14 MVP
 
@@ -848,5 +937,5 @@ Out of scope for Step 15:
 - geolocation/radius;
 - premium filters;
 - chat/messages;
-- notifications;
+- notification delivery ownership;
 - admin/moderation panel.

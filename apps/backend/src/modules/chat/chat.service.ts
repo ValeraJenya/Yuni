@@ -26,6 +26,7 @@ import {
 } from '../../common/serializers/user-profile.serializer';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { ModerationService } from '../moderation/moderation.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 
 const RESOURCE_NOT_FOUND_MESSAGE = 'Resource not found';
@@ -204,6 +205,7 @@ export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly moderationService: ModerationService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getConversations(
@@ -360,6 +362,14 @@ export class ChatService {
       });
 
       return createdMessage;
+    });
+
+    await this.notificationsService.createMessageNotification({
+      recipientUserId: otherParticipant.userId,
+      actorUserId: currentUser.id,
+      conversationId,
+      messageId: message.id,
+      now,
     });
 
     return {

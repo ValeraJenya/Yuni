@@ -1,10 +1,15 @@
 "use client"
 
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Flame, MessageCircle, Heart, User, LogOut } from "lucide-react"
+import { Bell, Flame, MessageCircle, Heart, User, LogOut } from "lucide-react"
 import { useLang } from "@/lib/lang-context"
 import { useAuth } from "@/lib/auth-context"
+import {
+  NOTIFICATIONS_UPDATED_EVENT,
+  notificationsApi,
+} from "@/lib/notifications-api"
 import Image from "next/image"
 
 const navItems = [
@@ -19,14 +24,18 @@ const navItems = [
     icon: Heart,
     labelRu: "Матчи",
     labelEn: "Matches",
-    badge: 2,
   },
   {
     href: "/messages",
     icon: MessageCircle,
     labelRu: "Чаты",
     labelEn: "Messages",
-    badge: 1,
+  },
+  {
+    href: "/notifications",
+    icon: Bell,
+    labelRu: "События",
+    labelEn: "Alerts",
   },
   {
     href: "/profile",
@@ -39,7 +48,33 @@ const navItems = [
 export function AppNav() {
   const pathname = usePathname()
   const { lang, toggle } = useLang()
-  const { logout } = useAuth()
+  const { logout, authenticatedRequest } = useAuth()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const response = await notificationsApi.getUnreadCount(authenticatedRequest)
+      setUnreadCount(response.unreadCount)
+    } catch {
+      setUnreadCount(0)
+    }
+  }, [authenticatedRequest])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refreshUnreadCount()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [pathname, refreshUnreadCount])
+
+  useEffect(() => {
+    window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshUnreadCount)
+
+    return () => {
+      window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshUnreadCount)
+    }
+  }, [refreshUnreadCount])
 
   async function handleLogout() {
     await logout()
@@ -84,6 +119,10 @@ export function AppNav() {
             const isActive = pathname.startsWith(item.href)
             const Icon = item.icon
             const label = lang === "ru" ? item.labelRu : item.labelEn
+            const badge =
+              item.href === "/notifications" && unreadCount > 0
+                ? Math.min(unreadCount, 99)
+                : null
             return (
               <Link
                 key={item.href}
@@ -103,7 +142,7 @@ export function AppNav() {
                       transition: "color 0.15s ease",
                     }}
                   />
-                  {item.badge && !isActive && (
+                  {badge && !isActive && (
                     <span
                       className="absolute -top-0.5 -right-1.5 flex items-center justify-center rounded-full font-sans font-semibold text-white"
                       style={{
@@ -113,7 +152,7 @@ export function AppNav() {
                         background: "oklch(0.65 0.26 12)",
                       }}
                     >
-                      {item.badge}
+                      {badge}
                     </span>
                   )}
                 </div>
@@ -181,6 +220,10 @@ export function AppNav() {
             const isActive = pathname.startsWith(item.href)
             const Icon = item.icon
             const label = lang === "ru" ? item.labelRu : item.labelEn
+            const badge =
+              item.href === "/notifications" && unreadCount > 0
+                ? Math.min(unreadCount, 99)
+                : null
             return (
               <Link
                 key={item.href}
@@ -217,7 +260,7 @@ export function AppNav() {
                         : "oklch(0.40 0.008 15)",
                     }}
                   />
-                  {item.badge && !isActive && (
+                  {badge && !isActive && (
                     <span
                       className="absolute -top-1 -right-1.5 flex items-center justify-center rounded-full font-sans font-semibold text-white"
                       style={{
@@ -227,7 +270,7 @@ export function AppNav() {
                         background: "oklch(0.65 0.26 12)",
                       }}
                     >
-                      {item.badge}
+                      {badge}
                     </span>
                   )}
                 </div>
