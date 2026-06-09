@@ -22,7 +22,7 @@ apps/backend/src/
 - `ConfigModule` с env validation;
 - global `ThrottlerGuard`;
 - `PrismaModule`;
-- domain modules: `AuthModule`, `UsersModule`, `ProfilesModule`, `MediaModule`, `LikesModule`, `MatchesModule`, `ChatModule`, `ModerationModule`;
+- domain modules: `AuthModule`, `UsersModule`, `ProfilesModule`, `MediaModule`, `LikesModule`, `MatchesModule`, `DiscoveryModule`, `ChatModule`, `ModerationModule`;
 - `HealthModule`.
 
 ### `main.ts`
@@ -177,6 +177,23 @@ Owns mutual active LIKE matches:
 - safe active match list response.
 
 Chat, messages, notifications and unmatch flows are outside Step 13. Blocks/reports are handled by `moderation` in Step 14.
+
+### `discovery`
+
+Implemented Step 15 MVP.
+
+- `GET /discovery/cards`
+
+Owns backend discovery card listing:
+
+- actor identity from `CurrentUser`;
+- cursor pagination with max `20`;
+- stable ordering by profile creation and user id;
+- filtering out self, inactive/deleted users, incomplete/non-discoverable/private profiles, blocked pairs, active LIKE/SKIP cooldowns and active matches;
+- allowing rediscovery after LIKE/SKIP or match expiration;
+- safe public card response with computed age and public photo URLs only.
+
+Ranking, random ordering, geolocation/radius, premium filters, chat/messages, notifications and admin/moderation panel behavior are outside Step 15.
 
 ### `chat`
 

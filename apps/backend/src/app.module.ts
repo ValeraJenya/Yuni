@@ -8,6 +8,7 @@ import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { HealthModule } from './modules/health/health.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { MatchesModule } from './modules/matches/matches.module';
@@ -38,6 +39,7 @@ import { UsersModule } from './modules/users/users.module';
     MediaModule,
     LikesModule,
     MatchesModule,
+    DiscoveryModule,
     ChatModule,
     ModerationModule,
   ],

@@ -21,7 +21,7 @@
 - Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
 - Доступ к чатам должен проверяться через membership в `conversation_participants`.
-- Доступ к профилям, фото, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
+- Доступ к профилям, фото, discovery, лайкам, матчам, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
 - Likes MVP принимает target profile только как `targetProfileUserId`, то есть `profiles.user_id`. У профиля нет отдельного публичного id.
 - Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.
 - Auth endpoints имеют базовый throttling foundation. Production rate limits можно уточнить позже.
@@ -46,7 +46,7 @@ Backend не должен доверять `birthDate`, `userId`, `profileId`, `
 
 Database constraints должны защищать критичные invariants там, где это возможно.
 
-Mock/demo flow не является production auth source. Product UI может временно использовать mock-data для discover/matches/messages, но доступ к protected routes и состояние авторизации должны зависеть от backend session/API response, а не от frontend flag в storage.
+Mock/demo flow не является production auth source. Product UI может временно использовать mock-data для еще не подключенных областей, но discovery cards, доступ к protected routes и состояние авторизации должны зависеть от backend session/API response, а не от frontend flag в storage.
 
 ## Backend access-control patterns
 
@@ -115,9 +115,36 @@ Known MVP limitations:
 - Image dimension validation, malware scanning, perceptual hashing и async moderation не входят в этот MVP шаг.
 - Локальное хранение подходит для development/early MVP, но не для production scale.
 
+## Discovery MVP security rules
+
+Discovery MVP реализует `GET /discovery/cards` как backend-owned выдачу анкет. Frontend не является источником истины для доступности карточек.
+
+Security rules:
+
+- Endpoint требует authenticated `CurrentUser` через `JwtAccessGuard`.
+- Actor identity берется только из access token, не из body/query/frontend state.
+- Response uses explicit safe card shape, not raw Prisma `Profile`, `User`, `ProfilePhoto`, `Like`, `Match` or `Block` rows.
+- Discovery excludes current user, inactive/deleted users, incomplete profiles, non-discoverable profiles and profiles without an explicit open/discoverable `PrivacySettings` row.
+- Public photos in cards require `publicUrl`, `moderationStatus=approved` and `publishedAt`.
+- Cards require at least one approved, published public photo for MVP.
+- Blocks apply in both directions and hide both users from each other.
+- Active LIKE/SKIP cooldown from the current user hides the target until `expiresAt`.
+- Expired LIKE/SKIP does not hide the target.
+- Active match hides the matched user while `status=active` and `expiresAt > now`.
+- Expired match does not hide the user, preserving future rediscovery/rematch.
+- `limit` is server-clamped to max `20`; unlimited lists are forbidden.
+- Sorting is stable and non-random for MVP.
+
+Discovery responses must not expose raw `birthDate`, email, password/passwordHash, refresh/session fields, `storageKey`, local paths, original filenames, private profile/privacy fields, block/report/moderation internals or raw Prisma rows.
+
+Known MVP limitations:
+
+- Ranking, random ordering, geolocation/radius, premium filters, notifications, chat/messages and admin/moderation panels are outside Step 15.
+- Race behavior around likes/matches database constraints should be covered by integration/e2e tests with a test database later.
+
 ## Likes MVP security rules
 
-Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike, chat и full backend discovery не входят в Step 12. Matches реализуются отдельно в Step 13 через `MatchesService`; Step 14 добавляет block-aware enforcement.
+Likes MVP реализует только `LIKE` и `SKIP/PASS`. Superlike и chat не входят в Step 12. Matches реализуются отдельно в Step 13 через `MatchesService`; Step 14 добавляет block-aware enforcement; Step 15 подключает backend discovery feed.
 
 Security rules:
 
@@ -140,7 +167,7 @@ Security rules:
 Known MVP limitations:
 
 - Race/exclusion constraint behavior should be covered by integration/e2e tests with a test database in a later step.
-- Backend discover feed and superlike rules are intentionally outside Step 12; block effects are enforced by Step 14 in likes/matches/profile reads.
+- Superlike rules are intentionally outside Step 12; block effects are enforced by Step 14 in likes/matches/profile reads and by Step 15 in discovery.
 
 ## Matches MVP security rules
 
@@ -196,7 +223,7 @@ Report rules:
 - `details` is optional, trimmed, empty string becomes `null`, max length is `1000`.
 - Public response status is only `"received"` and never exposes internal `ReportStatus`, notes, resolver data or review workflow.
 
-Frontend support is intentionally small in Step 14: matches page can send block/report actions. Admin panel, full moderation workflow, chat/messages, notifications, full backend discovery and discovery ranking remain out of scope.
+Frontend support is intentionally small in Step 14: matches page can send block/report actions. Admin panel, full moderation workflow, chat/messages, notifications and discovery ranking remain out of scope.
 
 ## Pagination and anti-abuse
 
@@ -204,6 +231,7 @@ List endpoints для discover, likes, matches, messages, reports и moderation 
 
 - default `limit`: `20`;
 - max `limit`: `50`;
+- discovery cards max `limit`: `20`;
 - frontend не может запросить unlimited list.
 
 Для dating app это часть anti-scraping и anti-abuse foundation: большие списки профилей, сообщений или жалоб нельзя отдавать одним запросом.

@@ -1,19 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { SlidersHorizontal, RefreshCw, Sparkles, MapPin, ChevronDown, Lock, X, Check, Wifi, ShieldCheck } from "lucide-react"
 import { ProfileCard } from "@/features/discover/components/profile-card"
 import { RevealProfileCard } from "@/features/discover/components/reveal-profile-card"
 import { SwipeActions } from "@/features/discover/components/swipe-actions"
 import { useProfileReveal } from "@/features/discover/hooks/use-profile-reveal"
-import { DISCOVER_PROFILES } from "@/mock-data/profiles"
-import type { SwipeAction } from "@/types/app"
+import type { SwipeAction, UserProfile } from "@/types/app"
 import { ApiError } from "@/lib/auth-api"
+import { discoveryApi, toUserProfile } from "@/lib/discovery-api"
 import { likesApi } from "@/lib/likes-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 
-const distances = [3, 12, 7, 4, 9, 5]
+const DISCOVERY_PAGE_SIZE = 20
 
 interface MatchOverlayProfile {
   name: string
@@ -41,6 +41,8 @@ const copy = {
     nearby: "Рядом",
     online: "В сети",
     verified: "Верифицированы",
+    loading: "Загружаем анкеты.",
+    loadError: "Не удалось загрузить анкеты. Попробуйте ещё раз.",
     actionError: "Не удалось сохранить действие. Попробуйте ещё раз.",
   },
   en: {
@@ -63,6 +65,8 @@ const copy = {
     nearby: "Nearby",
     online: "Online",
     verified: "Verified",
+    loading: "Loading profiles.",
+    loadError: "Could not load profiles. Try again.",
     actionError: "Could not save this action. Try again.",
   },
 }
@@ -419,10 +423,14 @@ function SideBlock({
 
 export default function DiscoverPage() {
   const { lang } = useLang()
-  const { authenticatedRequest } = useAuth()
+  const { authenticatedRequest, isAuthenticated, isLoading: isAuthLoading } = useAuth()
   const t = copy[lang]
 
-  const [stack, setStack] = useState(DISCOVER_PROFILES)
+  const [stack, setStack] = useState<UserProfile[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [isLoadingCards, setIsLoadingCards] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [matchProfile, setMatchProfile] = useState<MatchOverlayProfile | null>(null)
   const [lastAction, setLastAction] = useState<SwipeAction | null>(null)
   const [toastKey, setToastKey] = useState(0)
@@ -434,6 +442,9 @@ export default function DiscoverPage() {
   const current = stack[0]
   const next = stack[1]
   const third = stack[2]
+  const currentLocation = current
+    ? [current.city, current.country].filter(Boolean).join(", ")
+    : ""
 
   // Derived filter state
   const activeFilterCount = [
@@ -455,6 +466,63 @@ export default function DiscoverPage() {
     totalSegments: reveal.TOTAL_SEGMENTS,
     unlockZone: reveal.unlockZone,
   } : undefined
+
+  const loadCards = useCallback(
+    async (cursor: string | null = null, mode: "replace" | "append" = "replace") => {
+      if (mode === "replace") {
+        setIsLoadingCards(true)
+      } else {
+        setIsLoadingMore(true)
+      }
+
+      setLoadError(null)
+
+      try {
+        const response = await discoveryApi.getCards(authenticatedRequest, {
+          limit: DISCOVERY_PAGE_SIZE,
+          cursor,
+        })
+        const profiles = response.cards.map(toUserProfile)
+
+        setStack((currentProfiles) => {
+          if (mode === "replace") {
+            return profiles
+          }
+
+          const existingIds = new Set(currentProfiles.map((profile) => profile.id))
+          return [
+            ...currentProfiles,
+            ...profiles.filter((profile) => !existingIds.has(profile.id)),
+          ]
+        })
+        setNextCursor(response.nextCursor)
+      } catch (error) {
+        setLoadError(error instanceof ApiError ? error.message : t.loadError)
+
+        if (mode === "replace") {
+          setStack([])
+          setNextCursor(null)
+        }
+      } finally {
+        if (mode === "replace") {
+          setIsLoadingCards(false)
+        } else {
+          setIsLoadingMore(false)
+        }
+      }
+    },
+    [authenticatedRequest, t.loadError],
+  )
+
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated) return
+
+    const timeoutId = window.setTimeout(() => {
+      void loadCards()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [isAuthenticated, isAuthLoading, loadCards])
 
   async function handleAction(action: SwipeAction) {
     if (!current || pendingAction || action === "superlike") return
@@ -480,11 +548,16 @@ export default function DiscoverPage() {
 
       setLastAction(action)
       setToastKey((key) => key + 1)
+      const remainingCards = stack.filter((profile) => profile.id !== targetProfileUserId)
       setStack((profiles) =>
         profiles[0]?.id === targetProfileUserId
           ? profiles.slice(1)
           : profiles.filter((profile) => profile.id !== targetProfileUserId),
       )
+
+      if (remainingCards.length <= 2 && nextCursor && !isLoadingMore) {
+        void loadCards(nextCursor, "append")
+      }
     } catch (error) {
       setActionError(error instanceof ApiError ? error.message : t.actionError)
     } finally {
@@ -493,9 +566,10 @@ export default function DiscoverPage() {
   }
 
   function reset() {
-    setStack(DISCOVER_PROFILES)
     setMatchProfile(null)
     setLastAction(null)
+    setActionError(null)
+    void loadCards()
   }
 
   return (
@@ -561,7 +635,59 @@ export default function DiscoverPage() {
       {/* ── Main content ──────────────────────────────────── */}
       <div className="yuni-discover-main flex-1 flex flex-col md:flex-row md:items-start gap-0 px-4 pb-8 md:justify-center">
 
-        {stack.length === 0 ? (
+        {isLoadingCards ? (
+          <div className="flex flex-col items-center gap-7 text-center max-w-sm py-20 mx-auto">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center"
+              style={{
+                background: "oklch(0.65 0.26 12 / 0.07)",
+                border: "1px solid oklch(0.65 0.26 12 / 0.16)",
+                boxShadow: "0 0 40px oklch(0.65 0.26 12 / 0.08)",
+              }}
+            >
+              <RefreshCw size={28} style={{ color: "oklch(0.65 0.26 12 / 0.60)" }} strokeWidth={1.5} />
+            </div>
+            <p
+              className="font-display font-light"
+              style={{ fontSize: "1.75rem", color: "oklch(0.78 0.005 60)", lineHeight: 1.05 }}
+            >
+              {t.loading}
+            </p>
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center gap-7 text-center max-w-sm py-20 mx-auto">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center"
+              style={{
+                background: "oklch(0.70 0.16 28 / 0.08)",
+                border: "1px solid oklch(0.70 0.16 28 / 0.18)",
+                boxShadow: "0 0 40px oklch(0.70 0.16 28 / 0.08)",
+              }}
+            >
+              <RefreshCw size={28} style={{ color: "oklch(0.70 0.16 28 / 0.70)" }} strokeWidth={1.5} />
+            </div>
+            <p
+              className="font-sans leading-relaxed"
+              role="alert"
+              style={{ fontSize: "13px", color: "oklch(0.56 0.008 15)" }}
+            >
+              {loadError}
+            </p>
+            <button
+              onClick={reset}
+              className="flex items-center gap-2 rounded-full px-8 py-3.5 font-sans font-medium transition-all hover:brightness-110"
+              style={{
+                fontSize: "13px",
+                color: "white",
+                background: "oklch(0.65 0.26 12)",
+                boxShadow: "0 0 32px oklch(0.65 0.26 12 / 0.32)",
+              }}
+            >
+              <RefreshCw size={13} />
+              {t.resetBtn}
+            </button>
+          </div>
+        ) : stack.length === 0 ? (
           <div className="flex flex-col items-center gap-7 text-center max-w-sm py-20 mx-auto">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center"
@@ -629,7 +755,7 @@ export default function DiscoverPage() {
                     }}
                     aria-hidden="true"
                   >
-                    <ProfileCard profile={third} distance={distances[2]} />
+                    <ProfileCard profile={third} />
                   </div>
                 )}
                 {/* Ghost card 2 */}
@@ -646,14 +772,13 @@ export default function DiscoverPage() {
                     }}
                     aria-hidden="true"
                   >
-                    <ProfileCard profile={next} distance={distances[1]} />
+                    <ProfileCard profile={next} />
                   </div>
                 )}
                 {/* Active card with veil reveal */}
                 <div style={{ position: "relative", zIndex: 3 }}>
                   <RevealProfileCard
                     profile={current}
-                    distance={distances[0]}
                     lang={lang}
                     externalReveal={externalReveal}
                   />
@@ -698,6 +823,19 @@ export default function DiscoverPage() {
                   {actionError}
                 </p>
               )}
+              {isLoadingMore && (
+                <p
+                  className="font-sans text-center max-w-xs"
+                  role="status"
+                  style={{
+                    fontSize: "12px",
+                    color: "oklch(0.46 0.008 15)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {t.loading}
+                </p>
+              )}
             </div>
 
             {/* ── Desktop sidebar panel ── */}
@@ -727,10 +865,7 @@ export default function DiscoverPage() {
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <MapPin size={10} style={{ color: "oklch(0.65 0.26 12 / 0.75)" }} />
                         <span className="font-sans" style={{ fontSize: "11.5px", color: "oklch(0.44 0.008 15)" }}>
-                          {current.city}
-                          {distances[0] !== undefined && (
-                            <span style={{ color: "oklch(0.32 0.008 15)" }}> · {distances[0]} {t.km}</span>
-                          )}
+                          {currentLocation}
                         </span>
                       </div>
                     </div>

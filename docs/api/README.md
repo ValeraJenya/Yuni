@@ -1,6 +1,6 @@
 # API
 
-Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP и Blocks/Reports MVP.
+Это короткая API-документация для текущего backend foundation. Сейчас реализованы auth/session flow, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP и Discovery MVP.
 
 ## Подготовка
 
@@ -57,6 +57,7 @@ Owner checks, conversation membership checks, match participant checks и profil
 
 - default `limit`: `20`;
 - max `limit`: `50`;
+- `GET /discovery/cards` использует более строгий max `limit`: `20`;
 - `cursor` указывает продолжение списка;
 - unlimited lists запрещены.
 
@@ -255,6 +256,64 @@ Public profile responses include only photos that have:
 - `publishedAt` set.
 
 Public profile responses do not expose `storageKey`, filesystem path, original filename, moderation internals or private owner-only fields.
+
+## Discovery MVP
+
+`GET /discovery/cards` требует `Authorization: Bearer <accessToken>`. Backend берет actor только из `CurrentUser`; frontend не может передать actor id.
+
+```bash
+curl -i "http://localhost:4000/discovery/cards?limit=20" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Query:
+
+- `limit` optional, default `20`, max `20`;
+- `cursor` optional, значение из `nextCursor`;
+- cursor соответствует `profiles.user_id`, потому что у Profile нет отдельного id.
+
+Response shape:
+
+```json
+{
+  "cards": [
+    {
+      "userId": "22222222-2222-4222-8222-222222222222",
+      "handle": "target_user",
+      "displayName": "Target",
+      "bio": "Short public bio",
+      "gender": "female",
+      "lookingFor": "relationship",
+      "city": "Almaty",
+      "country": "KZ",
+      "age": 26,
+      "primaryPhotoUrl": "/uploads/profile-photos/photo.jpg",
+      "photos": [
+        {
+          "publicUrl": "/uploads/profile-photos/photo.jpg"
+        }
+      ]
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+Discovery filters on backend:
+
+- excludes current user;
+- excludes inactive/deleted users;
+- requires `profiles.is_discoverable=true`;
+- requires `profiles.completed_at`;
+- requires explicit open and discoverable `privacy_settings`;
+- requires at least one approved, published photo with `publicUrl`;
+- excludes active block in either direction;
+- excludes active LIKE/SKIP cooldown from current user where `expiresAt > now`;
+- excludes active match where `status=active` and `expiresAt > now`.
+
+Expired LIKE/SKIP and expired matches do not block rediscovery. Sorting is stable, not random: `createdAt desc`, then `userId desc`. Ranking, random ordering, geolocation/radius, premium filters, chat/messages, notifications and admin/moderation panels are outside Discovery MVP.
+
+Discovery response must not expose raw `birthDate`, email, password/passwordHash, refresh/session fields, storage keys, local paths, original filenames, private profile/privacy fields, block/report/moderation internals or raw Prisma rows.
 
 ## Likes MVP
 
