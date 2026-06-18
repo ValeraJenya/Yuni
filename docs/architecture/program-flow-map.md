@@ -18,6 +18,20 @@ frontend page/component
 
 Frontend is not a security boundary. Backend must enforce auth, ownership, membership, validation and visibility.
 
+Local Docker boot flow:
+
+```text
+copy .env.example .env
+  -> docker compose config/build
+  -> docker compose up -d postgres
+  -> docker:migrate runs prisma migrate deploy in backend container
+  -> docker compose up -d backend frontend
+  -> backend /health
+  -> frontend calls browser-facing NEXT_PUBLIC_API_URL
+```
+
+Migrations are explicit. Backend startup generates Prisma Client for the dev container but does not apply migrations.
+
 Rate-limit flow:
 
 ```text

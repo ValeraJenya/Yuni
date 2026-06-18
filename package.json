@@ -22,6 +22,13 @@
     "prisma:validate": "corepack pnpm --dir apps/backend prisma:validate",
     "prisma:migrate:dev": "corepack pnpm --dir apps/backend prisma:migrate:dev",
     "prisma:migrate:deploy": "corepack pnpm --dir apps/backend prisma:migrate:deploy",
-    "prisma:migrate:reset": "corepack pnpm --dir apps/backend prisma:migrate:reset"
+    "prisma:migrate:reset": "corepack pnpm --dir apps/backend prisma:migrate:reset",
+    "docker:config": "docker compose config",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d postgres backend frontend",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs --tail=100 -f",
+    "docker:migrate": "docker compose run --rm backend corepack pnpm --dir apps/backend prisma:migrate:deploy",
+    "docker:reset:dev": "docker compose down -v"
   }
 }

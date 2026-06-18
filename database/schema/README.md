@@ -6,6 +6,19 @@
 
 Проект стартует с новой пустой PostgreSQL БД. Legacy data migration, импорт старых пользователей, сохранение старых ID и cleanup старых данных не нужны.
 
+## Docker Migration Workflow
+
+Local Docker uses the same Prisma migrations. Backend containers do not run migrations automatically on startup.
+
+For a new local Docker database:
+
+```powershell
+docker compose up -d postgres
+corepack pnpm docker:migrate
+```
+
+`docker:migrate` runs `prisma migrate deploy` inside a backend container against the Docker network `postgres` service. Use `docker:reset:dev` only when intentionally deleting the local Docker PostgreSQL volume.
+
 ## Сущности
 
 - `users` хранит учетную запись, email, `password_hash`, lifecycle status и timestamps. Пароли не хранятся в открытом виде.
