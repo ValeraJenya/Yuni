@@ -8,11 +8,29 @@ Yuni организован как небольшой монорепозитор
 - `apps/backend/prisma/migrations` - основной migration workflow для greenfield PostgreSQL БД.
 - `database/schema`, `database/migrations`, `database/seeds` - database reference, будущие вспомогательные материалы и seeds.
 - `docs` - документация по архитектуре, security, onboarding и decisions.
-- `infra` - будущие docker и operational scripts.
+- `infra` - будущие operational scripts.
+- `docker-compose.yml` - локальный Docker workflow для PostgreSQL, backend и frontend.
 
 Backend сейчас находится на стадии foundation: есть структура, конфигурация, Prisma schema, health endpoint, auth/session flow, Profiles MVP и Profile Photos / Media MVP. Полной бизнес-логики likes, matches, chat и moderation пока нет.
 
 ## Быстрый локальный старт
+
+Рекомендуемый воспроизводимый путь для двух разработчиков описан в [Local Docker Workflow](./local-docker-workflow.md).
+
+Коротко:
+
+```powershell
+copy .env.example .env
+corepack pnpm docker:config
+corepack pnpm docker:build
+docker compose up -d postgres
+corepack pnpm docker:migrate
+docker compose up -d backend frontend
+Invoke-WebRequest http://localhost:4000/health
+Invoke-WebRequest http://localhost:3000
+```
+
+Альтернативный ручной запуск без Docker:
 
 1. Склонируйте репозиторий и установите зависимости:
 

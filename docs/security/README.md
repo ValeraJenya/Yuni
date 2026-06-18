@@ -20,6 +20,11 @@
 - Access token передается как Bearer token и не должен логироваться.
 - Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.
 - Локальные значения окружения должны храниться в `.env`, а в `.env.example` должны быть только безопасные примеры.
+- Docker Compose and Dockerfiles must not contain production secrets. Local Compose values are development placeholders only.
+- `.env` is ignored by git and must stay local. Do not copy production credentials into docs, scripts or compose files.
+- PostgreSQL host port in Docker is for local development only; server deployment must define separate network exposure rules later.
+- Docker logs must not contain access tokens, refresh tokens, cookies, token hashes, passwords, message bodies or sensitive PII.
+- Docker workflow must not bypass backend guards, owner checks, serializers, rate limits or Prisma migrations.
 - Доступ к чатам должен проверяться через membership в `conversation_participants`; `conversationId` сам по себе не является правом доступа.
 - Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated `user_id` и owner checks.
 - Likes MVP принимает target profile только как `targetProfileUserId`, то есть `profiles.user_id`. У профиля нет отдельного публичного id.

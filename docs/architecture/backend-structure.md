@@ -46,6 +46,20 @@ apps/backend/src/
 - `cors.ts` - allowed origins builder;
 - `env.validation.ts` - required env validation.
 
+### Local Docker runtime
+
+Backend local Docker image is defined in `apps/backend/Dockerfile` and is wired by root `docker-compose.yml`.
+
+Rules:
+
+- Docker is a local development workflow, not production deployment.
+- Backend container uses `PORT=4000` internally and publishes `${BACKEND_PORT:-4000}` on the host.
+- Inside Compose, `DATABASE_URL` points to PostgreSQL by service name `postgres`.
+- Prisma migrations are not run automatically when backend starts.
+- `docker:migrate` explicitly runs `prisma migrate deploy`.
+- Local profile photo uploads are mounted at `apps/backend/uploads`, which remains ignored by git.
+- Backend healthcheck uses `GET /health`.
+
 ### `common/`
 
 `common/` содержит cross-cutting infrastructure, not product business logic.

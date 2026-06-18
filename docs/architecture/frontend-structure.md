@@ -110,6 +110,17 @@ page/component
 - FormData support;
 - `ApiError`.
 
+### Local Docker runtime
+
+Frontend local Docker image is defined in `apps/frontend/Dockerfile` and is wired by root `docker-compose.yml`.
+
+Rules:
+
+- `NEXT_PUBLIC_API_URL` must be browser-facing, for example `http://localhost:4000`.
+- Do not set `NEXT_PUBLIC_API_URL` to the Compose service name `http://backend:4000`, because browser requests run on the host browser, not inside the Docker network.
+- Frontend container uses port `3000` internally and publishes `${FRONTEND_PORT:-3000}` on the host.
+- Docker does not replace frontend auth rules: access token remains memory-only and refresh cookie remains HttpOnly.
+
 `profile-api.ts` owns:
 
 - `GET /profiles/me`;
