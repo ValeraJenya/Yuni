@@ -238,9 +238,10 @@ curl -i http://localhost:4000/profiles/test_user \
 
 Все media endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет владельца только из `CurrentUser`, а не из body/query/path.
 
-Локальное MVP-хранилище:
+Profile photo storage boundary:
 
-- файлы сохраняются в `apps/backend/uploads/profile-photos`;
+- `MediaService` работает через `ProfilePhotoStorage`;
+- текущий local adapter сохраняет файлы в `apps/backend/uploads/profile-photos`;
 - папка uploads не коммитится;
 - `publicUrl` имеет вид `/uploads/profile-photos/<generated-file-name>`;
 - storage filename генерируется backend через random UUID и не использует original filename;
@@ -289,7 +290,7 @@ curl -i -X DELETE http://localhost:4000/media/profile-photos/<photoId> \
   -H "Authorization: Bearer <accessToken>"
 ```
 
-Only the owner can delete a photo. Backend deletes the DB row and best-effort removes the local file. If the deleted photo was primary, backend promotes the next owner photo by position.
+Only the owner can delete a photo. Backend deletes the DB row and promotes the next owner photo by position when needed, then best-effort removes the stored file through `ProfilePhotoStorage`.
 
 ### Public Profile Photo Visibility
 

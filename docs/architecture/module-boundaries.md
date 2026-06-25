@@ -42,9 +42,10 @@ ProfilesModule may declare a public-profile lookup rate limit. Profile visibilit
 
 Owns profile photos and file/storage rules:
 
-- local MVP upload;
+- profile photo storage boundary;
+- local adapter upload;
 - file type and size validation;
-- generated storage key;
+- generated storage key and public URL through the storage adapter;
 - own photo list;
 - set primary;
 - delete photo;
@@ -219,7 +220,7 @@ Avoid:
 
 - checks active user;
 - validates file type and size;
-- generates storage key and public URL;
+- delegates storage key/public URL generation and physical file operations to `ProfilePhotoStorage`;
 - performs owner checks via `assertOwner`;
 - returns `toSelfProfile` and `toSelfProfilePhoto`.
 

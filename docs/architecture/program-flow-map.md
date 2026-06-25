@@ -310,6 +310,8 @@ Security:
 - `apps/backend/src/modules/media/media.controller.ts`
 - `apps/backend/src/modules/media/media.service.ts`
 - `apps/backend/src/modules/media/media.constants.ts`
+- `apps/backend/src/modules/media/storage/profile-photo-storage.port.ts`
+- `apps/backend/src/modules/media/storage/local-profile-photo-storage.service.ts`
 - `apps/backend/src/modules/media/types/uploaded-profile-photo-file.ts`
 - `apps/backend/src/main.ts`
 - `apps/backend/src/common/serializers/user-profile.serializer.ts`
@@ -345,8 +347,9 @@ Security:
   -> CurrentUser
   -> MediaService.uploadProfilePhoto
   -> MIME/type/size validation
-  -> generated UUID filename
-  -> local write to apps/backend/uploads/profile-photos
+  -> ProfilePhotoStorage.saveProfilePhoto
+  -> LocalProfilePhotoStorageService generated UUID filename
+  -> local adapter write to apps/backend/uploads/profile-photos
   -> Prisma ProfilePhoto create
   -> toSelfProfile + toSelfProfilePhoto
   -> frontend profile state update
@@ -357,7 +360,8 @@ Security:
 - accepts only `image/jpeg`, `image/png`, `image/webp`;
 - max size is `5 MB`;
 - original filename is not used as storage filename;
-- local uploads are MVP-only;
+- local adapter storage is MVP-only;
+- path traversal checks for local delete live in the storage adapter;
 - self response does not expose `storageKey` or local path.
 
 ### PATCH `/media/profile-photos/:photoId/primary`
@@ -392,14 +396,14 @@ Security:
   -> Prisma find photo
   -> assertOwner(photo.userId, CurrentUser.id)
   -> transaction: delete row and promote next primary if needed
-  -> best-effort local file unlink
+  -> best-effort ProfilePhotoStorage.deleteProfilePhoto
   -> toSelfProfile + toSelfProfilePhoto list
 ```
 
 Security:
 
 - non-owner cannot delete;
-- local file cleanup does not expose local path to client.
+- storage cleanup does not expose local path to client.
 
 ### Public Photo Exposure
 

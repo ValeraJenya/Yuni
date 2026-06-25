@@ -31,7 +31,7 @@ apps/backend/src/
 `main.ts` отвечает за application bootstrap:
 
 - Helmet;
-- static serving for local profile photo MVP uploads;
+- static serving for local profile photo adapter uploads;
 - cookie parser;
 - CORS with configured origins, not wildcard credentials;
 - global `ValidationPipe` with whitelist, transform and forbid non-whitelisted fields;
@@ -57,7 +57,7 @@ Rules:
 - Inside Compose, `DATABASE_URL` points to PostgreSQL by service name `postgres`.
 - Prisma migrations are not run automatically when backend starts.
 - `docker:migrate` explicitly runs `prisma migrate deploy`.
-- Local profile photo uploads are mounted at `apps/backend/uploads`, which remains ignored by git.
+- Local profile photo adapter uploads are mounted at `apps/backend/uploads`, which remains ignored by git.
 - Backend healthcheck uses `GET /health`.
 
 ### `common/`
@@ -156,7 +156,7 @@ Implemented Profile Photos / Media MVP.
 - `PATCH /media/profile-photos/:photoId/primary`
 - `DELETE /media/profile-photos/:photoId`
 
-Owns profile photos, local MVP storage, upload validation, owner checks and self photo response shape.
+Owns profile photos, upload validation, owner checks, self photo response shape and the `ProfilePhotoStorage` boundary. The current implementation uses a local adapter behind that boundary.
 
 ### `likes`
 
