@@ -1,12 +1,10 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PhotoModerationStatus, Prisma, UserStatus } from '@prisma/client';
-import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { basename, join } from 'node:path';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
   assertFound,
@@ -23,10 +21,11 @@ import {
   PROFILE_PHOTO_ALLOWED_MIME_TYPES,
   PROFILE_PHOTO_MAX_BYTES,
   PROFILE_PHOTO_MAX_COUNT,
-  PROFILE_PHOTO_PUBLIC_PATH,
-  PROFILE_PHOTO_STORAGE_PREFIX,
-  PROFILE_PHOTO_UPLOAD_DIR,
 } from './media.constants';
+import {
+  PROFILE_PHOTO_STORAGE,
+  type ProfilePhotoStorage,
+} from './storage/profile-photo-storage.port';
 import type { UploadedProfilePhotoFile } from './types/uploaded-profile-photo-file';
 
 const selfProfileInclude = {
@@ -41,7 +40,11 @@ type ProfilePhotoRecord = Prisma.ProfilePhotoGetPayload<Record<string, never>>;
 
 @Injectable()
 export class MediaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(PROFILE_PHOTO_STORAGE)
+    private readonly profilePhotoStorage: ProfilePhotoStorage,
+  ) {}
 
   async getMyProfilePhotos(
     currentUser: AuthenticatedUser,
@@ -71,14 +74,11 @@ export class MediaService {
     }
 
     const now = new Date();
-    const extension = this.getExtensionForMimeType(file.mimetype);
-    const filename = `${randomUUID()}${extension}`;
-    const storageKey = `${PROFILE_PHOTO_STORAGE_PREFIX}${filename}`;
-    const publicUrl = `${PROFILE_PHOTO_PUBLIC_PATH}/${filename}`;
-    const uploadDir = this.getUploadDir();
-
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(join(uploadDir, filename), file.buffer);
+    const { storageKey, publicUrl } =
+      await this.profilePhotoStorage.saveProfilePhoto({
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+      });
 
     try {
       const photo = await this.prisma.$transaction(async (tx) => {
@@ -119,7 +119,11 @@ export class MediaService {
         photo: toSelfProfilePhoto(photo),
       };
     } catch (error) {
-      await this.unlinkStorageKeyBestEffort(storageKey);
+      try {
+        await this.profilePhotoStorage.deleteProfilePhoto(storageKey);
+      } catch {
+        // Storage cleanup should not mask the original DB/transaction failure.
+      }
       throw error;
     }
   }
@@ -164,7 +168,11 @@ export class MediaService {
   async deleteProfilePhoto(
     currentUser: AuthenticatedUser,
     photoId: string,
-  ): Promise<{ success: true; profile: SelfProfileView; photos: SelfProfilePhotoView[] }> {
+  ): Promise<{
+    success: true;
+    profile: SelfProfileView;
+    photos: SelfProfilePhotoView[];
+  }> {
     await this.assertActiveUser(currentUser.id);
 
     const photo = await this.prisma.profilePhoto.findUnique({
@@ -195,7 +203,11 @@ export class MediaService {
       }
     });
 
-    await this.unlinkStorageKeyBestEffort(photo.storageKey);
+    try {
+      await this.profilePhotoStorage.deleteProfilePhoto(photo.storageKey);
+    } catch {
+      // Storage cleanup should not turn a successful DB delete into 500.
+    }
 
     const [profile, photos] = await Promise.all([
       this.getSelfProfileView(currentUser.id),
@@ -263,21 +275,6 @@ export class MediaService {
     }
   }
 
-  private getExtensionForMimeType(mimeType: string): string {
-    switch (mimeType) {
-      case 'image/jpeg':
-        return '.jpg';
-      case 'image/png':
-        return '.png';
-      case 'image/webp':
-        return '.webp';
-      default:
-        throw new BadRequestException(
-          'Profile photo must be a JPEG, PNG or WebP image',
-        );
-    }
-  }
-
   private async assertActiveUser(userId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -319,41 +316,5 @@ export class MediaService {
           left.createdAt.getTime() - right.createdAt.getTime(),
       ),
     };
-  }
-
-  private getUploadDir(): string {
-    return join(process.cwd(), PROFILE_PHOTO_UPLOAD_DIR);
-  }
-
-  private getPhotoFilePath(storageKey: string): string | null {
-    if (!storageKey.startsWith(PROFILE_PHOTO_STORAGE_PREFIX)) {
-      return null;
-    }
-
-    const filename = storageKey.slice(PROFILE_PHOTO_STORAGE_PREFIX.length);
-
-    if (filename !== basename(filename)) {
-      return null;
-    }
-
-    if (!/^[0-9a-f-]+\.(jpg|png|webp)$/.test(filename)) {
-      return null;
-    }
-
-    return join(this.getUploadDir(), filename);
-  }
-
-  private async unlinkStorageKeyBestEffort(storageKey: string): Promise<void> {
-    const filePath = this.getPhotoFilePath(storageKey);
-
-    if (!filePath) {
-      return;
-    }
-
-    try {
-      await unlink(filePath);
-    } catch {
-      // Local MVP storage cleanup should not turn a successful DB change into 500.
-    }
   }
 }
