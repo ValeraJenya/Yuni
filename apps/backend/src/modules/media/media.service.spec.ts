@@ -11,6 +11,7 @@ import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import {
   PROFILE_PHOTO_MAX_BYTES,
+  PROFILE_PHOTO_MAX_COUNT,
   PROFILE_PHOTO_PUBLIC_PATH,
   PROFILE_PHOTO_STORAGE_PREFIX,
 } from './media.constants';
@@ -32,6 +33,14 @@ const CURRENT_USER: AuthenticatedUser = {
   email: 'person@example.com',
 };
 const FIXED_NOW = new Date('2026-06-06T12:00:00.000Z');
+
+const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
+const PNG_BUFFER = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00,
+]);
+const WEBP_BUFFER = Buffer.from([
+  0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+]);
 
 interface ProfilePhotoFixture {
   id: string;
@@ -86,6 +95,7 @@ interface PrismaMock {
 
 describe('MediaService', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     jest.useFakeTimers();
     jest.setSystemTime(FIXED_NOW);
     jest.mocked(randomUUID).mockReturnValue('11111111-1111-4111-8111-111111111111');
@@ -154,23 +164,109 @@ describe('MediaService', () => {
     expect(writeFile).not.toHaveBeenCalled();
   });
 
-  it('rejects missing, empty, invalid, and oversized files without storage writes', async () => {
+  it('rejects missing and empty files without storage writes', async () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
 
-    for (const file of [
-      undefined,
-      makeFile({ size: 0 }),
-      makeFile({ mimetype: 'image/gif' }),
-      makeFile({ size: PROFILE_PHOTO_MAX_BYTES + 1 }),
-    ]) {
-      await expect(
-        service.uploadProfilePhoto(CURRENT_USER, file),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    }
+    await expect(
+      service.uploadProfilePhoto(CURRENT_USER, undefined),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    await expect(
+      service.uploadProfilePhoto(CURRENT_USER, makeFile({ size: 0 })),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects unsupported mime types before storage writes', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+
+    await expect(
+      service.uploadProfilePhoto(
+        CURRENT_USER,
+        makeFile({ mimetype: 'image/gif' }),
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects oversized files before storage writes', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+
+    await expect(
+      service.uploadProfilePhoto(
+        CURRENT_USER,
+        makeFile({ size: PROFILE_PHOTO_MAX_BYTES + 1 }),
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid image signatures before storage writes', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+
+    await expect(
+      service.uploadProfilePhoto(
+        CURRENT_USER,
+        makeFile({ buffer: Buffer.from('not-an-image') }),
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects uploads at the profile photo limit before storage and create', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profilePhoto.count.mockResolvedValue(PROFILE_PHOTO_MAX_COUNT);
+
+    await expect(
+      service.uploadProfilePhoto(CURRENT_USER, makeFile()),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(mkdir).not.toHaveBeenCalled();
     expect(writeFile).not.toHaveBeenCalled();
+    expect(prisma.profilePhoto.create).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { name: 'JPEG', mimetype: 'image/jpeg', buffer: JPEG_BUFFER },
+    { name: 'PNG', mimetype: 'image/png', buffer: PNG_BUFFER },
+    { name: 'WebP', mimetype: 'image/webp', buffer: WEBP_BUFFER },
+  ])('accepts a valid $name signature', async ({ mimetype, buffer }) => {
+    const { service, prisma } = createService();
+    const createdPhoto = makePhoto({ mimeType: mimetype });
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profilePhoto.count.mockResolvedValue(0);
+    prisma.profilePhoto.aggregate.mockResolvedValue({
+      _max: { position: null },
+    });
+    prisma.profilePhoto.create.mockResolvedValue(createdPhoto);
+    prisma.profile.findUnique.mockResolvedValue(
+      makeProfile({ photos: [createdPhoto] }),
+    );
+
+    const result = await service.uploadProfilePhoto(
+      CURRENT_USER,
+      makeFile({ mimetype, buffer }),
+    );
+
+    expect(writeFile).toHaveBeenCalledWith(expect.any(String), buffer);
+    expect(result.photo).not.toHaveProperty('storageKey');
   });
 
   it('uploads a valid first photo as approved primary media without real file writes', async () => {
@@ -204,7 +300,7 @@ describe('MediaService', () => {
     );
     expect(writeFile).toHaveBeenCalledWith(
       expect.stringContaining('11111111-1111-4111-8111-111111111111.png'),
-      Buffer.from('profile-photo'),
+      PNG_BUFFER,
     );
     expect(prisma.profilePhoto.create).toHaveBeenCalledWith({
       data: {
@@ -475,11 +571,19 @@ function activeUser() {
 function makeFile(
   overrides: Partial<UploadedProfilePhotoFile> = {},
 ): UploadedProfilePhotoFile {
+  const mimetype = overrides.mimetype ?? 'image/jpeg';
+  const buffer =
+    overrides.buffer ??
+    (mimetype === 'image/png'
+      ? PNG_BUFFER
+      : mimetype === 'image/webp'
+        ? WEBP_BUFFER
+        : JPEG_BUFFER);
+
   return {
-    buffer: Buffer.from('profile-photo'),
-    mimetype: 'image/jpeg',
-    size: Buffer.byteLength('profile-photo'),
-    ...overrides,
+    buffer,
+    mimetype,
+    size: overrides.size ?? buffer.length,
   };
 }
 

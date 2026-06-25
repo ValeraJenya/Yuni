@@ -93,6 +93,22 @@ export const RATE_LIMIT_POLICIES = {
       key: 'user',
     },
   ],
+  mediaUpload: [
+    {
+      name: 'media.upload.user',
+      limit: 20,
+      windowMs: RATE_LIMIT_WINDOW_MS.hour,
+      key: 'user',
+    },
+  ],
+  mediaActions: [
+    {
+      name: 'media.actions.user',
+      limit: 60,
+      windowMs: RATE_LIMIT_WINDOW_MS.hour,
+      key: 'user',
+    },
+  ],
   notificationsList: [
     {
       name: 'notifications.list.user',

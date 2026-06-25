@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { RATE_LIMIT_POLICIES, UseRateLimit } from '../../common/rate-limit';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
@@ -28,6 +29,7 @@ export class MediaController {
   }
 
   @Post()
+  @UseRateLimit(RATE_LIMIT_POLICIES.mediaUpload)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: PROFILE_PHOTO_MAX_BYTES },
@@ -41,6 +43,7 @@ export class MediaController {
   }
 
   @Patch(':photoId/primary')
+  @UseRateLimit(RATE_LIMIT_POLICIES.mediaActions)
   setProfilePhotoPrimary(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Param('photoId') photoId: string,
@@ -49,6 +52,7 @@ export class MediaController {
   }
 
   @Delete(':photoId')
+  @UseRateLimit(RATE_LIMIT_POLICIES.mediaActions)
   deleteProfilePhoto(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Param('photoId') photoId: string,

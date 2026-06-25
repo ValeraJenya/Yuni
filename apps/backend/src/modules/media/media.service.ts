@@ -22,6 +22,7 @@ import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import {
   PROFILE_PHOTO_ALLOWED_MIME_TYPES,
   PROFILE_PHOTO_MAX_BYTES,
+  PROFILE_PHOTO_MAX_COUNT,
   PROFILE_PHOTO_PUBLIC_PATH,
   PROFILE_PHOTO_STORAGE_PREFIX,
   PROFILE_PHOTO_UPLOAD_DIR,
@@ -61,6 +62,14 @@ export class MediaService {
     await this.assertActiveUser(currentUser.id);
     this.assertValidProfilePhotoFile(file);
 
+    const existingPhotoCount = await this.prisma.profilePhoto.count({
+      where: { userId: currentUser.id },
+    });
+
+    if (existingPhotoCount >= PROFILE_PHOTO_MAX_COUNT) {
+      throw new BadRequestException('Profile photo limit has been reached');
+    }
+
     const now = new Date();
     const extension = this.getExtensionForMimeType(file.mimetype);
     const filename = `${randomUUID()}${extension}`;
@@ -82,6 +91,11 @@ export class MediaService {
             _max: { position: true },
           }),
         ]);
+
+        if (photoCount >= PROFILE_PHOTO_MAX_COUNT) {
+          throw new BadRequestException('Profile photo limit has been reached');
+        }
+
         const isFirstPhoto = photoCount === 0;
         const nextPosition = (positionAggregate._max.position ?? -1) + 1;
 
@@ -210,6 +224,42 @@ export class MediaService {
 
     if (file.size > PROFILE_PHOTO_MAX_BYTES) {
       throw new BadRequestException('Profile photo must be 5 MB or smaller');
+    }
+
+    if (!this.hasExpectedImageSignature(file.mimetype, file.buffer)) {
+      throw new BadRequestException(
+        'Profile photo must be a valid JPEG, PNG or WebP image',
+      );
+    }
+  }
+
+  private hasExpectedImageSignature(
+    mimeType: string,
+    buffer: Buffer,
+  ): boolean {
+    switch (mimeType) {
+      case 'image/jpeg':
+        return (
+          buffer.length >= 3 &&
+          buffer[0] === 0xff &&
+          buffer[1] === 0xd8 &&
+          buffer[2] === 0xff
+        );
+      case 'image/png':
+        return (
+          buffer.length >= 8 &&
+          buffer.subarray(0, 8).equals(
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+          )
+        );
+      case 'image/webp':
+        return (
+          buffer.length >= 12 &&
+          buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+          buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+        );
+      default:
+        return false;
     }
   }
 
