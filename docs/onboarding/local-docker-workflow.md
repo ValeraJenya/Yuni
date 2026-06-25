@@ -94,7 +94,7 @@ docker compose up -d backend frontend
 - Frontend opens at `http://localhost:3000`.
 - Register/login/refresh/logout work with browser cookies.
 - Frontend API calls go to `http://localhost:4000`.
-- Profile photo upload still persists under the backend uploads mount.
+- Profile photo upload still persists through the local storage adapter under the backend uploads mount.
 - Logout/refresh cookies are not blocked by CORS.
 
 ## Security notes

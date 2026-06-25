@@ -138,7 +138,7 @@ corepack pnpm prisma:migrate:deploy
 
 `prisma db push` не является основным workflow проекта. PostgreSQL-specific constraints и indexes хранятся в Prisma migrations.
 
-Profile Photos / Media MVP хранит uploaded files локально в `apps/backend/uploads/profile-photos`. Эта папка не коммитится. Production S3/CDN/media pipeline будет отдельным шагом после базового upload/owner/visibility flow.
+Profile Photos / Media MVP использует `ProfilePhotoStorage` boundary. Текущий local adapter сохраняет uploaded files в `apps/backend/uploads/profile-photos`, эта папка не коммитится, а публичный контракт URL остается `/uploads/profile-photos/...`. Production S3/CDN/media pipeline будет отдельным шагом после базового upload/owner/visibility flow.
 
 ## Environment
 

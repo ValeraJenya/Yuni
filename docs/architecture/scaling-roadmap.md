@@ -34,15 +34,15 @@ Goal: one service boundary, but operationally reliable.
 
 ## Stage 3 - Object Storage / CDN for Media
 
-After local upload MVP is stable:
+After the local `ProfilePhotoStorage` adapter MVP is stable:
 
-- replace local uploads with object storage;
+- add an object-storage adapter behind the existing profile photo storage boundary;
 - add CDN delivery;
 - add signed/private media access where needed;
 - move media metadata and visibility rules through backend;
 - add production media moderation pipeline.
 
-Goal: media storage no longer depends on one backend filesystem.
+Goal: media storage no longer depends on one backend filesystem while preserving the existing public photo API contract.
 
 ## Stage 4 - Redis / Valkey
 

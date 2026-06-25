@@ -17,7 +17,7 @@
 - `src/modules/users`, `likes`, `matches`, `chat`, `moderation` - границы будущих доменных модулей.
 - `prisma/schema.prisma` - ORM-модель для Prisma Client.
 - `prisma/migrations` - основной способ применения greenfield PostgreSQL schema.
-- `uploads/profile-photos` - local MVP storage для загруженных profile photos. Папка ignored by git.
+- `uploads/profile-photos` - local adapter storage для загруженных profile photos через `ProfilePhotoStorage`. Папка ignored by git.
 
 ## Локальный запуск
 
@@ -105,7 +105,7 @@ curl -i -X DELETE http://localhost:4000/media/profile-photos/<photoId> \
   -H "Authorization: Bearer <accessToken>"
 ```
 
-Media MVP хранит файлы локально в `apps/backend/uploads/profile-photos`, принимает только JPEG/PNG/WebP до `5 MB`, генерирует storage filename на backend и не использует original filename как имя файла. Production S3/CDN/media pipeline будет отдельной задачей позже.
+Media MVP принимает только JPEG/PNG/WebP до `5 MB`, генерирует storage filename на backend и не использует original filename как имя файла. `MediaService` работает через `ProfilePhotoStorage`, а текущий local adapter сохраняет файлы в `apps/backend/uploads/profile-photos` и возвращает `/uploads/profile-photos/...`. Production S3/CDN/media pipeline будет отдельной задачей позже.
 
 Для запуска напрямую из backend:
 
@@ -124,7 +124,7 @@ pnpm --dir apps/backend dev
 - Profile update endpoints должны брать owner identity только из `CurrentUser`, а не из body/query/path.
 - Profile photo endpoints должны брать owner identity только из `CurrentUser`; `photoId` из path не является proof of access.
 - Public profile serializers должны отдавать только approved+published photos и не раскрывать `storageKey`, filesystem path или original filename.
-- Local uploads не должны попадать в git, dumps или backups.
+- Local adapter uploads не должны попадать в git, dumps или backups.
 - Для будущих endpoints используйте `src/common/security`:
   - `assertOwner` / `assertSameUser` для owner-only действий;
   - `assertConversationMember` для chat reads/writes;

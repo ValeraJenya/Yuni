@@ -82,6 +82,6 @@ corepack pnpm check
 
 Frontend auth использует реальный backend contract: register/login/refresh/logout/me. Refresh token остается в HttpOnly cookie, access token хранится только в memory state и восстанавливается через `POST /auth/refresh` после reload. Demo/mock state не является production auth source.
 
-Profile Photos / Media MVP использует local uploads в `apps/backend/uploads/profile-photos`; эта папка ignored by git. Для production media storage, CDN, EXIF stripping и async moderation будет отдельный этап.
+Profile Photos / Media MVP использует `ProfilePhotoStorage` boundary. Текущий local adapter пишет uploads в `apps/backend/uploads/profile-photos`; эта папка ignored by git. Для production media storage, CDN, EXIF stripping и async moderation будет отдельный этап.
 
 Yuni стартует с новой пустой БД. Legacy data migration, перенос старых пользователей, сохранение старых ID и cleanup старых данных не нужны.

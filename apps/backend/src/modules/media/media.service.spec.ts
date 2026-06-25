@@ -5,34 +5,30 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PhotoModerationStatus, UserStatus } from '@prisma/client';
-import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import {
   PROFILE_PHOTO_MAX_BYTES,
   PROFILE_PHOTO_MAX_COUNT,
-  PROFILE_PHOTO_PUBLIC_PATH,
-  PROFILE_PHOTO_STORAGE_PREFIX,
 } from './media.constants';
 import { MediaService } from './media.service';
+import type { ProfilePhotoStorage } from './storage/profile-photo-storage.port';
 import type { UploadedProfilePhotoFile } from './types/uploaded-profile-photo-file';
-
-jest.mock('node:crypto', () => ({
-  randomUUID: jest.fn(() => '11111111-1111-4111-8111-111111111111'),
-}));
-
-jest.mock('node:fs/promises', () => ({
-  mkdir: jest.fn(async () => undefined),
-  writeFile: jest.fn(async () => undefined),
-  unlink: jest.fn(async () => undefined),
-}));
 
 const CURRENT_USER: AuthenticatedUser = {
   id: 'user-1',
   email: 'person@example.com',
 };
 const FIXED_NOW = new Date('2026-06-06T12:00:00.000Z');
+
+const DEFAULT_STORAGE_RESULT = {
+  storageKey: 'profile-photos/11111111-1111-4111-8111-111111111111.jpg',
+  publicUrl: '/uploads/profile-photos/11111111-1111-4111-8111-111111111111.jpg',
+};
+const PNG_STORAGE_RESULT = {
+  storageKey: 'profile-photos/11111111-1111-4111-8111-111111111111.png',
+  publicUrl: '/uploads/profile-photos/11111111-1111-4111-8111-111111111111.png',
+};
 
 const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
 const PNG_BUFFER = Buffer.from([
@@ -93,12 +89,13 @@ interface PrismaMock {
   $transaction: jest.Mock;
 }
 
+type ProfilePhotoStorageMock = jest.Mocked<ProfilePhotoStorage>;
+
 describe('MediaService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     jest.setSystemTime(FIXED_NOW);
-    jest.mocked(randomUUID).mockReturnValue('11111111-1111-4111-8111-111111111111');
   });
 
   afterEach(() => {
@@ -150,7 +147,7 @@ describe('MediaService', () => {
   });
 
   it('rejects photo upload for inactive users before touching storage', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue({
       status: UserStatus.disabled,
       deletedAt: null,
@@ -160,12 +157,12 @@ describe('MediaService', () => {
       service.uploadProfilePhoto(CURRENT_USER, makeFile()),
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
-    expect(mkdir).not.toHaveBeenCalled();
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(storage.saveProfilePhoto).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
   });
 
   it('rejects missing and empty files without storage writes', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
 
     await expect(
@@ -177,12 +174,12 @@ describe('MediaService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
-    expect(mkdir).not.toHaveBeenCalled();
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(storage.saveProfilePhoto).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
   });
 
   it('rejects unsupported mime types before storage writes', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
 
     await expect(
@@ -193,12 +190,12 @@ describe('MediaService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
-    expect(mkdir).not.toHaveBeenCalled();
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(storage.saveProfilePhoto).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
   });
 
   it('rejects oversized files before storage writes', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
 
     await expect(
@@ -209,12 +206,12 @@ describe('MediaService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
-    expect(mkdir).not.toHaveBeenCalled();
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(storage.saveProfilePhoto).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
   });
 
   it('rejects invalid image signatures before storage writes', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
 
     await expect(
@@ -225,12 +222,12 @@ describe('MediaService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.profilePhoto.count).not.toHaveBeenCalled();
-    expect(mkdir).not.toHaveBeenCalled();
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(storage.saveProfilePhoto).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
   });
 
   it('rejects uploads at the profile photo limit before storage and create', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.count.mockResolvedValue(PROFILE_PHOTO_MAX_COUNT);
 
@@ -238,8 +235,8 @@ describe('MediaService', () => {
       service.uploadProfilePhoto(CURRENT_USER, makeFile()),
     ).rejects.toBeInstanceOf(BadRequestException);
 
-    expect(mkdir).not.toHaveBeenCalled();
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(storage.saveProfilePhoto).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
     expect(prisma.profilePhoto.create).not.toHaveBeenCalled();
   });
 
@@ -248,8 +245,12 @@ describe('MediaService', () => {
     { name: 'PNG', mimetype: 'image/png', buffer: PNG_BUFFER },
     { name: 'WebP', mimetype: 'image/webp', buffer: WEBP_BUFFER },
   ])('accepts a valid $name signature', async ({ mimetype, buffer }) => {
-    const { service, prisma } = createService();
-    const createdPhoto = makePhoto({ mimeType: mimetype });
+    const { service, prisma, storage } = createService();
+    const createdPhoto = makePhoto({
+      mimeType: mimetype,
+      storageKey: DEFAULT_STORAGE_RESULT.storageKey,
+      publicUrl: DEFAULT_STORAGE_RESULT.publicUrl,
+    });
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.count.mockResolvedValue(0);
     prisma.profilePhoto.aggregate.mockResolvedValue({
@@ -265,22 +266,26 @@ describe('MediaService', () => {
       makeFile({ mimetype, buffer }),
     );
 
-    expect(writeFile).toHaveBeenCalledWith(expect.any(String), buffer);
+    expect(storage.saveProfilePhoto).toHaveBeenCalledWith({
+      buffer,
+      mimeType: mimetype,
+    });
     expect(result.photo).not.toHaveProperty('storageKey');
   });
 
-  it('uploads a valid first photo as approved primary media without real file writes', async () => {
-    const { service, prisma } = createService();
+  it('uploads a valid first photo as approved primary media through storage', async () => {
+    const { service, prisma, storage } = createService();
     const createdPhoto = makePhoto({
       id: 'created-photo',
-      storageKey: `${PROFILE_PHOTO_STORAGE_PREFIX}11111111-1111-4111-8111-111111111111.png`,
-      publicUrl: `${PROFILE_PHOTO_PUBLIC_PATH}/11111111-1111-4111-8111-111111111111.png`,
+      storageKey: PNG_STORAGE_RESULT.storageKey,
+      publicUrl: PNG_STORAGE_RESULT.publicUrl,
       mimeType: 'image/png',
       position: 0,
       isPrimary: true,
       approvedAt: FIXED_NOW,
       publishedAt: FIXED_NOW,
     });
+    storage.saveProfilePhoto.mockResolvedValue(PNG_STORAGE_RESULT);
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.count.mockResolvedValue(0);
     prisma.profilePhoto.aggregate.mockResolvedValue({ _max: { position: null } });
@@ -294,19 +299,15 @@ describe('MediaService', () => {
       makeFile({ mimetype: 'image/png' }),
     );
 
-    expect(mkdir).toHaveBeenCalledWith(
-      expect.stringContaining('uploads'),
-      { recursive: true },
-    );
-    expect(writeFile).toHaveBeenCalledWith(
-      expect.stringContaining('11111111-1111-4111-8111-111111111111.png'),
-      PNG_BUFFER,
-    );
+    expect(storage.saveProfilePhoto).toHaveBeenCalledWith({
+      buffer: PNG_BUFFER,
+      mimeType: 'image/png',
+    });
     expect(prisma.profilePhoto.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-1',
-        storageKey: `${PROFILE_PHOTO_STORAGE_PREFIX}11111111-1111-4111-8111-111111111111.png`,
-        publicUrl: `${PROFILE_PHOTO_PUBLIC_PATH}/11111111-1111-4111-8111-111111111111.png`,
+        storageKey: PNG_STORAGE_RESULT.storageKey,
+        publicUrl: PNG_STORAGE_RESULT.publicUrl,
         mimeType: 'image/png',
         position: 0,
         isPrimary: true,
@@ -354,7 +355,7 @@ describe('MediaService', () => {
   });
 
   it('removes the uploaded file best-effort when DB create fails', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.count.mockResolvedValue(0);
     prisma.profilePhoto.aggregate.mockResolvedValue({ _max: { position: null } });
@@ -364,8 +365,25 @@ describe('MediaService', () => {
       service.uploadProfilePhoto(CURRENT_USER, makeFile({ mimetype: 'image/jpeg' })),
     ).rejects.toThrow('db failed');
 
-    expect(unlink).toHaveBeenCalledWith(
-      expect.stringContaining('11111111-1111-4111-8111-111111111111.jpg'),
+    expect(storage.deleteProfilePhoto).toHaveBeenCalledWith(
+      DEFAULT_STORAGE_RESULT.storageKey,
+    );
+  });
+
+  it('keeps the original DB error when upload cleanup fails', async () => {
+    const { service, prisma, storage } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profilePhoto.count.mockResolvedValue(0);
+    prisma.profilePhoto.aggregate.mockResolvedValue({ _max: { position: null } });
+    prisma.profilePhoto.create.mockRejectedValue(new Error('db failed'));
+    storage.deleteProfilePhoto.mockRejectedValueOnce(new Error('cleanup failed'));
+
+    await expect(
+      service.uploadProfilePhoto(CURRENT_USER, makeFile({ mimetype: 'image/jpeg' })),
+    ).rejects.toThrow('db failed');
+
+    expect(storage.deleteProfilePhoto).toHaveBeenCalledWith(
+      DEFAULT_STORAGE_RESULT.storageKey,
     );
   });
 
@@ -432,7 +450,7 @@ describe('MediaService', () => {
   });
 
   it('rejects deleting a missing or non-owned photo', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.findUnique.mockResolvedValueOnce(null);
 
@@ -449,14 +467,14 @@ describe('MediaService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(prisma.profilePhoto.delete).not.toHaveBeenCalled();
-    expect(unlink).not.toHaveBeenCalled();
+    expect(storage.deleteProfilePhoto).not.toHaveBeenCalled();
   });
 
   it('deletes an owned primary photo, promotes the next photo, and cleans storage', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     const deletedPhoto = makePhoto({
       id: 'photo-primary',
-      storageKey: `${PROFILE_PHOTO_STORAGE_PREFIX}11111111-1111-4111-8111-111111111111.jpg`,
+      storageKey: DEFAULT_STORAGE_RESULT.storageKey,
       isPrimary: true,
       position: 1,
     });
@@ -488,8 +506,8 @@ describe('MediaService', () => {
       where: { id: 'photo-next' },
       data: { isPrimary: true },
     });
-    expect(unlink).toHaveBeenCalledWith(
-      expect.stringContaining('11111111-1111-4111-8111-111111111111.jpg'),
+    expect(storage.deleteProfilePhoto).toHaveBeenCalledWith(
+      DEFAULT_STORAGE_RESULT.storageKey,
     );
     expect(result).toMatchObject({
       success: true,
@@ -498,15 +516,15 @@ describe('MediaService', () => {
   });
 
   it('does not fail delete when storage cleanup fails', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, storage } = createService();
     const deletedPhoto = makePhoto({
       id: 'photo-delete',
-      storageKey: `${PROFILE_PHOTO_STORAGE_PREFIX}11111111-1111-4111-8111-111111111111.webp`,
+      storageKey: DEFAULT_STORAGE_RESULT.storageKey,
       isPrimary: false,
     });
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.findUnique.mockResolvedValue(deletedPhoto);
-    jest.mocked(unlink).mockRejectedValueOnce(new Error('file missing'));
+    storage.deleteProfilePhoto.mockRejectedValueOnce(new Error('file missing'));
     prisma.profile.findUnique.mockResolvedValue(makeProfile({ photos: [] }));
     prisma.profilePhoto.findMany.mockResolvedValue([]);
 
@@ -516,6 +534,12 @@ describe('MediaService', () => {
       success: true,
       photos: [],
     });
+    expect(prisma.profilePhoto.delete).toHaveBeenCalledWith({
+      where: { id: 'photo-delete' },
+    });
+    expect(storage.deleteProfilePhoto).toHaveBeenCalledWith(
+      DEFAULT_STORAGE_RESULT.storageKey,
+    );
   });
 });
 
@@ -540,6 +564,13 @@ function createService() {
     },
     $transaction: jest.fn(),
   };
+  const storage: ProfilePhotoStorageMock = {
+    saveProfilePhoto: jest.fn(),
+    deleteProfilePhoto: jest.fn(),
+  };
+
+  storage.saveProfilePhoto.mockResolvedValue(DEFAULT_STORAGE_RESULT);
+  storage.deleteProfilePhoto.mockResolvedValue(undefined);
 
   prisma.$transaction.mockImplementation(
     async (
@@ -556,8 +587,12 @@ function createService() {
   );
 
   return {
-    service: new MediaService(prisma as unknown as PrismaService),
+    service: new MediaService(
+      prisma as unknown as PrismaService,
+      storage as ProfilePhotoStorage,
+    ),
     prisma,
+    storage,
   };
 }
 
@@ -611,7 +646,7 @@ function makePhoto(
   return {
     id: 'photo-1',
     userId: 'user-1',
-    storageKey: `${PROFILE_PHOTO_STORAGE_PREFIX}photo-1.jpg`,
+    storageKey: 'profile-photos/photo-1.jpg',
     publicUrl: '/uploads/profile-photos/photo-1.jpg',
     blurhash: 'blur-1',
     mimeType: 'image/jpeg',
