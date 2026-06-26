@@ -16,3 +16,7 @@ dist/
 
 # Local MVP uploads
 apps/backend/uploads/
+
+# Obsidian workspace files
+.obsidian/
+*.canvas
