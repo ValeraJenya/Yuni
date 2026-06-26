@@ -1,6 +1,6 @@
 # Backend Foundation
 
-Backend Yuni строится на NestJS, Prisma и PostgreSQL. Этот слой пока является foundation: он задает структуру, настройки безопасности и границы модулей, но не реализует полную бизнес-логику.
+Backend Yuni строится на NestJS, Prisma и PostgreSQL. MVP реализован: все основные домены auth, profiles, media, likes, matches, discovery, chat, moderation и notifications работают как отдельные NestJS-модули.
 
 ## Цели
 
@@ -8,13 +8,13 @@ Backend Yuni строится на NestJS, Prisma и PostgreSQL. Этот сло
 - Подключить Prisma как слой доступа к PostgreSQL.
 - Сохранить соответствие финальной SQL-first доменной модели.
 - Заранее заложить безопасные правила валидации, CORS и обработки ошибок.
-- Разделить будущую реализацию по доменным модулям.
+- Разделить реализацию по доменным модулям.
 
 ## Модули
 
 - `health` - рабочий `GET /health` для проверки запуска.
 - `auth` - минимальный register/login/refresh/logout/me flow, password hashing и refresh token hashing.
-- `users` - будущая работа с учетной записью пользователя.
+- `users` - scaffold-only; account-level операции за пределами auth/session не реализованы.
 - `profiles` - профиль, handle, privacy/visibility и discovery eligibility.
 - `media` - фото, moderation status, primary photo и публикация.
 - `likes` - Step 12 MVP for expiring `like` and `pass`/`skip`; `superlike` остается future work.
@@ -36,7 +36,3 @@ Backend Yuni строится на NestJS, Prisma и PostgreSQL. Этот сло
 - CORS работает только с `FRONTEND_URL` и `CORS_ALLOWED_ORIGINS`, без wildcard.
 - Общий фильтр ошибок не возвращает stack trace клиенту.
 - Env validation требует `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` и проверяет `PORT`.
-
-## Следующий шаг
-
-Следующий шаг после auth foundation - расширение owner checks и реализация первого продуктового домена, например profiles или media.

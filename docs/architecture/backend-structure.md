@@ -113,7 +113,7 @@ Implemented.
 
 ### `auth`
 
-Implemented foundation.
+Implemented.
 
 - `POST /auth/register`
 - `POST /auth/login`
