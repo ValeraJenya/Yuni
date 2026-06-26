@@ -11,7 +11,7 @@ Yuni организован как небольшой монорепозитор
 - `infra` - будущие operational scripts.
 - `docker-compose.yml` - локальный Docker workflow для PostgreSQL, backend и frontend.
 
-Backend сейчас находится на стадии foundation: есть структура, конфигурация, Prisma schema, health endpoint, auth/session flow, Profiles MVP и Profile Photos / Media MVP. Полной бизнес-логики likes, matches, chat и moderation пока нет.
+Backend реализует структуру, конфигурацию, Prisma schema, health endpoint, auth/session flow, Profiles MVP, Profile Photos / Media MVP, Discovery MVP, Likes MVP, Matches MVP, Chat MVP, Notifications MVP и Blocks/Reports (moderation) MVP. Текущие ограничения: нет image sanitization и EXIF stripping, нет object storage/CDN, нет realtime/WebSocket, production deployment не реализован.
 
 ## Быстрый локальный старт
 

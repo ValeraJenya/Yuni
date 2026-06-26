@@ -1,18 +1,19 @@
 # Project State
 
-Last verified at: 2026-06-25
-Verified on commit: ca50baf
-Last merged task / PR: PR #23 — Profile photo storage boundary
+Last verified at: 2026-06-26
+Verified on commit: 6d3d399
+Last merged task / PR: PR #24 — Project documentation foundation (Task 000)
 
 ## Baseline `main`
 
-Этот раздел описывает подтверждённый baseline ветки `main`, а не незавершённую docs-работу в текущей ветке.
+Этот раздел описывает подтверждённый baseline ветки `main`.
 
 Подтверждённый baseline:
 
-- Verified on commit: `ca50baf`;
-- Last merged task / PR: PR #23 — Profile photo storage boundary;
-- Task 000 не является частью commit `ca50baf`.
+- Verified on commit: `6d3d399`;
+- Last merged task / PR: PR #24 — Project documentation foundation (Task 000);
+- Task 000 merged в `main` через PR #24;
+- PR #24 — docs-only изменение и не меняет backend code, API contract, Prisma или Docker; code baseline неизменен с `ca50baf` (PR #23).
 
 ## Факты baseline
 
@@ -71,10 +72,9 @@ Yuni - monorepo dating app. В репозитории есть:
 
 ## Текущая работа
 
-- Текущая рабочая ветка: `docs/project-documentation-foundation`.
-- Task 000 существует в текущей ветке как незавершённая documentation task.
-- Статус Task 000: `review`.
-- Task 000 ещё не merged в `main`.
+- Task 000 (project documentation foundation) merged в `main` через PR #24 (`6d3d399`) и закрыта со статусом `done`.
+- Документация README/onboarding синхронизирована с фактическим состоянием кода: реализованные домены auth, profiles, discovery, likes, matches, chat, moderation, notifications и media. Это docs-only изменение без правок кода, API contract, Prisma или Docker.
+- Активных продуктовых задач в работе нет; backlog задач 021–026 описан в `docs/ROADMAP.md`.
 
 ## Не включено
 

@@ -10,7 +10,7 @@ Project documentation foundation
 
 ## Статус
 
-review
+done
 
 ## Приоритет
 
@@ -109,7 +109,7 @@ Documentation only.
 ## Открытые вопросы
 
 - Практическая эффективность новой системы будет проверена на следующих задачах.
-- PR и merge Task 000 ещё не выполнены.
+- Task 000 merged в `main` через PR #24 (`6d3d399`).
 
 ## Инварианты
 
@@ -194,10 +194,10 @@ git ls-files --others --exclude-standard
 ## Evidence после выполнения
 
 - Independent blind review Claude, 2026-06-26: VERDICT: APPROVE.
-- Документационный commit создан в ветке `docs/project-documentation-foundation`; итоговый commit SHA фиксируется в PR и merge closeout после слияния.
+- Документационный фундамент merged в `main` через PR #24, merge commit `6d3d399`.
 - Branch: `docs/project-documentation-foundation` pushed to `origin`.
 - Claude recheck, 2026-06-26: VERDICT: APPROVE; F-001, F-003, F-004 и F-005 закрыты.
-- Pending PR and merge.
+- Task 000 merged в `main` через PR #24 (`6d3d399`), 2026-06-26.
 - Owner подтвердил, что `docs/audits/2026-06-25-yuni-full-project-audit-draft.md` уже существовал в working tree до создания ветки `docs/project-documentation-foundation`.
 - Файл untracked, поэтому это подтверждение owner-а, а не Git history evidence.
 - Файл не читался, не менялся, не staged и не commit в рамках Task 000.
@@ -205,7 +205,6 @@ git ls-files --others --exclude-standard
 ## Не проверялось
 
 - Практическая работа системы на нескольких будущих задачах.
-- Финальное состояние после PR merge и closeout update для PROJECT_STATE.md и ROADMAP.md.
 
 ## Known limitations
 
@@ -218,4 +217,4 @@ git ls-files --others --exclude-standard
 - 2026-06-25: документационный фундамент создан, ожидается independent review.
 - 2026-06-26: независимый blind review Claude завершён с VERDICT: APPROVE.
 - 2026-06-26: Claude recheck подтвердил закрытие F-001, F-003, F-004 и F-005.
-- 2026-06-26: ожидаются PR и merge.
+- 2026-06-26: Task 000 merged в `main` через PR #24 (`6d3d399`); статус `done`.

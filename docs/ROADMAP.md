@@ -25,9 +25,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 
 ## Сейчас
 
-| ID | Название | Статус | Priority | Зависимости | Notes |
-| --- | --- | --- | --- | --- | --- |
-| 000 | Project documentation foundation | review | P0 | none | Bootstrap documentation task. |
+Нет активных задач.
 
 ## Запланировано
 
@@ -44,6 +42,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 
 | ID | Название | Статус | Priority | Evidence |
 | --- | --- | --- | --- | --- |
+| 000 | Project documentation foundation | done | P0 | PR #24 / 6d3d399 |
 | Step 20.2 | Profile photo storage boundary | done | P0 | PR #23 / ca50baf |
 
 ## Отложено

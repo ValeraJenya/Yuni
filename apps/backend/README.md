@@ -2,7 +2,7 @@
 
 Это базовая основа backend-приложения Yuni на NestJS.
 
-Сейчас здесь есть каркас модулей, подключение конфигурации, Prisma, базовые security-настройки, `GET /health`, auth/session flow, Profiles MVP и Profile Photos / Media MVP. Полная бизнес-логика likes, matches, chat и moderation пока намеренно не реализована.
+Здесь есть модули и конфигурация, подключение Prisma, базовые security-настройки, `GET /health`, auth/session flow, Profiles MVP, Profile Photos / Media MVP, Discovery MVP, Likes MVP, Matches MVP, Chat MVP, Notifications MVP и Blocks/Reports (moderation) MVP. Текущие ограничения: нет image sanitization и EXIF stripping, нет object storage/CDN, нет realtime/WebSocket, production deployment не реализован.
 
 ## Структура
 
@@ -14,7 +14,13 @@
 - `src/modules/auth` - `register`, `login`, `refresh`, `logout`, `me`.
 - `src/modules/profiles` - MVP endpoints `GET /profiles/me`, `PATCH /profiles/me`, `GET /profiles/:handle`.
 - `src/modules/media` - MVP endpoints для own profile photos: list, upload, set primary и delete.
-- `src/modules/users`, `likes`, `matches`, `chat`, `moderation` - границы будущих доменных модулей.
+- `src/modules/discovery` - Discovery MVP: `GET /discovery/cards`.
+- `src/modules/likes` - Likes MVP: like/skip.
+- `src/modules/matches` - Matches MVP и старт conversation из match.
+- `src/modules/chat` - Chat MVP: conversations и текстовые сообщения.
+- `src/modules/notifications` - Notifications MVP (in-app).
+- `src/modules/moderation` - Blocks/Reports MVP.
+- `src/modules/users` - граница доменного модуля users.
 - `prisma/schema.prisma` - ORM-модель для Prisma Client.
 - `prisma/migrations` - основной способ применения greenfield PostgreSQL schema.
 - `uploads/profile-photos` - local adapter storage для загруженных profile photos через `ProfilePhotoStorage`. Папка ignored by git.
