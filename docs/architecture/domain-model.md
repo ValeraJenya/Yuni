@@ -1,6 +1,6 @@
 # Domain Model
 
-Yuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и будущие NestJS modules.
+Yuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и реализованные NestJS modules.
 
 ## Auth
 
@@ -40,7 +40,7 @@ Discovery returns computed age instead of raw `birth_date`, and only approved/pu
 
 - API `like` сохраняется как `LikeKind.like`;
 - API `skip`/`pass` сохраняется как `LikeKind.pass`;
-- `superlike` остается будущим расширением и не реализован в Step 12.
+- `superlike` не реализован в MVP.
 
 У Profile нет отдельного id: target profile в likes API обозначается как `targetProfileUserId`, то есть `profiles.user_id`.
 
