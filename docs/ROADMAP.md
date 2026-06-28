@@ -37,6 +37,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 024 | Atomic block and match lifecycle | idea | P1 | Task 000 | Проверить consistency block/match/chat side effects. |
 | 025 | Production deployment readiness | idea | P1 | Task 000 | Deployment architecture, secrets, HTTPS, reverse proxy. |
 | 026 | PostgreSQL integration checks in CI | idea | P2 | Task 000 | CI checks with real PostgreSQL service where useful. |
+| 027 | Этапный чат — схема и бэкенд | approved | P1 | Task 018 | Этапная система общения: схема, игры, стартовые фразы, голосовые лимиты. |
 
 ## Выполнено
 
