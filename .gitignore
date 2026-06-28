@@ -20,3 +20,11 @@ apps/backend/uploads/
 # Obsidian workspace files
 .obsidian/
 *.canvas
+
+# Hugo generated files
+docs-site/public/
+docs-site/resources/
+docs-site/.hugo_build.lock
+docs-site/cd
+docs-site/git
+docs-site/xcopy
