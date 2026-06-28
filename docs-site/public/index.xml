@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Yuni Documentation :: Yuni Docs</title>
+    <link>//localhost:1313/index.html</link>
+    <description>Yuni — dating app, монорепозиторий на React + NestJS + PostgreSQL/Prisma, развёртываемый локально через Docker Compose. Backend MVP реализован полностью: auth, profiles, media, discovery, likes, matches, chat, moderation, notifications. Production deployment не реализован.&#xA;Стек: Next.js (React) · NestJS · PostgreSQL · Prisma · Docker Compose&#xA;Текущее состояние: MVP backend — 9 доменов, 17 spec-файлов, 166 тестов. Production deployment, realtime/WebSocket и object storage/CDN в планах.&#xA;Разделы&#xD;О проекте — описание, стек, статус Этапы разработки — история PR, roadmap, идеи Архитектура — обзор, backend, frontend, domain model Backend-модули — auth, profiles, media, discovery, likes, matches, chat, moderation, notifications API — endpoints, rate limits, pagination База данных — схема, миграции, инварианты Безопасность — правила, serializers, data exposure Тестирование — критичные сценарии Онбординг — быстрый старт, Docker, ручной запуск ADR — Решения — architecture decision records Процесс — quality gates</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <atom:link href="//localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>О проекте</title>
+      <link>//localhost:1313/project/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/project/index.html</guid>
+      <description>Yuni — dating app в виде монорепозитория. Включает React-frontend, NestJS-backend, PostgreSQL/Prisma, документацию и Docker Compose для локальной разработки.&#xA;Стек&#xD;Компонент Технология Frontend Next.js (React), TypeScript Backend NestJS, TypeScript База данных PostgreSQL + Prisma ORM Локальный запуск Docker Compose Тесты Jest (backend unit) CI GitHub Actions Реализованные домены&#xD;auth · profiles · media · discovery · likes · matches · chat · moderation · notifications</description>
+    </item>
+    <item>
+      <title>Этапы разработки</title>
+      <link>//localhost:1313/stages/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/stages/index.html</guid>
+      <description>История реализованных PR, утверждённые задачи из roadmap и идеи для будущей разработки.&#xA;✅ Готовые — завершённые этапы из git log 🔄 Утверждённые — запланированные задачи из roadmap 💡 Идеи — неутверждённые идеи</description>
+    </item>
+    <item>
+      <title>Архитектура</title>
+      <link>//localhost:1313/architecture/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/architecture/index.html</guid>
+      <description>Yuni использует монорепозиторий, чтобы frontend, backend, база данных, документация и инфраструктура развивались вместе, но оставались разделены по зонам ответственности.&#xA;Структура монорепо&#xD;Директория Назначение apps/frontend Next.js frontend apps/backend NestJS backend database SQL-first схема, будущие миграции и seeds docs Документация по архитектуре, security, onboarding infra Будущие operational scripts docker-compose.yml Локальный Docker workflow Состояние&#xD;Backend MVP реализован. Все основные домены работают как отдельные NestJS-модули. Production deployment и realtime не реализованы.</description>
+    </item>
+    <item>
+      <title>Backend-модули</title>
+      <link>//localhost:1313/modules/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/modules/index.html</guid>
+      <description>Все модули реализованы в apps/backend/src/modules/. Каждый модуль содержит controller, service и module файлы; при необходимости — dto/, types/, constants/.&#xA;Список модулей&#xD;Модуль Статус Основные endpoints auth done register, login, refresh, logout, me profiles done GET/PATCH me, GET :handle media partial profile photos CRUD discovery done GET /discovery/cards likes done like, skip matches done GET /matches/me chat done conversations, messages, send moderation done blocks, reports notifications done list, unread-count, mark-read Также существует модуль health (GET /health) и users (scaffold only).</description>
+    </item>
+    <item>
+      <title>API</title>
+      <link>//localhost:1313/api/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/api/index.html</guid>
+      <description>Исходник: docs/api/README.md. Реализованы: auth/session, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP, Chat MVP, Notifications MVP.&#xA;Подготовка к ручной проверке&#xD;corepack pnpm install --frozen-lockfile copy .env.example .env corepack pnpm prisma:migrate:dev corepack pnpm prisma:generate corepack pnpm dev:backend&#xD;В .env нужен корректный DATABASE_URL:&#xA;DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni&#xD;Error и access-control conventions&#xD;Код Значение 400 Request validation error 401 Не аутентифицирован или session/token invalid 403 Аутентифицирован, но нет доступа к ресурсу 404 Ресурс отсутствует 409 Конфликт уникальности или доменного состояния 429 Rate limit exceeded Backend не раскрывает security-sensitive details в ошибках.</description>
+    </item>
+    <item>
+      <title>База данных</title>
+      <link>//localhost:1313/database/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/database/index.html</guid>
+      <description>Исходник: docs/database/README.md. Yuni использует PostgreSQL. apps/backend/prisma/schema.prisma — единственный source of truth для схемы, типов и relations. SQL migrations: apps/backend/prisma/migrations/.&#xA;Структура&#xD;apps/backend/prisma/ schema.prisma migrations/ migration_lock.toml 20260528150000_greenfield_baseline/ 20260607120000_likes_expiring_interactions/ 20260607140000_matches_expiring_rematchable/ 20260609180000_notifications_mvp/&#xD;database/schema/schema.sql — историческая заготовка, не является авторитетным источником.&#xA;PostgreSQL-расширения&#xD;pgcrypto — для gen_random_uuid(); включается в greenfield_baseline btree_gist — для exclusion constraints на likes и matches; включается в Step 12 и Step 13 migrations Migrations&#xD;Применяются командой prisma migrate deploy. Не запускаются автоматически при старте backend.</description>
+    </item>
+    <item>
+      <title>Безопасность</title>
+      <link>//localhost:1313/security/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/security/index.html</guid>
+      <description>Исходник: docs/security/README.md. Стартовые правила безопасности Yuni.&#xA;Подробные правила выдачи данных: Data Exposure Rules.&#xA;Базовые правила&#xD;Нельзя хранить реальные секреты в репозитории Сырые пароли не сохраняются — только password_hash (argon2) Сырые refresh tokens не сохраняются — только token_hash (argon2) Refresh token — HttpOnly cookie; в базе только argon2 hash Refresh token rotation: atomic, single-use Access token — только в memory state; нельзя в localStorage, sessionStorage, cookies, logs Frontend отправляет auth requests с credentials: include Access token передаётся как Bearer token; не логируется Frontend — не security boundary&#xD;Frontend validation используется только для UX.</description>
+    </item>
+    <item>
+      <title>Тестирование</title>
+      <link>//localhost:1313/testing/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/testing/index.html</guid>
+      <description>Исходник: docs/testing/critical-scenarios.md. Карта критичных тест-сценариев Yuni по состоянию на 2026-06-26.&#xA;Все тесты — unit-уровень с mock Prisma. Интеграционных и e2e тестов нет.&#xA;Статусы: covered — покрыт unit-тестом; not-covered — теста нет; needs-recheck — частично покрыт или покрыт на уровне mock-а, требует интеграционного теста с реальной БД.&#xA;Итоговая сводка по доменам&#xD;Домен Покрыто Не покрыто Needs-recheck Auth register, login, refresh, logout, PII дубль email/handle, login disabled user parallel refresh race Owner checks assertOwner, assertFound, assertCanAccessProfile, assertCanAccessPhoto assertConversationMember, assertMatchParticipant — Serializers PII exclusion, private mode — — Profiles getMe, updateMe, getByHandle, block/private access PATCH с запрещёнными полями (DTO-уровень) — Media upload validation (MIME, size, signature, limit), owner checks, storage cleanup EXIF stripping, path traversal — Discovery все фильтры, pagination, safe shape — — Likes happy path, все negative, block, cooldown, constraint — parallel race Matches happy path, все negative, normalization, constraint pagination parallel race Chat membership, block bypass, closed conversation, DTO, idempotent start — conversation race Moderation block/unblock/report, side effects, DTO, idempotency admin review workflow block race Notifications create/list/mark-read, block filter, settings, safe shape — — HTTP/Controller — JwtAccessGuard enforcement, DTO whitelist, rate limit wiring — Auth&#xD;Spec: apps/backend/src/modules/auth/auth.service.spec.ts</description>
+    </item>
+    <item>
+      <title>Онбординг</title>
+      <link>//localhost:1313/onboarding/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/onboarding/index.html</guid>
+      <description>Что установить&#xD;Инструмент Версия Зачем Node.js 20+ Backend и frontend pnpm (через Corepack) latest Менеджер пакетов Docker Desktop latest Локальный запуск БД, backend, frontend Git latest Клонирование и работа с репозиторием Включить Corepack (устанавливает нужную версию pnpm автоматически):&#xA;corepack enable&#xD;Клонирование репозитория&#xD;git clone &lt;repo-url&gt; cd yuni&#xD;Настройка .env&#xD;Скопировать .env.example в .env:</description>
+    </item>
+    <item>
+      <title>ADR — Решения</title>
+      <link>//localhost:1313/decisions/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/decisions/index.html</guid>
+      <description>Исходник: docs/decisions/README.md. Architecture Decision Records фиксируют значимые решения, их контекст и условия пересмотра.&#xA;Существующие decision records&#xD;0001 PostgreSQL Domain Foundation 0002 Greenfield Prisma Migrations Когда нужен ADR&#xD;ADR нужен, если решение влияет на:&#xA;Архитектурные границы API contract Database schema/migrations Security model Deployment/infrastructure Long-term development workflow Структура ADR&#xD;ID Название Статус: proposed / accepted / superseded / deprecated Принято Commit / PR Контекст Проблема Решение Последствия Не решает Альтернативы Связанные задачи Связанные документы Пересмотреть если&#xD;Правила&#xD;ADR не делает решение вечным Поле Пересмотреть если обязательно Если ADR заменён, новый ADR должен ссылаться на старый ADR должен отделять факты от решений и future work ADR не должен содержать secrets, PII, database dumps или real user data</description>
+    </item>
+    <item>
+      <title>Процесс</title>
+      <link>//localhost:1313/process/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/process/index.html</guid>
+      <description>Исходник: docs/QUALITY_GATES.md. Quality gates применяются согласно task spec. Используются только существующие scripts и текущие project commands.&#xA;Git&#xD;Проверить ветку и git status Проверить expected changed files Проверить expected staged files перед commit/PR Не использовать git add . и git add -A Не допускать случайные файлы, dumps, build artifacts, raw audit drafts Выполнить git diff --check Untracked files&#xD;Результат git ls-files --others --exclude-standard сравнивается с allowlist в task spec Untracked файл допустим только если task spec указывает точный путь и причину Любой untracked файл вне allowlist — blocker до ручного объяснения или удаления Docs-only задача&#xD;Не обязана запускать backend/frontend tests, если task spec не требует.</description>
+    </item>
+  </channel>
+</rss>

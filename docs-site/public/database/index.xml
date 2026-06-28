@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>База данных :: Yuni Docs</title>
+    <link>//localhost:1313/database/index.html</link>
+    <description>Исходник: docs/database/README.md. Yuni использует PostgreSQL. apps/backend/prisma/schema.prisma — единственный source of truth для схемы, типов и relations. SQL migrations: apps/backend/prisma/migrations/.&#xA;Структура&#xD;apps/backend/prisma/ schema.prisma migrations/ migration_lock.toml 20260528150000_greenfield_baseline/ 20260607120000_likes_expiring_interactions/ 20260607140000_matches_expiring_rematchable/ 20260609180000_notifications_mvp/&#xD;database/schema/schema.sql — историческая заготовка, не является авторитетным источником.&#xA;PostgreSQL-расширения&#xD;pgcrypto — для gen_random_uuid(); включается в greenfield_baseline btree_gist — для exclusion constraints на likes и matches; включается в Step 12 и Step 13 migrations Migrations&#xD;Применяются командой prisma migrate deploy. Не запускаются автоматически при старте backend.</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <atom:link href="//localhost:1313/database/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Схема и миграции</title>
+      <link>//localhost:1313/database/schema/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/database/schema/index.html</guid>
+      <description>Исходник: docs/database/schema-and-migrations.md. Source of truth: apps/backend/prisma/schema.prisma и apps/backend/prisma/migrations/.&#xA;Таблицы по доменам&#xD;Auth&#xD;users — account identity. PK: id (UUID). Ключевые поля: email (unique, case-insensitive), password_hash, status, deleted_at. Soft-delete: status=deleted + deleted_at.&#xA;refresh_tokens — hashed refresh tokens. FK user_id → users.id ON DELETE CASCADE. Revocation: revoked_at; partial index на активные (revoked_at IS NULL). token_hash unique.</description>
+    </item>
+  </channel>
+</rss>

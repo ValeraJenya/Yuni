@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html id="R-html" lang="en" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.163.3">
+    <meta name="generator" content="Relearn 9.0.3+36307e4ed23582638ab689240ac7b427217803ee">
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+    <meta name="description" content="Scaling RoadmapYuni should scale by strengthening the modular monolith first, then extracting only proven bottlenecks.
+Microservices are not the current strategy.
+Stage 1 - Modular MonolithCurrent target.
+One Next.js frontend. One NestJS backend. PostgreSQL via Prisma migrations. Local Docker/PostgreSQL workflow. Shared docs and architecture conventions. Domain modules inside one backend process. Goal: small team can ship MVP safely without distributed-system overhead.">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:description" content="Scaling RoadmapYuni should scale by strengthening the modular monolith first, then extracting only proven bottlenecks.
+Microservices are not the current strategy.
+Stage 1 - Modular MonolithCurrent target.
+One Next.js frontend. One NestJS backend. PostgreSQL via Prisma migrations. Local Docker/PostgreSQL workflow. Shared docs and architecture conventions. Domain modules inside one backend process. Goal: small team can ship MVP safely without distributed-system overhead.">
+    <meta property="og:url" content="//localhost:1313/docs/architecture/scaling-roadmap/index.html">
+    <meta property="og:site_name" content="Yuni Docs">
+    <meta property="og:description" content="Scaling RoadmapYuni should scale by strengthening the modular monolith first, then extracting only proven bottlenecks.
+Microservices are not the current strategy.
+Stage 1 - Modular MonolithCurrent target.
+One Next.js frontend. One NestJS backend. PostgreSQL via Prisma migrations. Local Docker/PostgreSQL workflow. Shared docs and architecture conventions. Domain modules inside one backend process. Goal: small team can ship MVP safely without distributed-system overhead.">
+    <meta property="og:locale" content="en">
+    <meta property="og:type" content="article">
+    <meta property="article:section" content="Docs">
+    <meta itemprop="description" content="Scaling RoadmapYuni should scale by strengthening the modular monolith first, then extracting only proven bottlenecks.
+Microservices are not the current strategy.
+Stage 1 - Modular MonolithCurrent target.
+One Next.js frontend. One NestJS backend. PostgreSQL via Prisma migrations. Local Docker/PostgreSQL workflow. Shared docs and architecture conventions. Domain modules inside one backend process. Goal: small team can ship MVP safely without distributed-system overhead.">
+    <meta itemprop="wordCount" content="462">
+    <title></title>
+    <link href="/css/auto-complete/auto-complete.min.css?1782659603" rel="stylesheet">
+    <script src="/js/auto-complete/auto-complete.min.js?1782659603" defer></script>
+    <script src="/js/search-lunr.js?1782659603" defer></script>
+    <script src="/js/search.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/searchindex.en.js?1782659603";
+    </script>
+    <script src="/js/lunr/lunr.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.stemmer.support.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.multi.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.en.min.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['en'];
+    </script>
+    <link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet"></noscript>
+    <link href="/css/perfect-scrollbar/perfect-scrollbar.min.css?1782659603" rel="stylesheet">
+    <link href="/css/theme.css?1782659603" rel="stylesheet">
+    <link href="/css/format-html.css?1782659603" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/docs\/architecture\/scaling-roadmap\/index.html';
+      window.relearn.relBasePath='..\/..\/..';
+      window.relearn.relBaseUri='..\/..\/..';
+      window.relearn.absBaseUri='\/\/localhost:1313';
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // translations
+      window.T_Copy_to_clipboard = `Copy text to clipboard`;
+      window.T_Copied_to_clipboard = `Text copied to clipboard!`;
+      window.T_Link_copied_to_clipboard = `Link copied to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      window.T_Browser_unsupported_feature = `This browser doesn't support this feature`;
+      // variant stuff
+      window.relearn.themevariants = [ 'relearn-dark' ];
+      window.relearn.customvariantprefix = "my-custom-";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant") ?? "";
+        if( !variant ||
+            (!variant.startsWith(window.relearn.customvariantprefix) && !window.relearn.themevariants.includes(variant)) ||
+            (variant.startsWith(window.relearn.customvariantprefix) && !window.localStorage.getItem(window.relearn.absBaseUri + "/variantstylesheet-" + variant)) ){
+          variant = window.relearn.themevariants[0];
+          window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-origin="/docs/architecture/scaling-roadmap/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar" class="default-animation">
+        <div class="topbar-wrapper default-animation">
+          <div class="topbar-sidebar-divider default-animation"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar default-animation" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button></span>
+            </div>
+            <div class="topbar-button topbar-button-toc default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-table-list"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+<nav class="TableOfContents">
+  <ul>
+    <li><a href="#stage-1---modular-monolith">Stage 1 - Modular Monolith</a></li>
+    <li><a href="#stage-2---production-ready-monolith">Stage 2 - Production-Ready Monolith</a></li>
+    <li><a href="#stage-3---object-storage--cdn-for-media">Stage 3 - Object Storage / CDN for Media</a></li>
+    <li><a href="#stage-4---redis--valkey">Stage 4 - Redis / Valkey</a></li>
+    <li><a href="#stage-5---workers--queues">Stage 5 - Workers / Queues</a></li>
+    <li><a href="#stage-6---realtime-chat-layer">Stage 6 - Realtime Chat Layer</a></li>
+    <li><a href="#stage-7---discovery-optimization">Stage 7 - Discovery Optimization</a></li>
+    <li><a href="#stage-8---selective-service-extraction">Stage 8 - Selective Service Extraction</a></li>
+    <li><a href="#what-not-to-do-now">What Not To Do Now</a></li>
+  </ul>
+</nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/index.html"><span itemprop="name">Yuni Documentation</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/docs/index.html"><span itemprop="name">Docs</span></a><meta itemprop="position" content="2">&nbsp;>&nbsp;</li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><a href="/docs/index.html" title="Docs (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a></span>
+            </div>
+            <div class="topbar-button topbar-button-next default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle"><span><i class="fa-fw fas fa-chevron-right"></i></span></span>
+            </div>
+            <div class="topbar-button topbar-button-more default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable docs" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id=""></h1>
+
+<h1 id="scaling-roadmap">Scaling Roadmap<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h1>
+<p>Yuni should scale by strengthening the modular monolith first, then extracting only proven bottlenecks.</p>
+<p>Microservices are not the current strategy.</p>
+<h2 id="stage-1---modular-monolith">Stage 1 - Modular Monolith<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Current target.</p>
+<ul>
+<li>One Next.js frontend.</li>
+<li>One NestJS backend.</li>
+<li>PostgreSQL via Prisma migrations.</li>
+<li>Local Docker/PostgreSQL workflow.</li>
+<li>Shared docs and architecture conventions.</li>
+<li>Domain modules inside one backend process.</li>
+</ul>
+<p>Goal: small team can ship MVP safely without distributed-system overhead.</p>
+<h2 id="stage-2---production-ready-monolith">Stage 2 - Production-Ready Monolith<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Before wider testing:</p>
+<ul>
+<li>Docker Compose server deployment;</li>
+<li>Nginx or equivalent reverse proxy;</li>
+<li>HTTPS;</li>
+<li>PostgreSQL backups and restore drills;</li>
+<li>CI/CD;</li>
+<li>logs and basic monitoring;</li>
+<li>error tracking;</li>
+<li>documented deploy and rollback steps.</li>
+</ul>
+<p>Goal: one service boundary, but operationally reliable.</p>
+<h2 id="stage-3---object-storage--cdn-for-media">Stage 3 - Object Storage / CDN for Media<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>After the local <code>ProfilePhotoStorage</code> adapter MVP is stable:</p>
+<ul>
+<li>add an object-storage adapter behind the existing profile photo storage boundary;</li>
+<li>add CDN delivery;</li>
+<li>add signed/private media access where needed;</li>
+<li>move media metadata and visibility rules through backend;</li>
+<li>add production media moderation pipeline.</li>
+</ul>
+<p>Goal: media storage no longer depends on one backend filesystem while preserving the existing public photo API contract.</p>
+<h2 id="stage-4---redis--valkey">Stage 4 - Redis / Valkey<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Add only when there is a clear need:</p>
+<ul>
+<li>rate limit counters;</li>
+<li>short-lived cache;</li>
+<li>temporary state;</li>
+<li>idempotency or lock helpers if PostgreSQL alone is not enough.</li>
+</ul>
+<p>Goal: support abuse prevention and hot-path temporary state without changing product module boundaries.</p>
+<h2 id="stage-5---workers--queues">Stage 5 - Workers / Queues<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Add for heavy or async work:</p>
+<ul>
+<li>media processing;</li>
+<li>EXIF/metadata stripping;</li>
+<li>thumbnails or blurhash generation;</li>
+<li>notifications;</li>
+<li>moderation jobs;</li>
+<li>retryable background tasks.</li>
+</ul>
+<p>Goal: keep request/response endpoints fast while preserving the same source of truth in PostgreSQL.</p>
+<h2 id="stage-6---realtime-chat-layer">Stage 6 - Realtime Chat Layer<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>After basic chat API exists:</p>
+<ul>
+<li>WebSocket gateway;</li>
+<li>message delivery state;</li>
+<li>read receipts;</li>
+<li>typing/presence if needed;</li>
+<li>anti-spam controls.</li>
+</ul>
+<p>Goal: realtime behavior without moving all chat domain logic out of the monolith too early.</p>
+<h2 id="stage-7---discovery-optimization">Stage 7 - Discovery Optimization<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>After discover API exists and real usage data appears:</p>
+<ul>
+<li>strong indexes;</li>
+<li>cursor pagination;</li>
+<li>block-aware filtering;</li>
+<li>caching for repeated queries;</li>
+<li>possible search engine later if PostgreSQL is not enough.</li>
+</ul>
+<p>Goal: improve discover latency and abuse resistance based on measured bottlenecks.</p>
+<h2 id="stage-8---selective-service-extraction">Stage 8 - Selective Service Extraction<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Only extract a service when the monolith has a proven bottleneck or operational mismatch.</p>
+<p>Possible candidates:</p>
+<ul>
+<li>media worker;</li>
+<li>chat realtime;</li>
+<li>notifications;</li>
+<li>recommendations;</li>
+<li>analytics.</li>
+</ul>
+<p>Extraction rule:</p>
+<ul>
+<li>first define the boundary inside the modular monolith;</li>
+<li>measure the bottleneck;</li>
+<li>extract only the narrow component that benefits;</li>
+<li>keep shared security and data exposure rules documented.</li>
+</ul>
+<h2 id="what-not-to-do-now">What Not To Do Now<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ul>
+<li>Do not start with microservices.</li>
+<li>Do not add Redis/event bus without a concrete use case.</li>
+<li>Do not build a complex recommendation system before discover basics.</li>
+<li>Do not build production CDN/media pipeline before local upload flow is stable.</li>
+<li>Do not add heavy admin tooling before basic reports/blocks exist.</li>
+<li>Do not optimize for huge traffic before indexes, pagination and auth/media/security foundations are solid.</li>
+</ul>
+
+  <footer class="footline">
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <a id="R-logo" class="R-default direction-row" href="/index.html">
+          <span class="logo-title default-animation">Yuni Docs</span>
+        </a>
+        <search><form action="/search/index.html" method="get">
+          <div class="searchbox default-animation">
+            <button class="search-detail" type="submit" title="Search (CTRL+ALT+f)"><i class="fas fa-fw fa-search"></i></button>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-fw fa-times" title="Clear search"></i></button>
+          </div>
+        </form></search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks default-animation">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/index.html"><a class="padding" href="/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main default-animation">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="" data-nav-id="/project/index.html"><input type="checkbox" id="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5" aria-controls="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5"><label for="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu О проекте</span></label><a class="padding default-animation" href="/project/index.html">О проекте</a><ul id="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5" class="collapsible-menu">
+            <li class="" data-nav-id="/project/state/index.html"><a class="padding" href="/project/state/index.html">Текущее состояние</a></li>
+            <li class="" data-nav-id="/project/roadmap/index.html"><a class="padding" href="/project/roadmap/index.html">Roadmap</a></li>
+            <li class="" data-nav-id="/project/features/index.html"><a class="padding" href="/project/features/index.html">Матрица фич</a></li></ul></li>
+            <li class="" data-nav-id="/stages/index.html"><a class="padding" href="/stages/index.html">Этапы разработки</a></li>
+            <li class="" data-nav-id="/architecture/index.html"><input type="checkbox" id="R-section-9e2fbae00589891720aedcdff0084e07" aria-controls="R-subsections-9e2fbae00589891720aedcdff0084e07"><label for="R-section-9e2fbae00589891720aedcdff0084e07"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Архитектура</span></label><a class="padding default-animation" href="/architecture/index.html">Архитектура</a><ul id="R-subsections-9e2fbae00589891720aedcdff0084e07" class="collapsible-menu">
+            <li class="" data-nav-id="/architecture/backend/index.html"><a class="padding" href="/architecture/backend/index.html">Backend</a></li>
+            <li class="" data-nav-id="/architecture/frontend/index.html"><a class="padding" href="/architecture/frontend/index.html">Frontend</a></li>
+            <li class="" data-nav-id="/architecture/domain-model/index.html"><a class="padding" href="/architecture/domain-model/index.html">Domain Model</a></li></ul></li>
+            <li class="" data-nav-id="/modules/index.html"><input type="checkbox" id="R-section-86070686ce713af8e2516d0daffc06f4" aria-controls="R-subsections-86070686ce713af8e2516d0daffc06f4"><label for="R-section-86070686ce713af8e2516d0daffc06f4"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Backend-модули</span></label><a class="padding default-animation" href="/modules/index.html">Backend-модули</a><ul id="R-subsections-86070686ce713af8e2516d0daffc06f4" class="collapsible-menu">
+            <li class="" data-nav-id="/modules/auth/index.html"><a class="padding" href="/modules/auth/index.html">auth</a></li>
+            <li class="" data-nav-id="/modules/profiles/index.html"><a class="padding" href="/modules/profiles/index.html">profiles</a></li>
+            <li class="" data-nav-id="/modules/media/index.html"><a class="padding" href="/modules/media/index.html">media</a></li>
+            <li class="" data-nav-id="/modules/discovery/index.html"><a class="padding" href="/modules/discovery/index.html">discovery</a></li>
+            <li class="" data-nav-id="/modules/likes/index.html"><a class="padding" href="/modules/likes/index.html">likes</a></li>
+            <li class="" data-nav-id="/modules/matches/index.html"><a class="padding" href="/modules/matches/index.html">matches</a></li>
+            <li class="" data-nav-id="/modules/chat/index.html"><a class="padding" href="/modules/chat/index.html">chat</a></li>
+            <li class="" data-nav-id="/modules/moderation/index.html"><a class="padding" href="/modules/moderation/index.html">moderation</a></li>
+            <li class="" data-nav-id="/modules/notifications/index.html"><a class="padding" href="/modules/notifications/index.html">notifications</a></li></ul></li>
+            <li class="" data-nav-id="/api/index.html"><a class="padding" href="/api/index.html">API</a></li>
+            <li class="" data-nav-id="/database/index.html"><input type="checkbox" id="R-section-ffbd3c632901f0c6472eed450e4e91f8" aria-controls="R-subsections-ffbd3c632901f0c6472eed450e4e91f8"><label for="R-section-ffbd3c632901f0c6472eed450e4e91f8"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu База данных</span></label><a class="padding default-animation" href="/database/index.html">База данных</a><ul id="R-subsections-ffbd3c632901f0c6472eed450e4e91f8" class="collapsible-menu">
+            <li class="" data-nav-id="/database/schema/index.html"><a class="padding" href="/database/schema/index.html">Схема и миграции</a></li></ul></li>
+            <li class="" data-nav-id="/security/index.html"><input type="checkbox" id="R-section-66815ecaaecfc1c209e5637d03b258b2" aria-controls="R-subsections-66815ecaaecfc1c209e5637d03b258b2"><label for="R-section-66815ecaaecfc1c209e5637d03b258b2"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Безопасность</span></label><a class="padding default-animation" href="/security/index.html">Безопасность</a><ul id="R-subsections-66815ecaaecfc1c209e5637d03b258b2" class="collapsible-menu">
+            <li class="" data-nav-id="/security/data-exposure/index.html"><a class="padding" href="/security/data-exposure/index.html">Data Exposure Rules</a></li></ul></li>
+            <li class="" data-nav-id="/testing/index.html"><a class="padding" href="/testing/index.html">Тестирование</a></li>
+            <li class="" data-nav-id="/onboarding/index.html"><input type="checkbox" id="R-section-0460cb8850cf3b8ece07dc5c51a10e63" aria-controls="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63"><label for="R-section-0460cb8850cf3b8ece07dc5c51a10e63"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Онбординг</span></label><a class="padding default-animation" href="/onboarding/index.html">Онбординг</a><ul id="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63" class="collapsible-menu">
+            <li class="" data-nav-id="/onboarding/docker/index.html"><a class="padding" href="/onboarding/docker/index.html">Local Docker Workflow</a></li></ul></li>
+            <li class="" data-nav-id="/decisions/index.html"><a class="padding" href="/decisions/index.html">ADR — Решения</a></li>
+            <li class="" data-nav-id="/process/index.html"><a class="padding" href="/process/index.html">Процесс</a></li>
+            <li class="parent " data-nav-id="/docs/index.html"><input type="checkbox" id="R-section-b5fa667da3c6d162416dac7e8c63bf8a" aria-controls="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" checked><label for="R-section-b5fa667da3c6d162416dac7e8c63bf8a"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Docs</span></label><a class="padding default-animation" href="/docs/index.html">Docs</a><ul id="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" class="collapsible-menu">
+            <li class="active hidden " data-nav-id="/docs/architecture/scaling-roadmap/index.html"><a class="padding" href="/docs/architecture/scaling-roadmap/index.html"></a></li></ul></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts default-animation">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin" class="default-animation"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer" class="default-animation"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/js/perfect-scrollbar/perfect-scrollbar.min.js?1782659603" defer></script>
+    <script src="/js/theme.js?1782659603" defer></script>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>

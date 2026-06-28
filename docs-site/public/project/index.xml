@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>О проекте :: Yuni Docs</title>
+    <link>//localhost:1313/project/index.html</link>
+    <description>Yuni — dating app в виде монорепозитория. Включает React-frontend, NestJS-backend, PostgreSQL/Prisma, документацию и Docker Compose для локальной разработки.&#xA;Стек&#xD;Компонент Технология Frontend Next.js (React), TypeScript Backend NestJS, TypeScript База данных PostgreSQL + Prisma ORM Локальный запуск Docker Compose Тесты Jest (backend unit) CI GitHub Actions Реализованные домены&#xD;auth · profiles · media · discovery · likes · matches · chat · moderation · notifications</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <atom:link href="//localhost:1313/project/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Текущее состояние</title>
+      <link>//localhost:1313/project/state/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/project/state/index.html</guid>
+      <description>Последняя проверка: 2026-06-26. Commit: 6d3d399. Последний merged PR: PR #24 — Project documentation foundation (Task 000).&#xA;Baseline main&#xD;Verified commit: 6d3d399 Last merged task / PR: PR #24 — Project documentation foundation (Task 000) PR #24 — docs-only изменение; code baseline неизменён с ca50baf (PR #23) Реализованные backend-домены&#xD;auth profiles discovery likes matches chat moderation notifications media Profile photo architecture&#xD;После PR #23:</description>
+    </item>
+    <item>
+      <title>Roadmap</title>
+      <link>//localhost:1313/project/roadmap/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/project/roadmap/index.html</guid>
+      <description>Правила&#xD;Task ID — постоянный идентификатор, не порядок выполнения Приоритет определяет порядок выполнения Зависимость блокирует начало задачи Status: idea | research | ready | in_progress | review | blocked | done | deferred | superseded&#xA;Priority: P0 | P1 | P2 | P3&#xA;Сейчас&#xD;Нет активных задач.</description>
+    </item>
+    <item>
+      <title>Матрица фич</title>
+      <link>//localhost:1313/project/features/index.html</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>//localhost:1313/project/features/index.html</guid>
+      <description>Единая матрица продуктовых фич Yuni. Источник каждого факта — реальный файл в репозитории.&#xA;Статусы: done — реализовано и покрыто тестами; partial — реализовано, но с известными ограничениями; planned — не реализовано.&#xA;Последнее обновление: 2026-06-26. Проверено на commit 6d3d399.&#xA;Сводная таблица по доменам&#xD;Домен Backend Frontend Тесты (backend) Статус Auth register, login, refresh, logout, me sign-in, sign-up формы ✓ done Profiles GET/PATCH me, GET :handle просмотр + редактирование ✓ done Media upload, list, set primary, delete загрузка/удаление фото в profile ✓ partial — local storage, нет EXIF/CDN Discovery GET /cards discover page, swipe, like/skip ✓ done Likes like, skip swipe actions + match overlay ✓ done Matches GET /me, start conversation matches page ✓ done Chat conversations, messages, send messages page ✓ done — нет realtime Moderation block/unblock/list, report action из matches page ✓ done — нет admin UI Notifications list, unread-count, mark read notifications page ✓ done — нет push/realtime Password reset нет UI stub (mock) — planned Email verification нет нет — planned Admin panel нет нет — planned Superlike нет нет — planned Realtime/WebSocket нет нет — planned Production deployment нет — — planned Auth&#xD;Статус: done</description>
+    </item>
+  </channel>
+</rss>

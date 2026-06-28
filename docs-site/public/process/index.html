@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html id="R-html" lang="en" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.163.3">
+    <meta name="generator" content="Relearn 9.0.3+36307e4ed23582638ab689240ac7b427217803ee">
+    <meta name="description" content="Исходник: docs/QUALITY_GATES.md. Quality gates применяются согласно task spec. Используются только существующие scripts и текущие project commands.
+GitПроверить ветку и git status Проверить expected changed files Проверить expected staged files перед commit/PR Не использовать git add . и git add -A Не допускать случайные файлы, dumps, build artifacts, raw audit drafts Выполнить git diff --check Untracked filesРезультат git ls-files --others --exclude-standard сравнивается с allowlist в task spec Untracked файл допустим только если task spec указывает точный путь и причину Любой untracked файл вне allowlist — blocker до ручного объяснения или удаления Docs-only задачаНе обязана запускать backend/frontend tests, если task spec не требует.">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Процесс :: Yuni Docs">
+    <meta name="twitter:description" content="Исходник: docs/QUALITY_GATES.md. Quality gates применяются согласно task spec. Используются только существующие scripts и текущие project commands.
+GitПроверить ветку и git status Проверить expected changed files Проверить expected staged files перед commit/PR Не использовать git add . и git add -A Не допускать случайные файлы, dumps, build artifacts, raw audit drafts Выполнить git diff --check Untracked filesРезультат git ls-files --others --exclude-standard сравнивается с allowlist в task spec Untracked файл допустим только если task spec указывает точный путь и причину Любой untracked файл вне allowlist — blocker до ручного объяснения или удаления Docs-only задачаНе обязана запускать backend/frontend tests, если task spec не требует.">
+    <meta property="og:url" content="//localhost:1313/process/index.html">
+    <meta property="og:site_name" content="Yuni Docs">
+    <meta property="og:title" content="Процесс :: Yuni Docs">
+    <meta property="og:description" content="Исходник: docs/QUALITY_GATES.md. Quality gates применяются согласно task spec. Используются только существующие scripts и текущие project commands.
+GitПроверить ветку и git status Проверить expected changed files Проверить expected staged files перед commit/PR Не использовать git add . и git add -A Не допускать случайные файлы, dumps, build artifacts, raw audit drafts Выполнить git diff --check Untracked filesРезультат git ls-files --others --exclude-standard сравнивается с allowlist в task spec Untracked файл допустим только если task spec указывает точный путь и причину Любой untracked файл вне allowlist — blocker до ручного объяснения или удаления Docs-only задачаНе обязана запускать backend/frontend tests, если task spec не требует.">
+    <meta property="og:locale" content="en">
+    <meta property="og:type" content="website">
+    <meta itemprop="name" content="Процесс :: Yuni Docs">
+    <meta itemprop="description" content="Исходник: docs/QUALITY_GATES.md. Quality gates применяются согласно task spec. Используются только существующие scripts и текущие project commands.
+GitПроверить ветку и git status Проверить expected changed files Проверить expected staged files перед commit/PR Не использовать git add . и git add -A Не допускать случайные файлы, dumps, build artifacts, raw audit drafts Выполнить git diff --check Untracked filesРезультат git ls-files --others --exclude-standard сравнивается с allowlist в task spec Untracked файл допустим только если task spec указывает точный путь и причину Любой untracked файл вне allowlist — blocker до ручного объяснения или удаления Docs-only задачаНе обязана запускать backend/frontend tests, если task spec не требует.">
+    <meta itemprop="wordCount" content="321">
+    <title>Процесс :: Yuni Docs</title>
+    <link href="/process/index.xml" rel="alternate" type="application/rss+xml" title="Процесс :: Yuni Docs">
+    <link href="/css/auto-complete/auto-complete.min.css?1782659948" rel="stylesheet">
+    <script src="/js/auto-complete/auto-complete.min.js?1782659948" defer></script>
+    <script src="/js/search-lunr.js?1782659948" defer></script>
+    <script src="/js/search.js?1782659948" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/searchindex.en.js?1782659948";
+    </script>
+    <script src="/js/lunr/lunr.min.js?1782659948" defer></script>
+    <script src="/js/lunr/lunr.stemmer.support.min.js?1782659948" defer></script>
+    <script src="/js/lunr/lunr.multi.min.js?1782659948" defer></script>
+    <script src="/js/lunr/lunr.en.min.js?1782659948" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['en'];
+    </script>
+    <link href="/fonts/fontawesome/css/all.min.css?1782659948" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/fonts/fontawesome/css/all.min.css?1782659948" rel="stylesheet"></noscript>
+    <link href="/css/perfect-scrollbar/perfect-scrollbar.min.css?1782659948" rel="stylesheet">
+    <link href="/css/theme.css?1782659948" rel="stylesheet">
+    <link href="/css/format-html.css?1782659948" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/process\/index.html';
+      window.relearn.relBasePath='..';
+      window.relearn.relBaseUri='..';
+      window.relearn.absBaseUri='\/\/localhost:1313';
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // translations
+      window.T_Copy_to_clipboard = `Copy text to clipboard`;
+      window.T_Copied_to_clipboard = `Text copied to clipboard!`;
+      window.T_Link_copied_to_clipboard = `Link copied to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      window.T_Browser_unsupported_feature = `This browser doesn't support this feature`;
+      // variant stuff
+      window.relearn.themevariants = [ 'relearn-dark' ];
+      window.relearn.customvariantprefix = "my-custom-";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant") ?? "";
+        if( !variant ||
+            (!variant.startsWith(window.relearn.customvariantprefix) && !window.relearn.themevariants.includes(variant)) ||
+            (variant.startsWith(window.relearn.customvariantprefix) && !window.localStorage.getItem(window.relearn.absBaseUri + "/variantstylesheet-" + variant)) ){
+          variant = window.relearn.themevariants[0];
+          window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-origin="/process/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar" class="default-animation">
+        <div class="topbar-wrapper default-animation">
+          <div class="topbar-sidebar-divider default-animation"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar default-animation" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button></span>
+            </div>
+            <div class="topbar-button topbar-button-toc default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-table-list"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+<nav class="TableOfContents">
+  <ul>
+    <li><a href="#git">Git</a></li>
+    <li><a href="#untracked-files">Untracked files</a></li>
+    <li><a href="#docs-only-задача">Docs-only задача</a></li>
+    <li><a href="#backend">Backend</a></li>
+    <li><a href="#frontend">Frontend</a></li>
+    <li><a href="#dockerintegration">Docker/integration</a></li>
+    <li><a href="#security">Security</a></li>
+    <li><a href="#documentation">Documentation</a></li>
+    <li><a href="#полный-check-перед-pr">Полный check перед PR</a></li>
+  </ul>
+</nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/index.html"><span itemprop="name">Yuni Documentation</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><span itemprop="name">Процесс</span><meta itemprop="position" content="2"></li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><a href="/decisions/index.html" title="ADR — Решения (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a></span>
+            </div>
+            <div class="topbar-button topbar-button-next default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle"><span><i class="fa-fw fas fa-chevron-right"></i></span></span>
+            </div>
+            <div class="topbar-button topbar-button-more default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable process" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id="процесс">Процесс</h1>
+
+<p>Исходник: <code>docs/QUALITY_GATES.md</code>. Quality gates применяются согласно task spec. Используются только существующие scripts и текущие project commands.</p>
+<h2 id="git">Git<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ul>
+<li>Проверить ветку и <code>git status</code></li>
+<li>Проверить expected changed files</li>
+<li>Проверить expected staged files перед commit/PR</li>
+<li>Не использовать <code>git add .</code> и <code>git add -A</code></li>
+<li>Не допускать случайные файлы, dumps, build artifacts, raw audit drafts</li>
+<li>Выполнить <code>git diff --check</code></li>
+</ul>
+<h2 id="untracked-files">Untracked files<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ul>
+<li>Результат <code>git ls-files --others --exclude-standard</code> сравнивается с allowlist в task spec</li>
+<li>Untracked файл допустим только если task spec указывает точный путь и причину</li>
+<li>Любой untracked файл вне allowlist — blocker до ручного объяснения или удаления</li>
+</ul>
+<h2 id="docs-only-задача">Docs-only задача<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Не обязана запускать backend/frontend tests, если task spec не требует.</p>
+<p>Минимальные проверки:</p>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>git diff --check
+</span></span><span style="display:flex;"><span>git status --short
+</span></span><span style="display:flex;"><span>git diff --name-only
+</span></span><span style="display:flex;"><span>git ls-files --others --exclude-standard</span></span></code></pre></div>
+<h2 id="backend">Backend<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Использовать только если task затрагивает backend или task spec явно требует.</p>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>corepack pnpm --filter backend test
+</span></span><span style="display:flex;"><span>corepack pnpm --filter backend build
+</span></span><span style="display:flex;"><span>corepack pnpm --filter backend lint
+</span></span><span style="display:flex;"><span>corepack pnpm check:backend</span></span></code></pre></div>
+<h2 id="frontend">Frontend<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Использовать только если task затрагивает frontend или task spec явно требует.</p>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>corepack pnpm check:frontend
+</span></span><span style="display:flex;"><span>corepack pnpm --dir apps/frontend lint
+</span></span><span style="display:flex;"><span>corepack pnpm --dir apps/frontend typecheck
+</span></span><span style="display:flex;"><span>corepack pnpm --dir apps/frontend build</span></span></code></pre></div>
+<h2 id="dockerintegration">Docker/integration<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Использовать только если task затрагивает Docker, local workflow или integration behavior.</p>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>corepack pnpm docker:config
+</span></span><span style="display:flex;"><span>corepack pnpm docker:build
+</span></span><span style="display:flex;"><span>corepack pnpm docker:migrate</span></span></code></pre></div>
+<p>Destructive local reset commands требуют явного task scope.</p>
+<h2 id="security">Security<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Перед PR проверить:</p>
+<ul>
+<li>Нет secrets, tokens, cookies, private keys</li>
+<li>Нет PII, real user photos, private messages, database dumps</li>
+<li>Нет internal storage data, local filesystem paths или raw Prisma rows в public API/docs</li>
+<li>Owner checks, rate limits, privacy, block/report behavior не ослаблены</li>
+<li>Media changes сохраняют safe filename, MIME/magic bytes, size limits и path traversal protection</li>
+</ul>
+<h2 id="documentation">Documentation<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ul>
+<li><code>PROJECT_STATE.md</code> обновляется при изменении состояния проекта</li>
+<li><code>ROADMAP.md</code> обновляется при изменении task status, priority, dependencies или completed work</li>
+<li><code>AGENTS.md</code> обновляется или явно подтверждается неизменность workflow/quality gates/security/docs structure</li>
+<li>Связанные architecture/security/API/onboarding docs обновляются при изменении contract или behavior</li>
+</ul>
+<h2 id="полный-check-перед-pr">Полный check перед PR<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>corepack pnpm install --frozen-lockfile
+</span></span><span style="display:flex;"><span>$env:DATABASE_URL=<span style="color:#e6db74">&#34;postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=public&#34;</span>
+</span></span><span style="display:flex;"><span>corepack pnpm check</span></span></code></pre></div>
+<p>Выполняет: backend Prisma validate/generate, backend tests, backend build/lint, frontend lint/typecheck/build.</p>
+
+  <footer class="footline">
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <a id="R-logo" class="R-default direction-row" href="/index.html">
+          <span class="logo-title default-animation">Yuni Docs</span>
+        </a>
+        <search>
+          <div class="searchbox default-animation">
+            <i class="fas fa-fw fa-search" title="Search (CTRL+ALT+f)"></i>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-fw fa-times" title="Clear search"></i></button>
+          </div>
+        </search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks default-animation">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/index.html"><a class="padding" href="/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main default-animation">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="" data-nav-id="/project/index.html"><input type="checkbox" id="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5" aria-controls="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5"><label for="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu О проекте</span></label><a class="padding default-animation" href="/project/index.html">О проекте</a><ul id="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5" class="collapsible-menu">
+            <li class="" data-nav-id="/project/state/index.html"><a class="padding" href="/project/state/index.html">Текущее состояние</a></li>
+            <li class="" data-nav-id="/project/roadmap/index.html"><a class="padding" href="/project/roadmap/index.html">Roadmap</a></li>
+            <li class="" data-nav-id="/project/features/index.html"><a class="padding" href="/project/features/index.html">Матрица фич</a></li></ul></li>
+            <li class="" data-nav-id="/stages/index.html"><input type="checkbox" id="R-section-e228a5f053fbb762c3690280936ca087" aria-controls="R-subsections-e228a5f053fbb762c3690280936ca087"><label for="R-section-e228a5f053fbb762c3690280936ca087"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Этапы разработки</span></label><a class="padding default-animation" href="/stages/index.html">Этапы разработки</a><ul id="R-subsections-e228a5f053fbb762c3690280936ca087" class="collapsible-menu">
+            <li class="" data-nav-id="/stages/done/index.html"><a class="padding" href="/stages/done/index.html">✅ Готовые</a></li>
+            <li class="" data-nav-id="/stages/approved/index.html"><a class="padding" href="/stages/approved/index.html">🔄 Утверждённые</a></li>
+            <li class="" data-nav-id="/stages/ideas/index.html"><a class="padding" href="/stages/ideas/index.html">💡 Идеи</a></li></ul></li>
+            <li class="" data-nav-id="/architecture/index.html"><input type="checkbox" id="R-section-9e2fbae00589891720aedcdff0084e07" aria-controls="R-subsections-9e2fbae00589891720aedcdff0084e07"><label for="R-section-9e2fbae00589891720aedcdff0084e07"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Архитектура</span></label><a class="padding default-animation" href="/architecture/index.html">Архитектура</a><ul id="R-subsections-9e2fbae00589891720aedcdff0084e07" class="collapsible-menu">
+            <li class="" data-nav-id="/architecture/backend/index.html"><a class="padding" href="/architecture/backend/index.html">Backend</a></li>
+            <li class="" data-nav-id="/architecture/frontend/index.html"><a class="padding" href="/architecture/frontend/index.html">Frontend</a></li>
+            <li class="" data-nav-id="/architecture/domain-model/index.html"><a class="padding" href="/architecture/domain-model/index.html">Domain Model</a></li></ul></li>
+            <li class="" data-nav-id="/modules/index.html"><input type="checkbox" id="R-section-86070686ce713af8e2516d0daffc06f4" aria-controls="R-subsections-86070686ce713af8e2516d0daffc06f4"><label for="R-section-86070686ce713af8e2516d0daffc06f4"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Backend-модули</span></label><a class="padding default-animation" href="/modules/index.html">Backend-модули</a><ul id="R-subsections-86070686ce713af8e2516d0daffc06f4" class="collapsible-menu">
+            <li class="" data-nav-id="/modules/auth/index.html"><a class="padding" href="/modules/auth/index.html">auth</a></li>
+            <li class="" data-nav-id="/modules/profiles/index.html"><a class="padding" href="/modules/profiles/index.html">profiles</a></li>
+            <li class="" data-nav-id="/modules/media/index.html"><a class="padding" href="/modules/media/index.html">media</a></li>
+            <li class="" data-nav-id="/modules/discovery/index.html"><a class="padding" href="/modules/discovery/index.html">discovery</a></li>
+            <li class="" data-nav-id="/modules/likes/index.html"><a class="padding" href="/modules/likes/index.html">likes</a></li>
+            <li class="" data-nav-id="/modules/matches/index.html"><a class="padding" href="/modules/matches/index.html">matches</a></li>
+            <li class="" data-nav-id="/modules/chat/index.html"><a class="padding" href="/modules/chat/index.html">chat</a></li>
+            <li class="" data-nav-id="/modules/moderation/index.html"><a class="padding" href="/modules/moderation/index.html">moderation</a></li>
+            <li class="" data-nav-id="/modules/notifications/index.html"><a class="padding" href="/modules/notifications/index.html">notifications</a></li></ul></li>
+            <li class="" data-nav-id="/api/index.html"><a class="padding" href="/api/index.html">API</a></li>
+            <li class="" data-nav-id="/database/index.html"><input type="checkbox" id="R-section-ffbd3c632901f0c6472eed450e4e91f8" aria-controls="R-subsections-ffbd3c632901f0c6472eed450e4e91f8"><label for="R-section-ffbd3c632901f0c6472eed450e4e91f8"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu База данных</span></label><a class="padding default-animation" href="/database/index.html">База данных</a><ul id="R-subsections-ffbd3c632901f0c6472eed450e4e91f8" class="collapsible-menu">
+            <li class="" data-nav-id="/database/schema/index.html"><a class="padding" href="/database/schema/index.html">Схема и миграции</a></li></ul></li>
+            <li class="" data-nav-id="/security/index.html"><input type="checkbox" id="R-section-66815ecaaecfc1c209e5637d03b258b2" aria-controls="R-subsections-66815ecaaecfc1c209e5637d03b258b2"><label for="R-section-66815ecaaecfc1c209e5637d03b258b2"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Безопасность</span></label><a class="padding default-animation" href="/security/index.html">Безопасность</a><ul id="R-subsections-66815ecaaecfc1c209e5637d03b258b2" class="collapsible-menu">
+            <li class="" data-nav-id="/security/data-exposure/index.html"><a class="padding" href="/security/data-exposure/index.html">Data Exposure Rules</a></li></ul></li>
+            <li class="" data-nav-id="/testing/index.html"><a class="padding" href="/testing/index.html">Тестирование</a></li>
+            <li class="" data-nav-id="/onboarding/index.html"><input type="checkbox" id="R-section-0460cb8850cf3b8ece07dc5c51a10e63" aria-controls="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63"><label for="R-section-0460cb8850cf3b8ece07dc5c51a10e63"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Онбординг</span></label><a class="padding default-animation" href="/onboarding/index.html">Онбординг</a><ul id="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63" class="collapsible-menu">
+            <li class="" data-nav-id="/onboarding/docker/index.html"><a class="padding" href="/onboarding/docker/index.html">Local Docker Workflow</a></li></ul></li>
+            <li class="" data-nav-id="/decisions/index.html"><a class="padding" href="/decisions/index.html">ADR — Решения</a></li>
+            <li class="active " data-nav-id="/process/index.html"><a class="padding" href="/process/index.html">Процесс</a></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts default-animation">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin" class="default-animation"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer" class="default-animation"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/js/perfect-scrollbar/perfect-scrollbar.min.js?1782659948" defer></script>
+    <script src="/js/theme.js?1782659948" defer></script>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>

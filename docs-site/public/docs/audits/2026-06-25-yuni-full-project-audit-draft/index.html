@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html id="R-html" lang="en" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.163.3">
+    <meta name="generator" content="Relearn 9.0.3+36307e4ed23582638ab689240ac7b427217803ee">
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+    <meta name="description" content="Full Technical Audit Draft: YuniDate: 2026-06-25
+Repository root: D:\Yuni-main
+Branch audited: refactor/media-storage-adapter
+Head commit audited: 5f6b95a Merge pull request #22 from ValeraJenya/feat/media-production-foundation
+Scope: full tracked repository plus the currently staged profile photo storage adapter change.
+Audit file policy: this audit intentionally creates only docs/audits/2026-06-25-yuni-full-project-audit-draft.md. Existing staged adapter files were reviewed but not modified, unstaged, staged, committed, pushed, or reverted.">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:description" content="Full Technical Audit Draft: YuniDate: 2026-06-25
+Repository root: D:\Yuni-main
+Branch audited: refactor/media-storage-adapter
+Head commit audited: 5f6b95a Merge pull request #22 from ValeraJenya/feat/media-production-foundation
+Scope: full tracked repository plus the currently staged profile photo storage adapter change.
+Audit file policy: this audit intentionally creates only docs/audits/2026-06-25-yuni-full-project-audit-draft.md. Existing staged adapter files were reviewed but not modified, unstaged, staged, committed, pushed, or reverted.">
+    <meta property="og:url" content="//localhost:1313/docs/audits/2026-06-25-yuni-full-project-audit-draft/index.html">
+    <meta property="og:site_name" content="Yuni Docs">
+    <meta property="og:description" content="Full Technical Audit Draft: YuniDate: 2026-06-25
+Repository root: D:\Yuni-main
+Branch audited: refactor/media-storage-adapter
+Head commit audited: 5f6b95a Merge pull request #22 from ValeraJenya/feat/media-production-foundation
+Scope: full tracked repository plus the currently staged profile photo storage adapter change.
+Audit file policy: this audit intentionally creates only docs/audits/2026-06-25-yuni-full-project-audit-draft.md. Existing staged adapter files were reviewed but not modified, unstaged, staged, committed, pushed, or reverted.">
+    <meta property="og:locale" content="en">
+    <meta property="og:type" content="article">
+    <meta property="article:section" content="Docs">
+    <meta itemprop="description" content="Full Technical Audit Draft: YuniDate: 2026-06-25
+Repository root: D:\Yuni-main
+Branch audited: refactor/media-storage-adapter
+Head commit audited: 5f6b95a Merge pull request #22 from ValeraJenya/feat/media-production-foundation
+Scope: full tracked repository plus the currently staged profile photo storage adapter change.
+Audit file policy: this audit intentionally creates only docs/audits/2026-06-25-yuni-full-project-audit-draft.md. Existing staged adapter files were reviewed but not modified, unstaged, staged, committed, pushed, or reverted.">
+    <meta itemprop="wordCount" content="3165">
+    <title></title>
+    <link href="/css/auto-complete/auto-complete.min.css?1782659603" rel="stylesheet">
+    <script src="/js/auto-complete/auto-complete.min.js?1782659603" defer></script>
+    <script src="/js/search-lunr.js?1782659603" defer></script>
+    <script src="/js/search.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/searchindex.en.js?1782659603";
+    </script>
+    <script src="/js/lunr/lunr.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.stemmer.support.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.multi.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.en.min.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['en'];
+    </script>
+    <link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet"></noscript>
+    <link href="/css/perfect-scrollbar/perfect-scrollbar.min.css?1782659603" rel="stylesheet">
+    <link href="/css/theme.css?1782659603" rel="stylesheet">
+    <link href="/css/format-html.css?1782659603" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/docs\/audits\/2026-06-25-yuni-full-project-audit-draft\/index.html';
+      window.relearn.relBasePath='..\/..\/..';
+      window.relearn.relBaseUri='..\/..\/..';
+      window.relearn.absBaseUri='\/\/localhost:1313';
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // translations
+      window.T_Copy_to_clipboard = `Copy text to clipboard`;
+      window.T_Copied_to_clipboard = `Text copied to clipboard!`;
+      window.T_Link_copied_to_clipboard = `Link copied to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      window.T_Browser_unsupported_feature = `This browser doesn't support this feature`;
+      // variant stuff
+      window.relearn.themevariants = [ 'relearn-dark' ];
+      window.relearn.customvariantprefix = "my-custom-";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant") ?? "";
+        if( !variant ||
+            (!variant.startsWith(window.relearn.customvariantprefix) && !window.relearn.themevariants.includes(variant)) ||
+            (variant.startsWith(window.relearn.customvariantprefix) && !window.localStorage.getItem(window.relearn.absBaseUri + "/variantstylesheet-" + variant)) ){
+          variant = window.relearn.themevariants[0];
+          window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-origin="/docs/audits/2026-06-25-yuni-full-project-audit-draft/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar" class="default-animation">
+        <div class="topbar-wrapper default-animation">
+          <div class="topbar-sidebar-divider default-animation"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar default-animation" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button></span>
+            </div>
+            <div class="topbar-button topbar-button-toc default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-table-list"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+<nav class="TableOfContents">
+  <ul>
+    <li><a href="#0-executive-summary">0. Executive Summary</a></li>
+    <li><a href="#1-required-initial-command-results">1. Required Initial Command Results</a>
+      <ul>
+        <li><a href="#11-git-status">1.1 <code>git status</code></a></li>
+        <li><a href="#12-git-branch---show-current">1.2 <code>git branch --show-current</code></a></li>
+        <li><a href="#13-git-log--1---oneline">1.3 <code>git log -1 --oneline</code></a></li>
+        <li><a href="#14-git-diff---check">1.4 <code>git diff --check</code></a></li>
+        <li><a href="#15-git-diff---staged---check">1.5 <code>git diff --staged --check</code></a></li>
+        <li><a href="#16-git-diff---staged---name-only">1.6 <code>git diff --staged --name-only</code></a></li>
+        <li><a href="#17-git-ls-files">1.7 <code>git ls-files</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#2-required-verification-commands">2. Required Verification Commands</a></li>
+    <li><a href="#3-repository-map">3. Repository Map</a>
+      <ul>
+        <li><a href="#31-monorepo-and-tooling">3.1 Monorepo and Tooling</a></li>
+        <li><a href="#32-backend">3.2 Backend</a></li>
+        <li><a href="#33-frontend">3.3 Frontend</a></li>
+        <li><a href="#34-infrastructure-and-docs">3.4 Infrastructure and Docs</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-findings">4. Findings</a>
+      <ul>
+        <li><a href="#int-01---high---discovery-excludes-real-users-because-completedat-is-never-set">INT-01 - High - Discovery excludes real users because <code>completedAt</code> is never set</a></li>
+        <li><a href="#int-02---high---relative-media-urls-break-outside-profile-specific-normalization">INT-02 - High - Relative media URLs break outside profile-specific normalization</a></li>
+        <li><a href="#sec-01---medium---uploaded-images-are-stored-and-served-as-original-bytes">SEC-01 - Medium - Uploaded images are stored and served as original bytes</a></li>
+        <li><a href="#sec-02---low---cross-site-refreshlogout-cookie-endpoints-lack-explicit-csrf-or-origin-checks">SEC-02 - Low - Cross-site refresh/logout cookie endpoints lack explicit CSRF or Origin checks</a></li>
+        <li><a href="#sec-03---low---rate-limiting-is-in-memory-and-single-process">SEC-03 - Low - Rate limiting is in-memory and single-process</a></li>
+        <li><a href="#int-03---medium---forgot-password-frontend-is-mock-only">INT-03 - Medium - Forgot password frontend is mock-only</a></li>
+        <li><a href="#int-04---low---privacy-and-terms-links-point-to-missing-routes">INT-04 - Low - Privacy and terms links point to missing routes</a></li>
+        <li><a href="#cor-01---medium---blocking-and-match-termination-are-not-transactional">COR-01 - Medium - Blocking and match termination are not transactional</a></li>
+        <li><a href="#test-01---medium---no-postgresql-integratione2e-coverage-in-ci">TEST-01 - Medium - No PostgreSQL integration/e2e coverage in CI</a></li>
+        <li><a href="#test-02---low---frontend-has-no-testspec-coverage">TEST-02 - Low - Frontend has no test/spec coverage</a></li>
+        <li><a href="#doc-01---medium---documentation-is-stale-relative-to-implemented-modules">DOC-01 - Medium - Documentation is stale relative to implemented modules</a></li>
+        <li><a href="#dep-01---info---dockercompose-is-local-development-only">DEP-01 - Info - Docker/Compose is local development only</a></li>
+        <li><a href="#arch-01---info---staged-storage-adapter-is-present-but-not-yet-wired-through-mediaservice">ARCH-01 - Info - Staged storage adapter is present but not yet wired through <code>MediaService</code></a></li>
+      </ul>
+    </li>
+    <li><a href="#5-staged-profile-photo-storage-adapter-review">5. Staged Profile Photo Storage Adapter Review</a></li>
+    <li><a href="#6-architecture-notes">6. Architecture Notes</a></li>
+    <li><a href="#7-security-and-privacy-notes">7. Security and Privacy Notes</a></li>
+    <li><a href="#8-data-model-notes">8. Data Model Notes</a></li>
+    <li><a href="#9-frontend-integration-notes">9. Frontend Integration Notes</a></li>
+    <li><a href="#10-ci-and-quality-gate-notes">10. CI and Quality Gate Notes</a></li>
+    <li><a href="#11-recommended-remediation-order">11. Recommended Remediation Order</a></li>
+    <li><a href="#12-audit-limitations">12. Audit Limitations</a></li>
+    <li><a href="#13-final-state-expectation-before-final-checks">13. Final State Expectation Before Final Checks</a></li>
+  </ul>
+</nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/index.html"><span itemprop="name">Yuni Documentation</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/docs/index.html"><span itemprop="name">Docs</span></a><meta itemprop="position" content="2">&nbsp;>&nbsp;</li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><a href="/docs/index.html" title="Docs (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a></span>
+            </div>
+            <div class="topbar-button topbar-button-next default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle"><span><i class="fa-fw fas fa-chevron-right"></i></span></span>
+            </div>
+            <div class="topbar-button topbar-button-more default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable docs" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id=""></h1>
+
+<h1 id="full-technical-audit-draft-yuni">Full Technical Audit Draft: Yuni<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h1>
+<p>Date: 2026-06-25</p>
+<p>Repository root: <code>D:\Yuni-main</code></p>
+<p>Branch audited: <code>refactor/media-storage-adapter</code></p>
+<p>Head commit audited: <code>5f6b95a Merge pull request #22 from ValeraJenya/feat/media-production-foundation</code></p>
+<p>Scope: full tracked repository plus the currently staged profile photo storage adapter change.</p>
+<p>Audit file policy: this audit intentionally creates only <code>docs/audits/2026-06-25-yuni-full-project-audit-draft.md</code>. Existing staged adapter files were reviewed but not modified, unstaged, staged, committed, pushed, or reverted.</p>
+<h2 id="0-executive-summary">0. Executive Summary<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Yuni is a pnpm monorepo with a NestJS backend, Next.js frontend, Prisma/PostgreSQL persistence, Docker Compose local development setup, and documentation covering architecture, API, onboarding, and security rules.</p>
+<p>The repository is in a generally healthy implementation state for a local MVP: backend tests, backend build, backend typecheck/lint, frontend production build, frontend lint, and Docker Compose configuration all completed successfully. The most important product blockers are cross-module integration issues rather than syntax or build failures.</p>
+<p>Severity counts:</p>
+<table>
+	<thead>
+			<tr>
+					<th>Severity</th>
+					<th style="text-align: right">Count</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Critical</td>
+					<td style="text-align: right">0</td>
+			</tr>
+			<tr>
+					<td>High</td>
+					<td style="text-align: right">2</td>
+			</tr>
+			<tr>
+					<td>Medium</td>
+					<td style="text-align: right">5</td>
+			</tr>
+			<tr>
+					<td>Low</td>
+					<td style="text-align: right">4</td>
+			</tr>
+			<tr>
+					<td>Info</td>
+					<td style="text-align: right">2</td>
+			</tr>
+	</tbody>
+</table>
+<p>Highest-priority findings:</p>
+<ol>
+<li>Discovery requires completed profiles, but registration/profile/media flows do not set <code>Profile.completedAt</code>, so real users can remain invisible in discovery even after providing profile data and photos.</li>
+<li>Backend media URLs are relative <code>/uploads/...</code> paths. Some frontend paths normalize them against the API origin, but discovery/matches/messages use raw URLs, causing broken images when frontend and backend are on different origins.</li>
+<li>Media upload handling validates MIME/size/count but stores and serves original image bytes without image decoding, re-encoding, metadata stripping, dimension checks, or malware scanning.</li>
+</ol>
+<p>Staged adapter verdict: <code>SAFE_TO_COMMIT</code>.</p>
+<h2 id="1-required-initial-command-results">1. Required Initial Command Results<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<h3 id="11-git-status">1.1 <code>git status</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>On branch refactor/media-storage-adapter
+</span></span><span style="display:flex;"><span>Changes to be committed:
+</span></span><span style="display:flex;"><span>  (use &#34;git restore --staged &lt;file&gt;...&#34; to unstage)
+</span></span><span style="display:flex;"><span>	modified:   apps/backend/src/modules/media/media.module.ts
+</span></span><span style="display:flex;"><span>	new file:   apps/backend/src/modules/media/storage/local-profile-photo-storage.service.spec.ts
+</span></span><span style="display:flex;"><span>	new file:   apps/backend/src/modules/media/storage/local-profile-photo-storage.service.ts
+</span></span><span style="display:flex;"><span>	new file:   apps/backend/src/modules/media/storage/profile-photo-storage.port.ts</span></span></code></pre></div>
+<p>Interpretation: the worktree started with a staged, intentional media storage adapter change. No unstaged files were present at the start of the audit.</p>
+<h3 id="12-git-branch---show-current">1.2 <code>git branch --show-current</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>refactor/media-storage-adapter</span></span></code></pre></div>
+<h3 id="13-git-log--1---oneline">1.3 <code>git log -1 --oneline</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>5f6b95a Merge pull request #22 from ValeraJenya/feat/media-production-foundation</span></span></code></pre></div>
+<h3 id="14-git-diff---check">1.4 <code>git diff --check</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"></code></pre></div>
+<p>Exit code: 0. No whitespace errors reported for unstaged changes.</p>
+<h3 id="15-git-diff---staged---check">1.5 <code>git diff --staged --check</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"></code></pre></div>
+<p>Exit code: 0. No whitespace errors reported for staged changes.</p>
+<h3 id="16-git-diff---staged---name-only">1.6 <code>git diff --staged --name-only</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>apps/backend/src/modules/media/media.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/storage/profile-photo-storage.port.ts</span></span></code></pre></div>
+<h3 id="17-git-ls-files">1.7 <code>git ls-files</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>.dockerignore
+</span></span><span style="display:flex;"><span>.env.example
+</span></span><span style="display:flex;"><span>.github/workflows/quality-gates.yml
+</span></span><span style="display:flex;"><span>.gitignore
+</span></span><span style="display:flex;"><span>README.md
+</span></span><span style="display:flex;"><span>apps/backend/Dockerfile
+</span></span><span style="display:flex;"><span>apps/backend/README.md
+</span></span><span style="display:flex;"><span>apps/backend/jest.config.cjs
+</span></span><span style="display:flex;"><span>apps/backend/nest-cli.json
+</span></span><span style="display:flex;"><span>apps/backend/package.json
+</span></span><span style="display:flex;"><span>apps/backend/prisma/migrations/20260528150000_greenfield_baseline/migration.sql
+</span></span><span style="display:flex;"><span>apps/backend/prisma/migrations/20260607120000_likes_expiring_interactions/migration.sql
+</span></span><span style="display:flex;"><span>apps/backend/prisma/migrations/20260607140000_matches_expiring_rematchable/migration.sql
+</span></span><span style="display:flex;"><span>apps/backend/prisma/migrations/20260609180000_notifications_mvp/migration.sql
+</span></span><span style="display:flex;"><span>apps/backend/prisma/migrations/migration_lock.toml
+</span></span><span style="display:flex;"><span>apps/backend/prisma/schema.prisma
+</span></span><span style="display:flex;"><span>apps/backend/src/app.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/filters/all-exceptions.filter.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/pagination/cursor-pagination.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/pagination/cursor-pagination.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/pagination/index.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/prisma/prisma.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/prisma/prisma.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/index.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.constants.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.decorator.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.decorator.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.guard.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.guard.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/rate-limit/rate-limit.types.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/security/access-control.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/security/access-control.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/security/index.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/serializers/index.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/serializers/user-profile.serializer.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/common/serializers/user-profile.serializer.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/config/app.config.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/config/auth.config.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/config/cors.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/config/env.validation.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/config/env.validation.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/main.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/auth.constants.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/auth.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/auth.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/auth.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/auth.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/decorators/current-user.decorator.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/dto/login.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/dto/register.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/guards/jwt-access.guard.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/types/auth-request.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/types/authenticated-user.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/auth/types/jwt-payload.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/chat/chat.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/chat/chat.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/chat/chat.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/chat/chat.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/chat/dto/create-message.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/chat/match-conversations.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/discovery/discovery.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/discovery/discovery.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/discovery/discovery.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/discovery/discovery.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/discovery/dto/discovery-cards-query.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/health/health.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/health/health.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/health/health.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/health/health.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/likes/likes.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/likes/likes.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/likes/likes.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/likes/likes.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/matches/matches.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/matches/matches.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/matches/matches.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/matches/matches.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/media.constants.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/media.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/media.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/media.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/media.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/storage/profile-photo-storage.port.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/media/types/uploaded-profile-photo-file.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/moderation/dto/create-report.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/moderation/moderation.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/moderation/moderation.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/moderation/moderation.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/moderation/moderation.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/notifications/notifications.constants.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/notifications/notifications.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/notifications/notifications.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/notifications/notifications.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/notifications/notifications.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/notifications/types/notification-view.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/profiles/dto/update-profile.dto.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/profiles/profiles.controller.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/profiles/profiles.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/profiles/profiles.service.spec.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/profiles/profiles.service.ts
+</span></span><span style="display:flex;"><span>apps/backend/src/modules/users/users.module.ts
+</span></span><span style="display:flex;"><span>apps/backend/tsconfig.build.json
+</span></span><span style="display:flex;"><span>apps/backend/tsconfig.json
+</span></span><span style="display:flex;"><span>apps/frontend/Dockerfile
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/discover/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/layout.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/matches/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/messages/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/notifications/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(app)/profile/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(auth)/forgot-password/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(auth)/join/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(auth)/layout.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/(auth)/signin/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/globals.css
+</span></span><span style="display:flex;"><span>apps/frontend/app/layout.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/app/page.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components.json
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/cta-section.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/footer.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/hero.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/how-it-works.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/manifesto.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/navbar.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/pink-rabbit.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/safety.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/landing/support.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/theme-provider.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/accordion.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/alert-dialog.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/alert.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/aspect-ratio.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/avatar.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/badge.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/breadcrumb.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/button-group.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/button.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/calendar.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/card.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/carousel.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/chart.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/checkbox.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/collapsible.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/command.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/context-menu.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/dialog.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/drawer.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/dropdown-menu.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/empty.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/field.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/form.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/hover-card.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/input-group.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/input-otp.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/input.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/item.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/kbd.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/label.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/menubar.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/navigation-menu.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/pagination.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/popover.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/progress.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/radio-group.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/resizable.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/scroll-area.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/select.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/separator.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/sheet.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/sidebar.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/skeleton.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/slider.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/sonner.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/spinner.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/switch.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/table.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/tabs.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/textarea.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/toast.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/toaster.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/toggle-group.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/toggle.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/tooltip.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/use-mobile.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/components/ui/use-toast.ts
+</span></span><span style="display:flex;"><span>apps/frontend/eslint.config.mjs
+</span></span><span style="display:flex;"><span>apps/frontend/features/app-shell/components/app-content.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/app-shell/components/app-nav.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/app-shell/components/demo-gate.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/auth/components/auth-field.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/auth/components/auth-shell.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/auth/components/birthdate-field.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/auth/components/sign-in-form.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/auth/components/sign-up-form.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/components/profile-card.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/components/reveal-profile-card.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/components/reveal-progress.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/components/reveal-zone-controls.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/components/swipe-actions.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/components/veil-overlay.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/hooks/use-profile-reveal.ts
+</span></span><span style="display:flex;"><span>apps/frontend/features/discover/types/reveal.ts
+</span></span><span style="display:flex;"><span>apps/frontend/hooks/use-mobile.ts
+</span></span><span style="display:flex;"><span>apps/frontend/hooks/use-toast.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/auth-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/auth-context.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/lib/blocks-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/chat-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/demo-session.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/lib/discovery-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/lang-context.tsx
+</span></span><span style="display:flex;"><span>apps/frontend/lib/likes-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/matches-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/notifications-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/profile-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/reports-api.ts
+</span></span><span style="display:flex;"><span>apps/frontend/lib/utils.ts
+</span></span><span style="display:flex;"><span>apps/frontend/mock-data/matches.ts
+</span></span><span style="display:flex;"><span>apps/frontend/mock-data/profiles.ts
+</span></span><span style="display:flex;"><span>apps/frontend/next-env.d.ts
+</span></span><span style="display:flex;"><span>apps/frontend/next.config.mjs
+</span></span><span style="display:flex;"><span>apps/frontend/package.json
+</span></span><span style="display:flex;"><span>apps/frontend/postcss.config.mjs
+</span></span><span style="display:flex;"><span>apps/frontend/public/cta-image.jpg
+</span></span><span style="display:flex;"><span>apps/frontend/public/hero-portrait.jpg
+</span></span><span style="display:flex;"><span>apps/frontend/public/yuni-logo.png
+</span></span><span style="display:flex;"><span>apps/frontend/styles/globals.css
+</span></span><span style="display:flex;"><span>apps/frontend/tsconfig.json
+</span></span><span style="display:flex;"><span>apps/frontend/types/app.ts
+</span></span><span style="display:flex;"><span>apps/frontend/types/auth.ts
+</span></span><span style="display:flex;"><span>database/migrations/.gitkeep
+</span></span><span style="display:flex;"><span>database/schema/.gitkeep
+</span></span><span style="display:flex;"><span>database/schema/README.md
+</span></span><span style="display:flex;"><span>database/schema/schema.sql
+</span></span><span style="display:flex;"><span>database/seeds/.gitkeep
+</span></span><span style="display:flex;"><span>docker-compose.yml
+</span></span><span style="display:flex;"><span>docs/api/.gitkeep
+</span></span><span style="display:flex;"><span>docs/api/README.md
+</span></span><span style="display:flex;"><span>docs/architecture/README.md
+</span></span><span style="display:flex;"><span>docs/architecture/backend-foundation.md
+</span></span><span style="display:flex;"><span>docs/architecture/backend-structure.md
+</span></span><span style="display:flex;"><span>docs/architecture/domain-model.md
+</span></span><span style="display:flex;"><span>docs/architecture/foundation-hardening-plan.md
+</span></span><span style="display:flex;"><span>docs/architecture/frontend-structure.md
+</span></span><span style="display:flex;"><span>docs/architecture/module-boundaries.md
+</span></span><span style="display:flex;"><span>docs/architecture/program-flow-map.md
+</span></span><span style="display:flex;"><span>docs/architecture/scaling-roadmap.md
+</span></span><span style="display:flex;"><span>docs/decisions/0001-postgresql-domain-foundation.md
+</span></span><span style="display:flex;"><span>docs/decisions/0002-greenfield-prisma-migrations.md
+</span></span><span style="display:flex;"><span>docs/decisions/README.md
+</span></span><span style="display:flex;"><span>docs/onboarding/README.md
+</span></span><span style="display:flex;"><span>docs/onboarding/local-docker-workflow.md
+</span></span><span style="display:flex;"><span>docs/security/README.md
+</span></span><span style="display:flex;"><span>docs/security/data-exposure-rules.md
+</span></span><span style="display:flex;"><span>infra/docker/.gitkeep
+</span></span><span style="display:flex;"><span>infra/scripts/.gitkeep
+</span></span><span style="display:flex;"><span>package.json
+</span></span><span style="display:flex;"><span>pnpm-lock.yaml
+</span></span><span style="display:flex;"><span>pnpm-workspace.yaml</span></span></code></pre></div>
+<h2 id="2-required-verification-commands">2. Required Verification Commands<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<table>
+	<thead>
+			<tr>
+					<th>Command</th>
+					<th>Result</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>git diff --check</code></td>
+					<td>Passed, exit 0, no output.</td>
+			</tr>
+			<tr>
+					<td><code>git diff --staged --check</code></td>
+					<td>Passed, exit 0, no output.</td>
+			</tr>
+			<tr>
+					<td><code>corepack pnpm --filter backend test</code></td>
+					<td>Passed, exit 0. 17 test suites passed, 165 tests passed.</td>
+			</tr>
+			<tr>
+					<td><code>corepack pnpm --filter backend build</code></td>
+					<td>Passed, exit 0. Nest build completed.</td>
+			</tr>
+			<tr>
+					<td><code>corepack pnpm --filter backend lint</code></td>
+					<td>Passed, exit 0. Backend <code>tsc --noEmit</code> completed.</td>
+			</tr>
+			<tr>
+					<td><code>corepack pnpm --filter frontend build</code></td>
+					<td>Passed, exit 0. Next.js 16.2.0 production build completed and generated static routes.</td>
+			</tr>
+			<tr>
+					<td><code>corepack pnpm --filter frontend lint</code></td>
+					<td>Passed, exit 0 with 18 warnings and 0 errors.</td>
+			</tr>
+			<tr>
+					<td><code>docker compose config</code></td>
+					<td>Passed, exit 0. Compose resolves <code>postgres</code>, <code>backend</code>, and <code>frontend</code> services with local development ports <code>5432</code>, <code>4000</code>, and <code>3000</code>.</td>
+			</tr>
+	</tbody>
+</table>
+<p>Frontend lint warning groups observed:</p>
+<ul>
+<li><code>@next/next/no-img-element</code> in landing/auth/discover/app shell image usage.</li>
+<li><code>react-hooks/set-state-in-effect</code> in profile, carousel, mobile hooks, and demo session code.</li>
+<li><code>react-hooks/purity</code> for <code>Math.random()</code> in sidebar render path.</li>
+<li><code>@typescript-eslint/no-unused-vars</code> for <code>actionTypes</code> in <code>use-toast</code>.</li>
+</ul>
+<p>Note: the frontend production build temporarily rewrote <code>apps/frontend/next-env.d.ts</code> from <code>./.next/dev/types/routes.d.ts</code> to <code>./.next/types/routes.d.ts</code>. Because the request explicitly disallowed <code>git restore</code>, the file was manually returned to its original tracked content. Final status confirms no remaining <code>next-env.d.ts</code> change.</p>
+<h2 id="3-repository-map">3. Repository Map<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<h3 id="31-monorepo-and-tooling">3.1 Monorepo and Tooling<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<ul>
+<li>Package manager: pnpm via <code>corepack pnpm</code>.</li>
+<li>Workspaces: root package plus <code>apps/backend</code> and <code>apps/frontend</code>.</li>
+<li>Root scripts delegate to backend/frontend scripts for build, test, and lint.</li>
+<li>CI workflow runs install, backend test/build/lint, and frontend build/lint.</li>
+<li>TypeScript is strict enough to catch many app-level issues, but there is no frontend test runner configured.</li>
+</ul>
+<h3 id="32-backend">3.2 Backend<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<ul>
+<li>Framework: NestJS.</li>
+<li>Database access: Prisma Client.</li>
+<li>Persistence: PostgreSQL schema in <code>apps/backend/prisma/schema.prisma</code> with migrations under <code>apps/backend/prisma/migrations</code>.</li>
+<li>Domains present: auth, profiles, media, likes, matches, discovery, chat, moderation, notifications, health.</li>
+<li>Shared infrastructure: Prisma module/service, exception filter, cursor pagination, in-memory endpoint rate limit guard, serializers, access-control helpers.</li>
+<li>Runtime upload serving: <code>main.ts</code> mounts <code>/uploads</code> from a local uploads directory.</li>
+</ul>
+<h3 id="33-frontend">3.3 Frontend<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<ul>
+<li>Framework: Next.js app router.</li>
+<li>UI: React components with local app features and a large shadcn-style UI component set.</li>
+<li>Runtime integration: API helpers in <code>apps/frontend/lib</code>.</li>
+<li>App routes: landing, auth, discover, profile, matches, messages, notifications, dashboard redirect/index.</li>
+<li>Demo data still exists for UI fallback and unauthenticated/demo flows.</li>
+</ul>
+<h3 id="34-infrastructure-and-docs">3.4 Infrastructure and Docs<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<ul>
+<li>Docker Compose is local-dev oriented: postgres plus backend and frontend dev servers.</li>
+<li>Docs cover architecture, API, onboarding, security, and decisions.</li>
+<li>Several docs lag behind current implementation state after likes/matches/chat/moderation/notifications were added.</li>
+</ul>
+<h2 id="4-findings">4. Findings<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<h3 id="int-01---high---discovery-excludes-real-users-because-completedat-is-never-set">INT-01 - High - Discovery excludes real users because <code>completedAt</code> is never set<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Discovery filters candidates with <code>profile.completedAt != null</code>. Registration creates a profile shell with <code>completedAt: null</code>; profile updates and media upload/update flows do not set <code>completedAt</code> after required profile fields or photos exist.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/modules/auth/auth.service.ts</code>: registration creates user/profile records.</li>
+<li><code>apps/backend/src/modules/profiles/profiles.service.ts</code>: profile update validates and stores profile fields but does not complete the profile.</li>
+<li><code>apps/backend/src/modules/media/media.service.ts</code>: photo upload/update changes media state but does not complete the profile.</li>
+<li><code>apps/backend/src/modules/discovery/discovery.service.ts</code>: discovery excludes profiles where <code>completedAt</code> is null.</li>
+</ul>
+<p>Impact: a newly registered user can complete the visible onboarding/profile work and still never appear in discovery. This is a product-blocking integration bug.</p>
+<p>Recommendation: define a single profile-completion rule, preferably in the profiles domain, and apply it after profile updates and photo changes inside the same logical transaction. Add backend tests for incomplete, complete-without-photo, complete-with-photo, and regression coverage in discovery.</p>
+<h3 id="int-02---high---relative-media-urls-break-outside-profile-specific-normalization">INT-02 - High - Relative media URLs break outside profile-specific normalization<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Backend stores/returns media URLs like <code>/uploads/profile-photos/...</code>. The profile API helper normalizes media URLs against <code>NEXT_PUBLIC_API_URL</code>, but discovery, matches, and messages code paths use <code>imageUrl</code>/<code>publicUrl</code> values directly.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/modules/media/media.constants.ts</code>: upload URL prefix is <code>/uploads/profile-photos</code>.</li>
+<li><code>apps/backend/src/modules/media/media.service.ts</code>: <code>publicUrl</code> is built from the relative prefix.</li>
+<li><code>apps/backend/src/main.ts</code>: backend serves <code>/uploads</code> on the backend origin.</li>
+<li><code>apps/frontend/lib/profile-api.ts</code>: profile media normalization exists.</li>
+<li><code>apps/frontend/lib/discovery-api.ts</code>: discovery mapping passes image URLs through directly.</li>
+<li><code>apps/frontend/app/(app)/matches/page.tsx</code> and <code>apps/frontend/app/(app)/messages/page.tsx</code>: UI consumes raw image URLs.</li>
+</ul>
+<p>Impact: profile photos can work on the profile page but fail in discovery/matches/messages when frontend runs on <code>localhost:3000</code> and backend serves files on <code>localhost:4000</code>.</p>
+<p>Recommendation: centralize media URL normalization in one frontend helper used by all API clients, or have the backend return absolute URLs based on a configured public API/media origin.</p>
+<h3 id="sec-01---medium---uploaded-images-are-stored-and-served-as-original-bytes">SEC-01 - Medium - Uploaded images are stored and served as original bytes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Media upload enforces count, size, and MIME constraints, but it writes original bytes to disk and serves them statically. There is no image decode/re-encode step, EXIF/GPS metadata stripping, dimension or pixel-count validation, content sniffing, or malware scanning.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/modules/media/media.constants.ts</code>: allowed MIME types and size limits.</li>
+<li><code>apps/backend/src/modules/media/media.service.ts</code>: upload path writes the provided buffer and auto-approves/publishes media.</li>
+<li><code>apps/backend/src/main.ts</code>: static serving exposes upload files.</li>
+<li><code>apps/backend/prisma/schema.prisma</code>: media moderation status exists, but upload currently sets usable status immediately.</li>
+</ul>
+<p>Impact: privacy-sensitive metadata can be retained in photos; malformed or polyglot files can be served as user content; oversized dimensions can create processing/display risk later.</p>
+<p>Recommendation: add a media processing boundary that decodes, validates dimensions, strips metadata, re-encodes to a safe format, and only then persists the public object. Add tests around rejected malformed files and metadata removal.</p>
+<h3 id="sec-02---low---cross-site-refreshlogout-cookie-endpoints-lack-explicit-csrf-or-origin-checks">SEC-02 - Low - Cross-site refresh/logout cookie endpoints lack explicit CSRF or Origin checks<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Refresh tokens are stored in an HTTP-only cookie. In production cookie settings use <code>SameSite=None; Secure</code>, allowing cross-site cookie sending. The refresh and logout routes do not appear to enforce an Origin/Referer allowlist or CSRF token. Logout revokes by decoded user id when available and clears the cookie.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/main.ts</code>: CORS credentials are enabled.</li>
+<li><code>apps/backend/src/modules/auth/auth.controller.ts</code>: refresh/logout read cookies.</li>
+<li><code>apps/backend/src/modules/auth/auth.service.ts</code>: logout revokes current user refresh token and refresh validates refresh token.</li>
+</ul>
+<p>Impact: impact is limited because refresh responses are protected by CORS and logout is mostly state-changing denial of session, but cross-site POSTs can still trigger cookie-backed state changes in production browser contexts.</p>
+<p>Recommendation: add Origin/Referer checks for cookie-authenticated mutation routes or use a CSRF token pattern for refresh/logout. Verify raw refresh token identity on logout when revoking token state.</p>
+<h3 id="sec-03---low---rate-limiting-is-in-memory-and-single-process">SEC-03 - Low - Rate limiting is in-memory and single-process<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Endpoint-specific rate limiting is implemented in memory. This is adequate for local development and single-process MVP use, but weak for multiple replicas or restarts.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/common/rate-limit/rate-limit.service.ts</code>: in-memory buckets.</li>
+<li><code>apps/backend/src/app.module.ts</code>: global rate limit guard/module.</li>
+<li><code>docs/security/README.md</code>: docs acknowledge this as MVP-oriented.</li>
+</ul>
+<p>Impact: distributed deployments can bypass limits by spreading traffic across instances, and restarts reset counters.</p>
+<p>Recommendation: move production rate limiting to Redis, gateway-level controls, or provider WAF/rate limits before multi-instance deployment.</p>
+<h3 id="int-03---medium---forgot-password-frontend-is-mock-only">INT-03 - Medium - Forgot password frontend is mock-only<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>The forgot password page simulates success with a timeout and no backend endpoint exists for reset request or token completion.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/frontend/app/(auth)/forgot-password/page.tsx</code>: mock submit behavior.</li>
+<li><code>apps/backend/src/modules/auth/auth.controller.ts</code>: auth controller exposes register/login/me/refresh/logout but no password reset routes.</li>
+</ul>
+<p>Impact: users can enter a password reset flow that cannot send a real reset email or complete recovery.</p>
+<p>Recommendation: either hide/label the route as unavailable until implemented or add backend reset request/confirm flows with token storage, email integration boundary, rate limits, and tests.</p>
+<h3 id="int-04---low---privacy-and-terms-links-point-to-missing-routes">INT-04 - Low - Privacy and terms links point to missing routes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Auth and landing UI link to <code>/privacy</code> and <code>/terms</code>, but no corresponding app routes exist.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/frontend/features/auth/components/sign-up-form.tsx</code>: links to terms/privacy.</li>
+<li><code>apps/frontend/features/auth/components/auth-shell.tsx</code>: footer links.</li>
+<li><code>apps/frontend/components/landing/footer.tsx</code>: footer links.</li>
+<li><code>apps/frontend/app</code>: no <code>privacy</code> or <code>terms</code> route files.</li>
+</ul>
+<p>Impact: legal/support navigation produces 404s.</p>
+<p>Recommendation: add minimal legal route pages or remove links until content is ready.</p>
+<h3 id="cor-01---medium---blocking-and-match-termination-are-not-transactional">COR-01 - Medium - Blocking and match termination are not transactional<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Blocking creates the block record and then separately ends active matches between the users. If the second write fails after the block is created, the system can be left in a partially applied moderation state.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/modules/moderation/moderation.service.ts</code>: block creation and active match termination are separate Prisma operations.</li>
+</ul>
+<p>Impact: a blocked user might retain active match/chat state if the second operation fails, causing moderation inconsistencies.</p>
+<p>Recommendation: wrap block creation and related match updates in a Prisma transaction. Add tests that validate both state changes occur together.</p>
+<h3 id="test-01---medium---no-postgresql-integratione2e-coverage-in-ci">TEST-01 - Medium - No PostgreSQL integration/e2e coverage in CI<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Backend tests are unit-focused and CI does not start PostgreSQL or run Prisma-backed integration/e2e tests. The schema has important relational constraints and lifecycle semantics that unit mocks cannot fully cover.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>.github/workflows/quality-gates.yml</code>: install/build/test/lint only; no database service.</li>
+<li><code>apps/backend/jest.config.cjs</code>: unit test configuration.</li>
+<li>Existing backend specs mock Prisma interactions heavily.</li>
+</ul>
+<p>Impact: relation constraints, cascades, uniqueness, transaction behavior, cursor pagination with real ordering, and migration compatibility can regress without CI signal.</p>
+<p>Recommendation: add a focused integration test job with PostgreSQL, Prisma migrate/deploy, and a small suite covering auth/profile/media/discovery/likes/matches/moderation flows.</p>
+<h3 id="test-02---low---frontend-has-no-testspec-coverage">TEST-02 - Low - Frontend has no test/spec coverage<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>No frontend test files are tracked. Current frontend quality gates rely on build and lint/type checking.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>rg --files apps/frontend | rg &quot;(test|spec)\.(ts|tsx)$&quot;</code> returned no files during audit.</li>
+<li><code>apps/frontend/package.json</code> contains build/lint/dev dependencies but no test script.</li>
+</ul>
+<p>Impact: auth context behavior, API URL normalization, route guards, demo/live mode transitions, and critical UI flows can regress silently as long as type checks pass.</p>
+<p>Recommendation: add a minimal frontend test runner and start with API helper tests plus auth/profile/discovery smoke tests.</p>
+<h3 id="doc-01---medium---documentation-is-stale-relative-to-implemented-modules">DOC-01 - Medium - Documentation is stale relative to implemented modules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Several docs still describe likes/matches/chat/moderation/notifications as future, scaffold-only, or not implemented even though backend modules and frontend routes now exist.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>README.md</code>: product status wording is behind current backend/frontend state.</li>
+<li><code>apps/backend/README.md</code>: module list and status are stale.</li>
+<li><code>docs/onboarding/README.md</code>: onboarding status lags implementation.</li>
+<li><code>docs/architecture/foundation-hardening-plan.md</code>: plan still frames implemented areas as future/scaffold work.</li>
+</ul>
+<p>Impact: contributors can make wrong assumptions about what is safe to build on, test, or refactor.</p>
+<p>Recommendation: refresh docs after the current media adapter work lands, especially README, backend README, onboarding, API docs, and foundation hardening plan.</p>
+<h3 id="dep-01---info---dockercompose-is-local-development-only">DEP-01 - Info - Docker/Compose is local development only<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>Dockerfiles run dev commands, Compose exposes Postgres locally, and environment values are placeholders. Backend uploads are bind-mounted from the local workspace.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/Dockerfile</code> and <code>apps/frontend/Dockerfile</code>: dev-oriented commands.</li>
+<li><code>docker-compose.yml</code>: local ports, placeholder secrets, backend upload bind mount.</li>
+<li><code>.env.example</code>: local defaults and placeholders.</li>
+</ul>
+<p>Impact: no immediate issue for local development, but these files should not be treated as production deployment artifacts.</p>
+<p>Recommendation: keep Compose documented as local-only, and add separate production deployment docs/config when needed.</p>
+<h3 id="arch-01---info---staged-storage-adapter-is-present-but-not-yet-wired-through-mediaservice">ARCH-01 - Info - Staged storage adapter is present but not yet wired through <code>MediaService</code><span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h3>
+<p>The staged adapter introduces a narrow profile photo storage port and local implementation, and registers it in the media module. Existing <code>MediaService</code> still uses direct filesystem writes and deletes.</p>
+<p>Evidence:</p>
+<ul>
+<li><code>apps/backend/src/modules/media/storage/profile-photo-storage.port.ts</code>: storage port.</li>
+<li><code>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.ts</code>: local storage implementation.</li>
+<li><code>apps/backend/src/modules/media/media.module.ts</code>: provider registration.</li>
+<li><code>apps/backend/src/modules/media/media.service.ts</code>: current direct filesystem behavior remains.</li>
+</ul>
+<p>Impact: no immediate regression because existing behavior remains intact. The adapter is a foundation step, not yet a behavior replacement.</p>
+<p>Recommendation: in the next change, inject the port into <code>MediaService</code>, preserve current URL/storage key contracts, and migrate existing media tests to the port boundary.</p>
+<h2 id="5-staged-profile-photo-storage-adapter-review">5. Staged Profile Photo Storage Adapter Review<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Verdict: <code>SAFE_TO_COMMIT</code>.</p>
+<p>Staged files reviewed:</p>
+<ul>
+<li><code>apps/backend/src/modules/media/media.module.ts</code></li>
+<li><code>apps/backend/src/modules/media/storage/profile-photo-storage.port.ts</code></li>
+<li><code>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.ts</code></li>
+<li><code>apps/backend/src/modules/media/storage/local-profile-photo-storage.service.spec.ts</code></li>
+</ul>
+<p>Positive observations:</p>
+<ul>
+<li>The port is small and domain-specific: save/delete profile photos only.</li>
+<li>Provider registration is scoped to <code>MediaModule</code>.</li>
+<li>Generated filenames use UUIDs and trusted extensions based on MIME type, not original filenames.</li>
+<li>Storage keys are canonicalized under <code>profile-photos/</code>.</li>
+<li><code>publicUrl</code> preserves the existing <code>/uploads/profile-photos/...</code> contract.</li>
+<li>Delete path rejects suspicious keys through prefix, basename, regex, <code>resolve</code>, <code>relative</code>, and absolute-path checks.</li>
+<li>Invalid or out-of-scope delete keys are no-ops, which is a safe behavior for cleanup paths.</li>
+<li>Unit tests cover save, unsupported MIME rejection, valid delete, and invalid key no-op behavior.</li>
+</ul>
+<p>Non-blocking follow-ups:</p>
+<ul>
+<li>Add a test that simulates <code>unlink</code> failure for a valid key and documents whether errors should propagate or be swallowed.</li>
+<li>When wiring the adapter into <code>MediaService</code>, verify cleanup semantics for replace/delete failure paths.</li>
+</ul>
+<p>No staged-blocking security, correctness, or integration issue was found in the adapter change itself.</p>
+<h2 id="6-architecture-notes">6. Architecture Notes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Backend boundaries are generally clear: modules own controllers/services and shared concerns sit under <code>common</code>. Prisma remains the central integration boundary, which is appropriate at this project size.</p>
+<p>Current cross-module risks are mostly lifecycle coordination:</p>
+<ul>
+<li>Profile completion depends on auth, profiles, and media but is consumed by discovery.</li>
+<li>Media URL semantics are produced by backend media and consumed by several frontend clients.</li>
+<li>Moderation side effects touch blocks, reports, matches, and chat visibility.</li>
+<li>Likes and matches rely on expiration/rematch semantics that should eventually be covered by integration tests.</li>
+</ul>
+<p>Frontend structure is understandable: app routes are thin enough, API helpers centralize most backend calls, and feature-specific components are grouped under <code>features</code>. The main cleanup opportunity is to remove duplicated media URL handling and separate demo/mock behavior from live API behavior more explicitly.</p>
+<h2 id="7-security-and-privacy-notes">7. Security and Privacy Notes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Strengths:</p>
+<ul>
+<li>Passwords are hashed with bcrypt.</li>
+<li>Refresh tokens are stored hashed server-side.</li>
+<li>Access token and refresh token duties are separated.</li>
+<li>HTTP-only refresh cookie is used.</li>
+<li>Rate-limit guards exist for sensitive endpoints.</li>
+<li>DTO validation and global validation pipe are present.</li>
+<li>Media upload count/size/MIME restrictions exist.</li>
+<li>Moderation/report/block modules exist rather than being deferred entirely.</li>
+</ul>
+<p>Main remaining concerns:</p>
+<ul>
+<li>User-uploaded image bytes need a processing/sanitization boundary.</li>
+<li>Cookie-backed mutation routes need explicit cross-site request posture.</li>
+<li>Production rate limiting needs external/shared state.</li>
+<li>Documentation should clearly distinguish MVP local controls from production controls.</li>
+</ul>
+<h2 id="8-data-model-notes">8. Data Model Notes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>The Prisma schema includes substantial domain modeling for users, profiles, media, interactions, matches, messages, reports, blocks, and notifications. The schema is more mature than several docs imply.</p>
+<p>Important model-level observations:</p>
+<ul>
+<li><code>Profile.completedAt</code> is present and used as a discovery eligibility gate, but application flows do not maintain it.</li>
+<li><code>ProfileMedia</code> has ordering, type, moderation status, and <code>isPrimary</code>; this is a good basis for profile photo management.</li>
+<li>Likes/interactions and matches encode expiry/rematch semantics that deserve DB-backed integration tests.</li>
+<li>Blocks and reports provide moderation foundations, but block side effects should be transactional.</li>
+</ul>
+<h2 id="9-frontend-integration-notes">9. Frontend Integration Notes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Strong points:</p>
+<ul>
+<li>API client files are easy to locate and inspect.</li>
+<li>Profile media normalization exists in one place.</li>
+<li>Auth context manages live session state and refresh behavior.</li>
+<li>App shell and route structure are coherent.</li>
+</ul>
+<p>Issues to prioritize:</p>
+<ul>
+<li>Reuse one media URL resolver across profile, discovery, matches, messages, and notifications if media appears there later.</li>
+<li>Replace forgot-password mock behavior with a real API flow or remove the live-looking affordance.</li>
+<li>Add privacy/terms routes for links already shown in UI.</li>
+<li>Introduce frontend tests around API helper normalization and auth context behavior.</li>
+</ul>
+<h2 id="10-ci-and-quality-gate-notes">10. CI and Quality Gate Notes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Current signal is good for compile-time and backend unit behavior:</p>
+<ul>
+<li>Backend tests pass.</li>
+<li>Backend build passes.</li>
+<li>Backend lint/typecheck passes.</li>
+<li>Frontend production build passes.</li>
+<li>Frontend lint passes with warnings.</li>
+<li>Compose config resolves.</li>
+</ul>
+<p>Main gaps:</p>
+<ul>
+<li>No PostgreSQL service in CI.</li>
+<li>No Prisma migration validation against a real database in CI.</li>
+<li>No frontend test suite.</li>
+<li>Frontend lint warnings are tolerated and should be burned down gradually.</li>
+</ul>
+<h2 id="11-recommended-remediation-order">11. Recommended Remediation Order<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ol>
+<li>Fix profile completion lifecycle and add backend regression tests.</li>
+<li>Centralize media URL normalization or return absolute backend media URLs.</li>
+<li>Add image processing/sanitization before public serving.</li>
+<li>Make block side effects transactional.</li>
+<li>Replace or remove mock forgot-password flow.</li>
+<li>Add <code>/privacy</code> and <code>/terms</code> routes.</li>
+<li>Add PostgreSQL integration CI.</li>
+<li>Add frontend tests for API helpers/auth/discovery basics.</li>
+<li>Refresh docs to match implemented modules.</li>
+<li>Plan production storage/rate-limit/deployment hardening separately from local Compose.</li>
+</ol>
+<h2 id="12-audit-limitations">12. Audit Limitations<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ul>
+<li>No code/config files were changed as part of remediation; this was an audit-only task.</li>
+<li>No database instance was started.</li>
+<li>No migrations were created or applied.</li>
+<li>No Docker services were started or stopped.</li>
+<li>No Git staging, commit, push, branch creation, branch switch, restore, reset, or clean was performed.</li>
+<li>Security review was static plus existing unit/build/lint checks, not dynamic penetration testing.</li>
+</ul>
+<h2 id="13-final-state-expectation-before-final-checks">13. Final State Expectation Before Final Checks<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Expected final Git state after writing this audit:</p>
+<ul>
+<li>The original four staged media adapter files remain staged.</li>
+<li><code>docs/audits/2026-06-25-yuni-full-project-audit-draft.md</code> is the only new unstaged/untracked audit artifact created by this task.</li>
+<li>No code, config, dependency, migration, or existing documentation files should remain modified by the audit.</li>
+</ul>
+
+  <footer class="footline">
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <a id="R-logo" class="R-default direction-row" href="/index.html">
+          <span class="logo-title default-animation">Yuni Docs</span>
+        </a>
+        <search><form action="/search/index.html" method="get">
+          <div class="searchbox default-animation">
+            <button class="search-detail" type="submit" title="Search (CTRL+ALT+f)"><i class="fas fa-fw fa-search"></i></button>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-fw fa-times" title="Clear search"></i></button>
+          </div>
+        </form></search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks default-animation">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/index.html"><a class="padding" href="/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main default-animation">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="" data-nav-id="/project/index.html"><input type="checkbox" id="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5" aria-controls="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5"><label for="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu О проекте</span></label><a class="padding default-animation" href="/project/index.html">О проекте</a><ul id="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5" class="collapsible-menu">
+            <li class="" data-nav-id="/project/state/index.html"><a class="padding" href="/project/state/index.html">Текущее состояние</a></li>
+            <li class="" data-nav-id="/project/roadmap/index.html"><a class="padding" href="/project/roadmap/index.html">Roadmap</a></li>
+            <li class="" data-nav-id="/project/features/index.html"><a class="padding" href="/project/features/index.html">Матрица фич</a></li></ul></li>
+            <li class="" data-nav-id="/stages/index.html"><a class="padding" href="/stages/index.html">Этапы разработки</a></li>
+            <li class="" data-nav-id="/architecture/index.html"><input type="checkbox" id="R-section-9e2fbae00589891720aedcdff0084e07" aria-controls="R-subsections-9e2fbae00589891720aedcdff0084e07"><label for="R-section-9e2fbae00589891720aedcdff0084e07"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Архитектура</span></label><a class="padding default-animation" href="/architecture/index.html">Архитектура</a><ul id="R-subsections-9e2fbae00589891720aedcdff0084e07" class="collapsible-menu">
+            <li class="" data-nav-id="/architecture/backend/index.html"><a class="padding" href="/architecture/backend/index.html">Backend</a></li>
+            <li class="" data-nav-id="/architecture/frontend/index.html"><a class="padding" href="/architecture/frontend/index.html">Frontend</a></li>
+            <li class="" data-nav-id="/architecture/domain-model/index.html"><a class="padding" href="/architecture/domain-model/index.html">Domain Model</a></li></ul></li>
+            <li class="" data-nav-id="/modules/index.html"><input type="checkbox" id="R-section-86070686ce713af8e2516d0daffc06f4" aria-controls="R-subsections-86070686ce713af8e2516d0daffc06f4"><label for="R-section-86070686ce713af8e2516d0daffc06f4"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Backend-модули</span></label><a class="padding default-animation" href="/modules/index.html">Backend-модули</a><ul id="R-subsections-86070686ce713af8e2516d0daffc06f4" class="collapsible-menu">
+            <li class="" data-nav-id="/modules/auth/index.html"><a class="padding" href="/modules/auth/index.html">auth</a></li>
+            <li class="" data-nav-id="/modules/profiles/index.html"><a class="padding" href="/modules/profiles/index.html">profiles</a></li>
+            <li class="" data-nav-id="/modules/media/index.html"><a class="padding" href="/modules/media/index.html">media</a></li>
+            <li class="" data-nav-id="/modules/discovery/index.html"><a class="padding" href="/modules/discovery/index.html">discovery</a></li>
+            <li class="" data-nav-id="/modules/likes/index.html"><a class="padding" href="/modules/likes/index.html">likes</a></li>
+            <li class="" data-nav-id="/modules/matches/index.html"><a class="padding" href="/modules/matches/index.html">matches</a></li>
+            <li class="" data-nav-id="/modules/chat/index.html"><a class="padding" href="/modules/chat/index.html">chat</a></li>
+            <li class="" data-nav-id="/modules/moderation/index.html"><a class="padding" href="/modules/moderation/index.html">moderation</a></li>
+            <li class="" data-nav-id="/modules/notifications/index.html"><a class="padding" href="/modules/notifications/index.html">notifications</a></li></ul></li>
+            <li class="" data-nav-id="/api/index.html"><a class="padding" href="/api/index.html">API</a></li>
+            <li class="" data-nav-id="/database/index.html"><input type="checkbox" id="R-section-ffbd3c632901f0c6472eed450e4e91f8" aria-controls="R-subsections-ffbd3c632901f0c6472eed450e4e91f8"><label for="R-section-ffbd3c632901f0c6472eed450e4e91f8"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu База данных</span></label><a class="padding default-animation" href="/database/index.html">База данных</a><ul id="R-subsections-ffbd3c632901f0c6472eed450e4e91f8" class="collapsible-menu">
+            <li class="" data-nav-id="/database/schema/index.html"><a class="padding" href="/database/schema/index.html">Схема и миграции</a></li></ul></li>
+            <li class="" data-nav-id="/security/index.html"><input type="checkbox" id="R-section-66815ecaaecfc1c209e5637d03b258b2" aria-controls="R-subsections-66815ecaaecfc1c209e5637d03b258b2"><label for="R-section-66815ecaaecfc1c209e5637d03b258b2"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Безопасность</span></label><a class="padding default-animation" href="/security/index.html">Безопасность</a><ul id="R-subsections-66815ecaaecfc1c209e5637d03b258b2" class="collapsible-menu">
+            <li class="" data-nav-id="/security/data-exposure/index.html"><a class="padding" href="/security/data-exposure/index.html">Data Exposure Rules</a></li></ul></li>
+            <li class="" data-nav-id="/testing/index.html"><a class="padding" href="/testing/index.html">Тестирование</a></li>
+            <li class="" data-nav-id="/onboarding/index.html"><input type="checkbox" id="R-section-0460cb8850cf3b8ece07dc5c51a10e63" aria-controls="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63"><label for="R-section-0460cb8850cf3b8ece07dc5c51a10e63"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Онбординг</span></label><a class="padding default-animation" href="/onboarding/index.html">Онбординг</a><ul id="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63" class="collapsible-menu">
+            <li class="" data-nav-id="/onboarding/docker/index.html"><a class="padding" href="/onboarding/docker/index.html">Local Docker Workflow</a></li></ul></li>
+            <li class="" data-nav-id="/decisions/index.html"><a class="padding" href="/decisions/index.html">ADR — Решения</a></li>
+            <li class="" data-nav-id="/process/index.html"><a class="padding" href="/process/index.html">Процесс</a></li>
+            <li class="parent " data-nav-id="/docs/index.html"><input type="checkbox" id="R-section-b5fa667da3c6d162416dac7e8c63bf8a" aria-controls="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" checked><label for="R-section-b5fa667da3c6d162416dac7e8c63bf8a"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Docs</span></label><a class="padding default-animation" href="/docs/index.html">Docs</a><ul id="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" class="collapsible-menu">
+            <li class="active hidden " data-nav-id="/docs/audits/2026-06-25-yuni-full-project-audit-draft/index.html"><a class="padding" href="/docs/audits/2026-06-25-yuni-full-project-audit-draft/index.html"></a></li></ul></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts default-animation">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin" class="default-animation"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer" class="default-animation"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/js/perfect-scrollbar/perfect-scrollbar.min.js?1782659603" defer></script>
+    <script src="/js/theme.js?1782659603" defer></script>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>

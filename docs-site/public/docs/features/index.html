@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html id="R-html" lang="en" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.163.3">
+    <meta name="generator" content="Relearn 9.0.3+36307e4ed23582638ab689240ac7b427217803ee">
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+    <meta name="description" content="FeaturesЕдиная матрица продуктовых фич Yuni. Источник каждого факта — реальный файл в репозитории, а не предположение.
+Статусы: done — реализовано и покрыто тестами; partial — реализовано, но с известными ограничениями; planned — не реализовано.
+Последнее обновление: 2026-06-26. Проверено на commit 6d3d399 (origin/main).
+AuthСтатус: done">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:description" content="FeaturesЕдиная матрица продуктовых фич Yuni. Источник каждого факта — реальный файл в репозитории, а не предположение.
+Статусы: done — реализовано и покрыто тестами; partial — реализовано, но с известными ограничениями; planned — не реализовано.
+Последнее обновление: 2026-06-26. Проверено на commit 6d3d399 (origin/main).
+AuthСтатус: done">
+    <meta property="og:url" content="//localhost:1313/docs/features/index.html">
+    <meta property="og:site_name" content="Yuni Docs">
+    <meta property="og:description" content="FeaturesЕдиная матрица продуктовых фич Yuni. Источник каждого факта — реальный файл в репозитории, а не предположение.
+Статусы: done — реализовано и покрыто тестами; partial — реализовано, но с известными ограничениями; planned — не реализовано.
+Последнее обновление: 2026-06-26. Проверено на commit 6d3d399 (origin/main).
+AuthСтатус: done">
+    <meta property="og:locale" content="en">
+    <meta property="og:type" content="article">
+    <meta property="article:section" content="Docs">
+    <meta itemprop="description" content="FeaturesЕдиная матрица продуктовых фич Yuni. Источник каждого факта — реальный файл в репозитории, а не предположение.
+Статусы: done — реализовано и покрыто тестами; partial — реализовано, но с известными ограничениями; planned — не реализовано.
+Последнее обновление: 2026-06-26. Проверено на commit 6d3d399 (origin/main).
+AuthСтатус: done">
+    <meta itemprop="wordCount" content="1131">
+    <title></title>
+    <link href="/css/auto-complete/auto-complete.min.css?1782659603" rel="stylesheet">
+    <script src="/js/auto-complete/auto-complete.min.js?1782659603" defer></script>
+    <script src="/js/search-lunr.js?1782659603" defer></script>
+    <script src="/js/search.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/searchindex.en.js?1782659603";
+    </script>
+    <script src="/js/lunr/lunr.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.stemmer.support.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.multi.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.en.min.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['en'];
+    </script>
+    <link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet"></noscript>
+    <link href="/css/perfect-scrollbar/perfect-scrollbar.min.css?1782659603" rel="stylesheet">
+    <link href="/css/theme.css?1782659603" rel="stylesheet">
+    <link href="/css/format-html.css?1782659603" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/docs\/features\/index.html';
+      window.relearn.relBasePath='..\/..';
+      window.relearn.relBaseUri='..\/..';
+      window.relearn.absBaseUri='\/\/localhost:1313';
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // translations
+      window.T_Copy_to_clipboard = `Copy text to clipboard`;
+      window.T_Copied_to_clipboard = `Text copied to clipboard!`;
+      window.T_Link_copied_to_clipboard = `Link copied to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      window.T_Browser_unsupported_feature = `This browser doesn't support this feature`;
+      // variant stuff
+      window.relearn.themevariants = [ 'relearn-dark' ];
+      window.relearn.customvariantprefix = "my-custom-";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant") ?? "";
+        if( !variant ||
+            (!variant.startsWith(window.relearn.customvariantprefix) && !window.relearn.themevariants.includes(variant)) ||
+            (variant.startsWith(window.relearn.customvariantprefix) && !window.localStorage.getItem(window.relearn.absBaseUri + "/variantstylesheet-" + variant)) ){
+          variant = window.relearn.themevariants[0];
+          window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-origin="/docs/features/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar" class="default-animation">
+        <div class="topbar-wrapper default-animation">
+          <div class="topbar-sidebar-divider default-animation"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar default-animation" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button></span>
+            </div>
+            <div class="topbar-button topbar-button-toc default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-table-list"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+<nav class="TableOfContents">
+  <ul>
+    <li><a href="#auth">Auth</a></li>
+    <li><a href="#profiles">Profiles</a></li>
+    <li><a href="#media-profile-photos">Media (Profile Photos)</a></li>
+    <li><a href="#discovery">Discovery</a></li>
+    <li><a href="#likes">Likes</a></li>
+    <li><a href="#matches">Matches</a></li>
+    <li><a href="#chat">Chat</a></li>
+    <li><a href="#moderation-blocks--reports">Moderation (Blocks &amp; Reports)</a></li>
+    <li><a href="#notifications">Notifications</a></li>
+    <li><a href="#инфраструктура-и-cross-cutting">Инфраструктура и cross-cutting</a></li>
+    <li><a href="#сводная-таблица-по-доменам">Сводная таблица по доменам</a></li>
+  </ul>
+</nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/index.html"><span itemprop="name">Yuni Documentation</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/docs/index.html"><span itemprop="name">Docs</span></a><meta itemprop="position" content="2">&nbsp;>&nbsp;</li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><a href="/docs/index.html" title="Docs (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a></span>
+            </div>
+            <div class="topbar-button topbar-button-next default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle"><span><i class="fa-fw fas fa-chevron-right"></i></span></span>
+            </div>
+            <div class="topbar-button topbar-button-more default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable docs" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id=""></h1>
+
+<h1 id="features">Features<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h1>
+<p>Единая матрица продуктовых фич Yuni. Источник каждого факта — реальный файл в репозитории, а не предположение.</p>
+<p>Статусы: <code>done</code> — реализовано и покрыто тестами; <code>partial</code> — реализовано, но с известными ограничениями; <code>planned</code> — не реализовано.</p>
+<p>Последнее обновление: 2026-06-26. Проверено на commit <code>6d3d399</code> (<code>origin/main</code>).</p>
+<hr>
+<h2 id="auth">Auth<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>POST /auth/register</code>, <code>POST /auth/login</code>, <code>POST /auth/refresh</code>, <code>POST /auth/logout</code>, <code>GET /auth/me</code></td>
+					<td><code>apps/backend/src/modules/auth/auth.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>sign-in и sign-up формы, real backend integration</td>
+					<td><code>apps/frontend/features/auth/</code>, <code>apps/frontend/app/(auth)/</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>authApi</code> + <code>AuthContext</code> (access token в memory, refresh в HttpOnly cookie)</td>
+					<td><code>apps/frontend/lib/auth-api.ts</code>, <code>apps/frontend/lib/auth-context.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>auth.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/auth/auth.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Rate limits</td>
+					<td>register: 3/hour/IP; login: 20/10min/IP + 5/10min/IP+email</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>Email verification не реализована (нет backend endpoint).</li>
+<li>Password reset: UI страница существует (<code>app/(auth)/forgot-password/page.tsx</code>), но backend endpoint отсутствует; текущая реализация — mock (<code>setTimeout</code>).</li>
+<li>Superlike не реализован.</li>
+</ul>
+<hr>
+<h2 id="profiles">Profiles<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>GET /profiles/me</code>, <code>PATCH /profiles/me</code>, <code>GET /profiles/:handle</code></td>
+					<td><code>apps/backend/src/modules/profiles/profiles.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>profile page: просмотр, редактирование полей (displayName, bio, city, country, gender, lookingFor, isDiscoverable)</td>
+					<td><code>apps/frontend/app/(app)/profile/page.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>profileApi</code></td>
+					<td><code>apps/frontend/lib/profile-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>profiles.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/profiles/profiles.service.spec.ts</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>Profile completion lifecycle (обязательные поля, discoverability) уточняется в Task 021 (backlog).</li>
+<li>Поля interests, height, occupation, education присутствуют в frontend типах и mock-data, но не реализованы в backend profile schema как часть текущего MVP.</li>
+</ul>
+<hr>
+<h2 id="media-profile-photos">Media (Profile Photos)<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>partial</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>GET /media/profile-photos/me</code>, <code>POST /media/profile-photos</code>, <code>PATCH /media/profile-photos/:photoId/primary</code>, <code>DELETE /media/profile-photos/:photoId</code></td>
+					<td><code>apps/backend/src/modules/media/media.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>upload, set primary, delete в profile page</td>
+					<td><code>apps/frontend/app/(app)/profile/page.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>profileApi</code> (foto methods)</td>
+					<td><code>apps/frontend/lib/profile-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>media.service.spec.ts</code>, <code>local-profile-photo-storage.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/media/media.service.spec.ts</code>, <code>apps/backend/src/modules/media/storage/</code></td>
+			</tr>
+			<tr>
+					<td>Storage adapter</td>
+					<td><code>ProfilePhotoStorage</code> boundary; current adapter сохраняет в <code>apps/backend/uploads/profile-photos</code></td>
+					<td><code>apps/backend/src/modules/media/storage/</code></td>
+			</tr>
+			<tr>
+					<td>Public URL contract</td>
+					<td><code>/uploads/profile-photos/&lt;generated-uuid&gt;</code></td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>MIME limits</td>
+					<td>JPEG, PNG, WebP; max 5 MB</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>Image sanitization и EXIF stripping <strong>не реализованы</strong>.</li>
+<li>Object storage/CDN (S3 и т.п.) <strong>не реализованы</strong>; используется local adapter.</li>
+<li>Pending/private media lifecycle (очередь модерации) <strong>не реализован</strong>; uploaded photos помечаются <code>approved</code> сразу.</li>
+<li>Production media pipeline запланирован как отдельный шаг (Task 023, backlog).</li>
+</ul>
+<hr>
+<h2 id="discovery">Discovery<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>GET /discovery/cards</code> (cursor pagination, max limit 20)</td>
+					<td><code>apps/backend/src/modules/discovery/discovery.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>discover page: карточки профилей с reveal-эффектом, swipe actions (like/skip)</td>
+					<td><code>apps/frontend/app/(app)/discover/page.tsx</code>, <code>apps/frontend/features/discover/</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>discoveryApi</code></td>
+					<td><code>apps/frontend/lib/discovery-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>discovery.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/discovery/discovery.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend filters</td>
+					<td>исключает: self, inactive users, is_discoverable=false, нет completed_at, нет approved фото, active block в любую сторону, active LIKE/SKIP cooldown, active match</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Rate limits</td>
+					<td>120 req/10min/user</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>Геолокация и radius filter не реализованы.</li>
+<li>Ранжирование (scoring/ranking) не реализовано; сортировка стабильная: <code>createdAt desc</code>, затем <code>userId desc</code>.</li>
+<li>Premium-фильтры не реализованы.</li>
+<li>Фильтры по возрасту/полу в UI присутствуют в виде UI-элементов, но не подключены к backend query.</li>
+</ul>
+<hr>
+<h2 id="likes">Likes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>POST /likes/:targetProfileUserId</code> (like), <code>POST /likes/:targetProfileUserId/skip</code> (skip/pass)</td>
+					<td><code>apps/backend/src/modules/likes/likes.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>swipe actions в discover page; match overlay при взаимном лайке</td>
+					<td><code>apps/frontend/app/(app)/discover/page.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>likesApi</code></td>
+					<td><code>apps/frontend/lib/likes-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>likes.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/likes/likes.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Cooldowns</td>
+					<td>LIKE: 3 дня; SKIP: 1 день</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Rate limits</td>
+					<td>60 req/hour/user (shared LIKE + SKIP)</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Block check</td>
+					<td>active block в любую сторону запрещает LIKE/SKIP</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>Superlike не реализован.</li>
+<li><code>GET /likes/me</code> (история отправленных лайков) не реализован.</li>
+</ul>
+<hr>
+<h2 id="matches">Matches<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>GET /matches/me</code>, <code>POST /matches/:matchId/conversation</code></td>
+					<td><code>apps/backend/src/modules/matches/matches.controller.ts</code>, <code>apps/backend/src/modules/chat/match-conversations.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>matches page: список активных матчей; block/report из matches page; переход в чат</td>
+					<td><code>apps/frontend/app/(app)/matches/page.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>matchesApi</code></td>
+					<td><code>apps/frontend/lib/matches-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>matches.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/matches/matches.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Match TTL</td>
+					<td>7 дней с момента создания</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Match + block</td>
+					<td>block завершает active match (<code>status=blocked</code>), unblock не восстанавливает</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>Cron/job для автоматического перевода <code>status</code> в <code>expired</code> по истечении TTL не реализован; expiry применяется через фильтр <code>expiresAt &gt; now</code> на чтение.</li>
+<li>Unmatch (разрыв матча без блока) не реализован.</li>
+</ul>
+<hr>
+<h2 id="chat">Chat<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>GET /chat/conversations</code>, <code>GET /chat/conversations/:conversationId/messages</code>, <code>POST /chat/conversations/:conversationId/messages</code></td>
+					<td><code>apps/backend/src/modules/chat/chat.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>messages page: список conversations + просмотр + отправка сообщений</td>
+					<td><code>apps/frontend/app/(app)/messages/page.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>chatApi</code></td>
+					<td><code>apps/frontend/lib/chat-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>chat.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/chat/chat.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Access control</td>
+					<td>send разрешён только active participant в active conversation; active block в любую сторону возвращает <code>403</code></td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Message limits</td>
+					<td>max text 2000 символов; plain text only; тело не логируется</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Rate limits</td>
+					<td>30 msg/min + 120 msg/10min</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>WebSocket/realtime <strong>не реализован</strong>; polling или ручное обновление.</li>
+<li>Read receipts не реализованы.</li>
+<li>Typing indicators не реализованы.</li>
+<li>Вложения/медиа-сообщения не реализованы.</li>
+<li>Поиск по чату не реализован.</li>
+</ul>
+<hr>
+<h2 id="moderation-blocks--reports">Moderation (Blocks &amp; Reports)<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>POST /blocks/:targetUserId</code>, <code>DELETE /blocks/:targetUserId</code>, <code>GET /blocks/me</code>, <code>POST /reports</code></td>
+					<td><code>apps/backend/src/modules/moderation/moderation.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>block/report действия доступны из matches page; <code>blocksApi</code> и <code>reportsApi</code> подключены</td>
+					<td><code>apps/frontend/app/(app)/matches/page.tsx</code>, <code>apps/frontend/lib/blocks-api.ts</code>, <code>apps/frontend/lib/reports-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>moderation.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/moderation/moderation.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Report reasons</td>
+					<td>spam, fake_profile, harassment, sexual_content, hate_speech, scam_or_money, underage_suspected, violence_or_threats, other</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Block side effects</td>
+					<td>block завершает active match (<code>status=blocked</code>); active block скрывает пару из discovery, matches, chat, notifications</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Rate limits</td>
+					<td><code>POST /reports</code>: 10/hour/user</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li><code>GET /reports/me</code> (история отправленных жалоб) не реализован.</li>
+<li>Admin/moderation panel не реализован.</li>
+<li>Автоматическая обработка жалоб не реализована; <code>status</code> фиксируется как <code>received</code>.</li>
+<li>Dedicated frontend UI для просмотра/управления своим списком блокировок отсутствует (только action из matches).</li>
+</ul>
+<hr>
+<h2 id="notifications">Notifications<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><strong>Статус:</strong> <code>done</code></p>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Backend endpoints</td>
+					<td><code>GET /notifications</code>, <code>GET /notifications/unread-count</code>, <code>POST /notifications/:notificationId/read</code>, <code>POST /notifications/read-all</code></td>
+					<td><code>apps/backend/src/modules/notifications/notifications.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Frontend UI</td>
+					<td>notifications page: список, mark read, unread-count badge</td>
+					<td><code>apps/frontend/app/(app)/notifications/page.tsx</code></td>
+			</tr>
+			<tr>
+					<td>Frontend API client</td>
+					<td><code>notificationsApi</code> + <code>NOTIFICATIONS_UPDATED_EVENT</code> (custom DOM event)</td>
+					<td><code>apps/frontend/lib/notifications-api.ts</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td><code>notifications.service.spec.ts</code></td>
+					<td><code>apps/backend/src/modules/notifications/notifications.service.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Notification types</td>
+					<td><code>match_created</code>, <code>message_received</code>, <code>system</code></td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Block filter</td>
+					<td>notifications от заблокированных пользователей скрываются</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+			<tr>
+					<td>Rate limits</td>
+					<td>GET: 120/10min; unread-count: 240/10min; mark-read: 120/10min</td>
+					<td><code>docs/api/README.md</code></td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>Ограничения:</strong></p>
+<ul>
+<li>WebSocket/realtime delivery <strong>не реализован</strong>; frontend полагается на polling или ручное обновление через DOM event.</li>
+<li>Push notifications (mobile/browser) не реализованы.</li>
+<li>Email notifications не реализованы.</li>
+<li>Notification preferences UI не реализован.</li>
+</ul>
+<hr>
+<h2 id="инфраструктура-и-cross-cutting">Инфраструктура и cross-cutting<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<table>
+	<thead>
+			<tr>
+					<th>Аспект</th>
+					<th>Состояние</th>
+					<th>Источник</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Health endpoint</td>
+					<td><code>GET /health</code> — real check</td>
+					<td><code>apps/backend/src/modules/health/health.controller.ts</code></td>
+			</tr>
+			<tr>
+					<td>Rate limiting</td>
+					<td>global fallback (300 req/10min/IP) + per-endpoint in-memory limiter</td>
+					<td><code>docs/api/README.md</code>, <code>apps/backend/src/common/rate-limit/</code></td>
+			</tr>
+			<tr>
+					<td>Cursor pagination</td>
+					<td>реализована для всех list endpoints (default 20, max 50)</td>
+					<td><code>apps/backend/src/common/pagination/</code></td>
+			</tr>
+			<tr>
+					<td>Safe serializers</td>
+					<td>запрет raw Prisma rows; storageKey/paths не отдаются клиенту</td>
+					<td><code>apps/backend/src/common/serializers/</code>, <code>docs/security/data-exposure-rules.md</code></td>
+			</tr>
+			<tr>
+					<td>Security helpers</td>
+					<td><code>assertOwner</code>, <code>assertConversationMember</code>, <code>assertMatchParticipant</code>, <code>assertCanAccessProfile</code>, <code>assertCanAccessPhoto</code></td>
+					<td><code>apps/backend/src/common/security/access-control.spec.ts</code></td>
+			</tr>
+			<tr>
+					<td>Docker Compose</td>
+					<td>local development workflow (postgres + backend + frontend)</td>
+					<td><code>docker-compose.yml</code>, <code>docs/onboarding/local-docker-workflow.md</code></td>
+			</tr>
+			<tr>
+					<td>CI</td>
+					<td>GitHub Actions <code>quality-gates</code> на PR и push в main</td>
+					<td><code>.github/</code></td>
+			</tr>
+			<tr>
+					<td>Backend tests</td>
+					<td>17 spec files, 166 tests passed (verified on ca50baf)</td>
+					<td><code>apps/backend/src/</code>, <code>docs/PROJECT_STATE.md</code></td>
+			</tr>
+			<tr>
+					<td>Frontend tests</td>
+					<td>отсутствуют</td>
+					<td>—</td>
+			</tr>
+			<tr>
+					<td>Production deployment</td>
+					<td><strong>не реализован</strong></td>
+					<td><code>docs/PROJECT_STATE.md</code></td>
+			</tr>
+			<tr>
+					<td>Demo mode</td>
+					<td><code>DemoSessionProvider</code> (sessionStorage); <code>DemoGate</code> UI</td>
+					<td><code>apps/frontend/lib/demo-session.tsx</code>, <code>apps/frontend/features/app-shell/components/demo-gate.tsx</code></td>
+			</tr>
+	</tbody>
+</table>
+<hr>
+<h2 id="сводная-таблица-по-доменам">Сводная таблица по доменам<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<table>
+	<thead>
+			<tr>
+					<th>Домен</th>
+					<th>Backend</th>
+					<th>Frontend</th>
+					<th>Тесты (backend)</th>
+					<th>Статус</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Auth</td>
+					<td>register, login, refresh, logout, me</td>
+					<td>sign-in, sign-up формы</td>
+					<td>✓</td>
+					<td><code>done</code></td>
+			</tr>
+			<tr>
+					<td>Profiles</td>
+					<td>GET/PATCH me, GET :handle</td>
+					<td>просмотр + редактирование</td>
+					<td>✓</td>
+					<td><code>done</code></td>
+			</tr>
+			<tr>
+					<td>Media</td>
+					<td>upload, list, set primary, delete</td>
+					<td>загрузка/удаление фото в profile</td>
+					<td>✓</td>
+					<td><code>partial</code> — local storage, нет EXIF/CDN</td>
+			</tr>
+			<tr>
+					<td>Discovery</td>
+					<td>GET /cards</td>
+					<td>discover page, swipe, like/skip</td>
+					<td>✓</td>
+					<td><code>done</code></td>
+			</tr>
+			<tr>
+					<td>Likes</td>
+					<td>like, skip</td>
+					<td>swipe actions + match overlay</td>
+					<td>✓</td>
+					<td><code>done</code></td>
+			</tr>
+			<tr>
+					<td>Matches</td>
+					<td>GET /me, start conversation</td>
+					<td>matches page</td>
+					<td>✓</td>
+					<td><code>done</code></td>
+			</tr>
+			<tr>
+					<td>Chat</td>
+					<td>conversations, messages, send</td>
+					<td>messages page</td>
+					<td>✓</td>
+					<td><code>done</code> — нет realtime</td>
+			</tr>
+			<tr>
+					<td>Moderation</td>
+					<td>block/unblock/list, report</td>
+					<td>action из matches page</td>
+					<td>✓</td>
+					<td><code>done</code> — нет admin UI</td>
+			</tr>
+			<tr>
+					<td>Notifications</td>
+					<td>list, unread-count, mark read</td>
+					<td>notifications page</td>
+					<td>✓</td>
+					<td><code>done</code> — нет push/realtime</td>
+			</tr>
+			<tr>
+					<td>Password reset</td>
+					<td><strong>нет</strong></td>
+					<td>UI stub (mock)</td>
+					<td>—</td>
+					<td><code>planned</code></td>
+			</tr>
+			<tr>
+					<td>Email verification</td>
+					<td><strong>нет</strong></td>
+					<td>нет</td>
+					<td>—</td>
+					<td><code>planned</code></td>
+			</tr>
+			<tr>
+					<td>Admin panel</td>
+					<td><strong>нет</strong></td>
+					<td>нет</td>
+					<td>—</td>
+					<td><code>planned</code></td>
+			</tr>
+			<tr>
+					<td>Superlike</td>
+					<td><strong>нет</strong></td>
+					<td>нет</td>
+					<td>—</td>
+					<td><code>planned</code></td>
+			</tr>
+			<tr>
+					<td>Realtime/WebSocket</td>
+					<td><strong>нет</strong></td>
+					<td>нет</td>
+					<td>—</td>
+					<td><code>planned</code></td>
+			</tr>
+			<tr>
+					<td>Production deployment</td>
+					<td><strong>нет</strong></td>
+					<td>—</td>
+					<td>—</td>
+					<td><code>planned</code></td>
+			</tr>
+	</tbody>
+</table>
+
+  <footer class="footline">
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <a id="R-logo" class="R-default direction-row" href="/index.html">
+          <span class="logo-title default-animation">Yuni Docs</span>
+        </a>
+        <search><form action="/search/index.html" method="get">
+          <div class="searchbox default-animation">
+            <button class="search-detail" type="submit" title="Search (CTRL+ALT+f)"><i class="fas fa-fw fa-search"></i></button>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-fw fa-times" title="Clear search"></i></button>
+          </div>
+        </form></search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks default-animation">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/index.html"><a class="padding" href="/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main default-animation">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="" data-nav-id="/project/index.html"><input type="checkbox" id="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5" aria-controls="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5"><label for="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu О проекте</span></label><a class="padding default-animation" href="/project/index.html">О проекте</a><ul id="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5" class="collapsible-menu">
+            <li class="" data-nav-id="/project/state/index.html"><a class="padding" href="/project/state/index.html">Текущее состояние</a></li>
+            <li class="" data-nav-id="/project/roadmap/index.html"><a class="padding" href="/project/roadmap/index.html">Roadmap</a></li>
+            <li class="" data-nav-id="/project/features/index.html"><a class="padding" href="/project/features/index.html">Матрица фич</a></li></ul></li>
+            <li class="" data-nav-id="/stages/index.html"><a class="padding" href="/stages/index.html">Этапы разработки</a></li>
+            <li class="" data-nav-id="/architecture/index.html"><input type="checkbox" id="R-section-9e2fbae00589891720aedcdff0084e07" aria-controls="R-subsections-9e2fbae00589891720aedcdff0084e07"><label for="R-section-9e2fbae00589891720aedcdff0084e07"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Архитектура</span></label><a class="padding default-animation" href="/architecture/index.html">Архитектура</a><ul id="R-subsections-9e2fbae00589891720aedcdff0084e07" class="collapsible-menu">
+            <li class="" data-nav-id="/architecture/backend/index.html"><a class="padding" href="/architecture/backend/index.html">Backend</a></li>
+            <li class="" data-nav-id="/architecture/frontend/index.html"><a class="padding" href="/architecture/frontend/index.html">Frontend</a></li>
+            <li class="" data-nav-id="/architecture/domain-model/index.html"><a class="padding" href="/architecture/domain-model/index.html">Domain Model</a></li></ul></li>
+            <li class="" data-nav-id="/modules/index.html"><input type="checkbox" id="R-section-86070686ce713af8e2516d0daffc06f4" aria-controls="R-subsections-86070686ce713af8e2516d0daffc06f4"><label for="R-section-86070686ce713af8e2516d0daffc06f4"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Backend-модули</span></label><a class="padding default-animation" href="/modules/index.html">Backend-модули</a><ul id="R-subsections-86070686ce713af8e2516d0daffc06f4" class="collapsible-menu">
+            <li class="" data-nav-id="/modules/auth/index.html"><a class="padding" href="/modules/auth/index.html">auth</a></li>
+            <li class="" data-nav-id="/modules/profiles/index.html"><a class="padding" href="/modules/profiles/index.html">profiles</a></li>
+            <li class="" data-nav-id="/modules/media/index.html"><a class="padding" href="/modules/media/index.html">media</a></li>
+            <li class="" data-nav-id="/modules/discovery/index.html"><a class="padding" href="/modules/discovery/index.html">discovery</a></li>
+            <li class="" data-nav-id="/modules/likes/index.html"><a class="padding" href="/modules/likes/index.html">likes</a></li>
+            <li class="" data-nav-id="/modules/matches/index.html"><a class="padding" href="/modules/matches/index.html">matches</a></li>
+            <li class="" data-nav-id="/modules/chat/index.html"><a class="padding" href="/modules/chat/index.html">chat</a></li>
+            <li class="" data-nav-id="/modules/moderation/index.html"><a class="padding" href="/modules/moderation/index.html">moderation</a></li>
+            <li class="" data-nav-id="/modules/notifications/index.html"><a class="padding" href="/modules/notifications/index.html">notifications</a></li></ul></li>
+            <li class="" data-nav-id="/api/index.html"><a class="padding" href="/api/index.html">API</a></li>
+            <li class="" data-nav-id="/database/index.html"><input type="checkbox" id="R-section-ffbd3c632901f0c6472eed450e4e91f8" aria-controls="R-subsections-ffbd3c632901f0c6472eed450e4e91f8"><label for="R-section-ffbd3c632901f0c6472eed450e4e91f8"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu База данных</span></label><a class="padding default-animation" href="/database/index.html">База данных</a><ul id="R-subsections-ffbd3c632901f0c6472eed450e4e91f8" class="collapsible-menu">
+            <li class="" data-nav-id="/database/schema/index.html"><a class="padding" href="/database/schema/index.html">Схема и миграции</a></li></ul></li>
+            <li class="" data-nav-id="/security/index.html"><input type="checkbox" id="R-section-66815ecaaecfc1c209e5637d03b258b2" aria-controls="R-subsections-66815ecaaecfc1c209e5637d03b258b2"><label for="R-section-66815ecaaecfc1c209e5637d03b258b2"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Безопасность</span></label><a class="padding default-animation" href="/security/index.html">Безопасность</a><ul id="R-subsections-66815ecaaecfc1c209e5637d03b258b2" class="collapsible-menu">
+            <li class="" data-nav-id="/security/data-exposure/index.html"><a class="padding" href="/security/data-exposure/index.html">Data Exposure Rules</a></li></ul></li>
+            <li class="" data-nav-id="/testing/index.html"><a class="padding" href="/testing/index.html">Тестирование</a></li>
+            <li class="" data-nav-id="/onboarding/index.html"><input type="checkbox" id="R-section-0460cb8850cf3b8ece07dc5c51a10e63" aria-controls="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63"><label for="R-section-0460cb8850cf3b8ece07dc5c51a10e63"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Онбординг</span></label><a class="padding default-animation" href="/onboarding/index.html">Онбординг</a><ul id="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63" class="collapsible-menu">
+            <li class="" data-nav-id="/onboarding/docker/index.html"><a class="padding" href="/onboarding/docker/index.html">Local Docker Workflow</a></li></ul></li>
+            <li class="" data-nav-id="/decisions/index.html"><a class="padding" href="/decisions/index.html">ADR — Решения</a></li>
+            <li class="" data-nav-id="/process/index.html"><a class="padding" href="/process/index.html">Процесс</a></li>
+            <li class="parent " data-nav-id="/docs/index.html"><input type="checkbox" id="R-section-b5fa667da3c6d162416dac7e8c63bf8a" aria-controls="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" checked><label for="R-section-b5fa667da3c6d162416dac7e8c63bf8a"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Docs</span></label><a class="padding default-animation" href="/docs/index.html">Docs</a><ul id="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" class="collapsible-menu">
+            <li class="active hidden " data-nav-id="/docs/features/index.html"><a class="padding" href="/docs/features/index.html"></a></li></ul></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts default-animation">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin" class="default-animation"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer" class="default-animation"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/js/perfect-scrollbar/perfect-scrollbar.min.js?1782659603" defer></script>
+    <script src="/js/theme.js?1782659603" defer></script>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>

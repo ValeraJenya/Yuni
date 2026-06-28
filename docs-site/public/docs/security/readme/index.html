@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html id="R-html" lang="en" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.163.3">
+    <meta name="generator" content="Relearn 9.0.3+36307e4ed23582638ab689240ac7b427217803ee">
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+    <meta name="description" content="SecurityЭто стартовые правила безопасности для Yuni.
+Подробные правила выдачи данных описаны отдельно: Data Exposure Rules.
+Нельзя хранить реальные секреты в репозитории. Нельзя коммитить production credentials, API keys, токены, private certificates или пароли. Сырые пароли никогда не сохраняются: в базе должен быть только password_hash. Сырые refresh tokens никогда не сохраняются: в базе должен быть только token_hash. Password hashing реализуется через argon2. Refresh token хранится у клиента в HttpOnly cookie, а в базе хранится только argon2 hash. Cookie содержит refreshTokenId.rawToken: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе. Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз. Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions. Frontend хранит access token только в memory state. Access token нельзя сохранять в localStorage, sessionStorage, cookies или logs. Refresh token хранится только в HttpOnly cookie, выставленной backend. JavaScript не должен читать, копировать или сохранять refresh token. Frontend должен отправлять auth requests с credentials: include, чтобы browser сам отправлял HttpOnly cookie на /auth/*. При 401 frontend может один раз выполнить refresh retry через shared refresh promise, чтобы параллельные requests не создавали refresh storm. Access token передается как Bearer token и не должен логироваться. Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные. Локальные значения окружения должны храниться в .env, а в .env.example должны быть только безопасные примеры. Docker Compose and Dockerfiles must not contain production secrets. Local Compose values are development placeholders only. .env is ignored by git and must stay local. Do not copy production credentials into docs, scripts or compose files. PostgreSQL host port in Docker is for local development only; server deployment must define separate network exposure rules later. Docker logs must not contain access tokens, refresh tokens, cookies, token hashes, passwords, message bodies or sensitive PII. Docker workflow must not bypass backend guards, owner checks, serializers, rate limits or Prisma migrations. Доступ к чатам должен проверяться через membership в conversation_participants; conversationId сам по себе не является правом доступа. Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated user_id и owner checks. Likes MVP принимает target profile только как targetProfileUserId, то есть profiles.user_id. У профиля нет отдельного публичного id. Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar. Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs. Frontend is not a security boundaryFrontend validation используется только для UX. Browser-side checks можно обойти через DevTools, curl, Postman или прямые HTTP-запросы.">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:description" content="SecurityЭто стартовые правила безопасности для Yuni.
+Подробные правила выдачи данных описаны отдельно: Data Exposure Rules.
+Нельзя хранить реальные секреты в репозитории. Нельзя коммитить production credentials, API keys, токены, private certificates или пароли. Сырые пароли никогда не сохраняются: в базе должен быть только password_hash. Сырые refresh tokens никогда не сохраняются: в базе должен быть только token_hash. Password hashing реализуется через argon2. Refresh token хранится у клиента в HttpOnly cookie, а в базе хранится только argon2 hash. Cookie содержит refreshTokenId.rawToken: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе. Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз. Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions. Frontend хранит access token только в memory state. Access token нельзя сохранять в localStorage, sessionStorage, cookies или logs. Refresh token хранится только в HttpOnly cookie, выставленной backend. JavaScript не должен читать, копировать или сохранять refresh token. Frontend должен отправлять auth requests с credentials: include, чтобы browser сам отправлял HttpOnly cookie на /auth/*. При 401 frontend может один раз выполнить refresh retry через shared refresh promise, чтобы параллельные requests не создавали refresh storm. Access token передается как Bearer token и не должен логироваться. Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные. Локальные значения окружения должны храниться в .env, а в .env.example должны быть только безопасные примеры. Docker Compose and Dockerfiles must not contain production secrets. Local Compose values are development placeholders only. .env is ignored by git and must stay local. Do not copy production credentials into docs, scripts or compose files. PostgreSQL host port in Docker is for local development only; server deployment must define separate network exposure rules later. Docker logs must not contain access tokens, refresh tokens, cookies, token hashes, passwords, message bodies or sensitive PII. Docker workflow must not bypass backend guards, owner checks, serializers, rate limits or Prisma migrations. Доступ к чатам должен проверяться через membership в conversation_participants; conversationId сам по себе не является правом доступа. Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated user_id и owner checks. Likes MVP принимает target profile только как targetProfileUserId, то есть profiles.user_id. У профиля нет отдельного публичного id. Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar. Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs. Frontend is not a security boundaryFrontend validation используется только для UX. Browser-side checks можно обойти через DevTools, curl, Postman или прямые HTTP-запросы.">
+    <meta property="og:url" content="//localhost:1313/docs/security/readme/index.html">
+    <meta property="og:site_name" content="Yuni Docs">
+    <meta property="og:description" content="SecurityЭто стартовые правила безопасности для Yuni.
+Подробные правила выдачи данных описаны отдельно: Data Exposure Rules.
+Нельзя хранить реальные секреты в репозитории. Нельзя коммитить production credentials, API keys, токены, private certificates или пароли. Сырые пароли никогда не сохраняются: в базе должен быть только password_hash. Сырые refresh tokens никогда не сохраняются: в базе должен быть только token_hash. Password hashing реализуется через argon2. Refresh token хранится у клиента в HttpOnly cookie, а в базе хранится только argon2 hash. Cookie содержит refreshTokenId.rawToken: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе. Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз. Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions. Frontend хранит access token только в memory state. Access token нельзя сохранять в localStorage, sessionStorage, cookies или logs. Refresh token хранится только в HttpOnly cookie, выставленной backend. JavaScript не должен читать, копировать или сохранять refresh token. Frontend должен отправлять auth requests с credentials: include, чтобы browser сам отправлял HttpOnly cookie на /auth/*. При 401 frontend может один раз выполнить refresh retry через shared refresh promise, чтобы параллельные requests не создавали refresh storm. Access token передается как Bearer token и не должен логироваться. Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные. Локальные значения окружения должны храниться в .env, а в .env.example должны быть только безопасные примеры. Docker Compose and Dockerfiles must not contain production secrets. Local Compose values are development placeholders only. .env is ignored by git and must stay local. Do not copy production credentials into docs, scripts or compose files. PostgreSQL host port in Docker is for local development only; server deployment must define separate network exposure rules later. Docker logs must not contain access tokens, refresh tokens, cookies, token hashes, passwords, message bodies or sensitive PII. Docker workflow must not bypass backend guards, owner checks, serializers, rate limits or Prisma migrations. Доступ к чатам должен проверяться через membership в conversation_participants; conversationId сам по себе не является правом доступа. Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated user_id и owner checks. Likes MVP принимает target profile только как targetProfileUserId, то есть profiles.user_id. У профиля нет отдельного публичного id. Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar. Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs. Frontend is not a security boundaryFrontend validation используется только для UX. Browser-side checks можно обойти через DevTools, curl, Postman или прямые HTTP-запросы.">
+    <meta property="og:locale" content="en">
+    <meta property="og:type" content="article">
+    <meta property="article:section" content="Docs">
+    <meta itemprop="description" content="SecurityЭто стартовые правила безопасности для Yuni.
+Подробные правила выдачи данных описаны отдельно: Data Exposure Rules.
+Нельзя хранить реальные секреты в репозитории. Нельзя коммитить production credentials, API keys, токены, private certificates или пароли. Сырые пароли никогда не сохраняются: в базе должен быть только password_hash. Сырые refresh tokens никогда не сохраняются: в базе должен быть только token_hash. Password hashing реализуется через argon2. Refresh token хранится у клиента в HttpOnly cookie, а в базе хранится только argon2 hash. Cookie содержит refreshTokenId.rawToken: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе. Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз. Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions. Frontend хранит access token только в memory state. Access token нельзя сохранять в localStorage, sessionStorage, cookies или logs. Refresh token хранится только в HttpOnly cookie, выставленной backend. JavaScript не должен читать, копировать или сохранять refresh token. Frontend должен отправлять auth requests с credentials: include, чтобы browser сам отправлял HttpOnly cookie на /auth/*. При 401 frontend может один раз выполнить refresh retry через shared refresh promise, чтобы параллельные requests не создавали refresh storm. Access token передается как Bearer token и не должен логироваться. Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные. Локальные значения окружения должны храниться в .env, а в .env.example должны быть только безопасные примеры. Docker Compose and Dockerfiles must not contain production secrets. Local Compose values are development placeholders only. .env is ignored by git and must stay local. Do not copy production credentials into docs, scripts or compose files. PostgreSQL host port in Docker is for local development only; server deployment must define separate network exposure rules later. Docker logs must not contain access tokens, refresh tokens, cookies, token hashes, passwords, message bodies or sensitive PII. Docker workflow must not bypass backend guards, owner checks, serializers, rate limits or Prisma migrations. Доступ к чатам должен проверяться через membership в conversation_participants; conversationId сам по себе не является правом доступа. Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated user_id и owner checks. Likes MVP принимает target profile только как targetProfileUserId, то есть profiles.user_id. У профиля нет отдельного публичного id. Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar. Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs. Frontend is not a security boundaryFrontend validation используется только для UX. Browser-side checks можно обойти через DevTools, curl, Postman или прямые HTTP-запросы.">
+    <meta itemprop="wordCount" content="3010">
+    <title></title>
+    <link href="/css/auto-complete/auto-complete.min.css?1782659603" rel="stylesheet">
+    <script src="/js/auto-complete/auto-complete.min.js?1782659603" defer></script>
+    <script src="/js/search-lunr.js?1782659603" defer></script>
+    <script src="/js/search.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/searchindex.en.js?1782659603";
+    </script>
+    <script src="/js/lunr/lunr.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.stemmer.support.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.multi.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.en.min.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['en'];
+    </script>
+    <link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet"></noscript>
+    <link href="/css/perfect-scrollbar/perfect-scrollbar.min.css?1782659603" rel="stylesheet">
+    <link href="/css/theme.css?1782659603" rel="stylesheet">
+    <link href="/css/format-html.css?1782659603" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/docs\/security\/readme\/index.html';
+      window.relearn.relBasePath='..\/..\/..';
+      window.relearn.relBaseUri='..\/..\/..';
+      window.relearn.absBaseUri='\/\/localhost:1313';
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // translations
+      window.T_Copy_to_clipboard = `Copy text to clipboard`;
+      window.T_Copied_to_clipboard = `Text copied to clipboard!`;
+      window.T_Link_copied_to_clipboard = `Link copied to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      window.T_Browser_unsupported_feature = `This browser doesn't support this feature`;
+      // variant stuff
+      window.relearn.themevariants = [ 'relearn-dark' ];
+      window.relearn.customvariantprefix = "my-custom-";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant") ?? "";
+        if( !variant ||
+            (!variant.startsWith(window.relearn.customvariantprefix) && !window.relearn.themevariants.includes(variant)) ||
+            (variant.startsWith(window.relearn.customvariantprefix) && !window.localStorage.getItem(window.relearn.absBaseUri + "/variantstylesheet-" + variant)) ){
+          variant = window.relearn.themevariants[0];
+          window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-origin="/docs/security/readme/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar" class="default-animation">
+        <div class="topbar-wrapper default-animation">
+          <div class="topbar-sidebar-divider default-animation"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar default-animation" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button></span>
+            </div>
+            <div class="topbar-button topbar-button-toc default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-table-list"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+<nav class="TableOfContents">
+  <ul>
+    <li><a href="#frontend-is-not-a-security-boundary">Frontend is not a security boundary</a></li>
+    <li><a href="#backend-access-control-patterns">Backend access-control patterns</a></li>
+    <li><a href="#rate-limiting-and-anti-spam">Rate limiting and anti-spam</a></li>
+    <li><a href="#serializer-rules">Serializer rules</a></li>
+    <li><a href="#profiles-mvp-security-rules">Profiles MVP security rules</a></li>
+    <li><a href="#profile-photos--media-mvp-security-rules">Profile Photos / Media MVP security rules</a></li>
+    <li><a href="#discovery-mvp-security-rules">Discovery MVP security rules</a></li>
+    <li><a href="#likes-mvp-security-rules">Likes MVP security rules</a></li>
+    <li><a href="#matches-mvp-security-rules">Matches MVP security rules</a></li>
+    <li><a href="#chat-mvp-security-rules">Chat MVP security rules</a></li>
+    <li><a href="#notifications-mvp-security-rules">Notifications MVP security rules</a></li>
+    <li><a href="#blocks--reports-mvp-security-rules">Blocks / Reports MVP security rules</a></li>
+    <li><a href="#pagination-and-anti-abuse">Pagination and anti-abuse</a></li>
+    <li><a href="#database-securityintegrity-baseline">Database security/integrity baseline</a></li>
+  </ul>
+</nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/index.html"><span itemprop="name">Yuni Documentation</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/docs/index.html"><span itemprop="name">Docs</span></a><meta itemprop="position" content="2">&nbsp;>&nbsp;</li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><a href="/docs/index.html" title="Docs (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a></span>
+            </div>
+            <div class="topbar-button topbar-button-next default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle"><span><i class="fa-fw fas fa-chevron-right"></i></span></span>
+            </div>
+            <div class="topbar-button topbar-button-more default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable docs" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id=""></h1>
+
+<h1 id="security">Security<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h1>
+<p>Это стартовые правила безопасности для Yuni.</p>
+<p>Подробные правила выдачи данных описаны отдельно: <a href="/docs/security/data-exposure-rules/index.html">Data Exposure Rules</a>.</p>
+<ul>
+<li>Нельзя хранить реальные секреты в репозитории.</li>
+<li>Нельзя коммитить production credentials, API keys, токены, private certificates или пароли.</li>
+<li>Сырые пароли никогда не сохраняются: в базе должен быть только <code>password_hash</code>.</li>
+<li>Сырые refresh tokens никогда не сохраняются: в базе должен быть только <code>token_hash</code>.</li>
+<li>Password hashing реализуется через argon2.</li>
+<li>Refresh token хранится у клиента в HttpOnly cookie, а в базе хранится только argon2 hash.</li>
+<li>Cookie содержит <code>refreshTokenId.rawToken</code>: id нужен только для поиска строки сессии, raw token проверяется через argon2 и не сохраняется в базе.</li>
+<li>Refresh token rotation должна быть atomic и single-use: один refresh token может успешно использоваться только один раз.</li>
+<li>Параллельные refresh-запросы с одной cookie не должны создавать несколько валидных refresh sessions.</li>
+<li>Frontend хранит access token только в memory state. Access token нельзя сохранять в <code>localStorage</code>, <code>sessionStorage</code>, cookies или logs.</li>
+<li>Refresh token хранится только в HttpOnly cookie, выставленной backend. JavaScript не должен читать, копировать или сохранять refresh token.</li>
+<li>Frontend должен отправлять auth requests с <code>credentials: include</code>, чтобы browser сам отправлял HttpOnly cookie на <code>/auth/*</code>.</li>
+<li>При <code>401</code> frontend может один раз выполнить refresh retry через shared refresh promise, чтобы параллельные requests не создавали refresh storm.</li>
+<li>Access token передается как Bearer token и не должен логироваться.</li>
+<li>Нельзя логировать access tokens, refresh tokens, cookies, token hashes, пароли, session values и лишние персональные данные.</li>
+<li>Локальные значения окружения должны храниться в <code>.env</code>, а в <code>.env.example</code> должны быть только безопасные примеры.</li>
+<li>Docker Compose and Dockerfiles must not contain production secrets. Local Compose values are development placeholders only.</li>
+<li><code>.env</code> is ignored by git and must stay local. Do not copy production credentials into docs, scripts or compose files.</li>
+<li>PostgreSQL host port in Docker is for local development only; server deployment must define separate network exposure rules later.</li>
+<li>Docker logs must not contain access tokens, refresh tokens, cookies, token hashes, passwords, message bodies or sensitive PII.</li>
+<li>Docker workflow must not bypass backend guards, owner checks, serializers, rate limits or Prisma migrations.</li>
+<li>Доступ к чатам должен проверяться через membership в <code>conversation_participants</code>; <code>conversationId</code> сам по себе не является правом доступа.</li>
+<li>Доступ к профилям, фото, discovery, лайкам, матчам, чатам, уведомлениям, блокировкам и жалобам должен строиться вокруг authenticated <code>user_id</code> и owner checks.</li>
+<li>Likes MVP принимает target profile только как <code>targetProfileUserId</code>, то есть <code>profiles.user_id</code>. У профиля нет отдельного публичного id.</li>
+<li>Private mode не должен отдавать user-uploaded photos; вместо них используется системный anonymous avatar.</li>
+<li>Anti-spam limits не должны раскрывать raw email, IP, user id, token, cookie, password или internal limiter key в response или logs.</li>
+</ul>
+<h2 id="frontend-is-not-a-security-boundary">Frontend is not a security boundary<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Frontend validation используется только для UX. Browser-side checks можно обойти через DevTools, curl, Postman или прямые HTTP-запросы.</p>
+<p>Все критичные правила должны enforced на backend:</p>
+<ul>
+<li>authentication and session rules;</li>
+<li>minimum age 18+;</li>
+<li>owner checks;</li>
+<li>conversation membership checks;</li>
+<li>media/photo ownership and visibility;</li>
+<li>likes/matches/block/report restrictions;</li>
+<li>public/private profile serialization.</li>
+</ul>
+<p>Backend не должен доверять <code>birthDate</code>, <code>userId</code>, <code>profileId</code>, <code>conversationId</code>, <code>photoId</code>, <code>role</code>, <code>status</code>, <code>isAdult</code>, <code>isAgeConfirmed</code>, <code>isOwner</code>, <code>isMember</code> или <code>isAdmin</code>, пришедшим с frontend.</p>
+<p>Возраст 18+ enforced на backend: backend сам вычисляет возраст по <code>birthDate</code> и не принимает <code>isAdult</code> или <code>isAgeConfirmed</code> как доказательство возраста. <code>birthDate</code> считается sensitive data и не должна логироваться.</p>
+<p>Database constraints должны защищать критичные invariants там, где это возможно.</p>
+<p>Mock/demo flow не является production auth source. Product UI может временно использовать mock-data для еще не подключенных областей, но discovery cards, доступ к protected routes и состояние авторизации должны зависеть от backend session/API response, а не от frontend flag в storage.</p>
+<h2 id="backend-access-control-patterns">Backend access-control patterns<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Backend security boundary для будущих product modules строится вокруг authenticated <code>user_id</code> из <code>CurrentUser</code>. Frontend значения <code>userId</code>, <code>profileId</code>, <code>photoId</code>, <code>conversationId</code>, <code>isOwner</code>, <code>isMember</code> и <code>isAdmin</code> считаются untrusted input и всегда проверяются на backend.</p>
+<p>Общие helpers находятся в <code>apps/backend/src/common/security</code>:</p>
+<ul>
+<li><code>assertOwner(resourceOwnerId, currentUserId)</code> и <code>assertSameUser(targetUserId, currentUserId)</code> - для owner-only операций.</li>
+<li><code>assertConversationMember(membership, currentUserId)</code> - для chat reads/writes. Conversation id сам по себе не даёт доступ.</li>
+<li><code>assertMatchParticipant(match, currentUserId)</code> - для match-scoped действий.</li>
+<li><code>assertCanAccessProfile(profile, currentUserId)</code> - для own profile и public discover/profile access с учетом private mode.</li>
+<li><code>assertCanAccessPhoto(photo, currentUserId)</code> - для own photos или approved+published public photos.</li>
+</ul>
+<p>Отсутствующий ресурс возвращает <code>404 Resource not found</code>. Недостаточные права возвращают <code>403 Forbidden</code>. Ошибки не должны раскрывать детали вроде &ldquo;user exists but you are not owner&rdquo;.</p>
+<h2 id="rate-limiting-and-anti-spam">Rate limiting and anti-spam<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Step 17 добавляет anti-spam слой поверх существующих service-level checks:</p>
+<ul>
+<li>global fallback через <code>@nestjs/throttler</code>: <code>300</code> requests / <code>10 minutes</code> / IP;</li>
+<li>endpoint-specific in-memory limiter в <code>apps/backend/src/common/rate-limit</code>.</li>
+</ul>
+<p>Endpoint-specific limits:</p>
+<ul>
+<li>register: <code>3 / hour / IP</code>;</li>
+<li>login: <code>20 / 10 minutes / IP</code> plus <code>5 / 10 minutes / IP + normalizedEmailHash</code>;</li>
+<li>refresh: <code>30 / 10 minutes / IP</code>;</li>
+<li>logout: <code>30 / 10 minutes / IP</code>;</li>
+<li>LIKE/SKIP combined: <code>60 / hour / authenticated user</code>;</li>
+<li>chat send: <code>30 / minute / authenticated user</code> and <code>120 / 10 minutes / authenticated user</code>;</li>
+<li>report create: <code>10 / hour / authenticated user</code>;</li>
+<li>discovery cards: <code>120 / 10 minutes / authenticated user</code>;</li>
+<li>public profile lookup: <code>120 / 10 minutes / authenticated user</code>;</li>
+<li>notifications list: <code>120 / 10 minutes / authenticated user</code>;</li>
+<li>notifications unread count: <code>240 / 10 minutes / authenticated user</code>;</li>
+<li>notifications mark read/read all: <code>120 / 10 minutes / authenticated user</code>.</li>
+</ul>
+<p>Authenticated policies must use <code>CurrentUser</code> populated by <code>JwtAccessGuard</code>; actor identity never comes from body, query, params or frontend state. Login&rsquo;s composite key uses a normalized email hash, not raw email. <code>429</code> responses return only:</p>
+<div class="highlight actionbar-wrapper wrap-code" dir="auto"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;statusCode&#34;</span>: <span style="color:#ae81ff">429</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;message&#34;</span>: <span style="color:#e6db74">&#34;Too many requests&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;retryAfterSeconds&#34;</span>: <span style="color:#ae81ff">60</span>
+</span></span><span style="display:flex;"><span>}</span></span></code></pre></div>
+<p>Limiter keys, policy names, raw email, IP, user id, token and cookie values must not be exposed in responses or logs.</p>
+<p>The current endpoint-specific limiter is local in-memory and single-instance only. Production or multi-instance deployments must use a shared Redis/Valkey-backed store to avoid per-instance bypass. Rate limiting is an anti-abuse layer only; it does not replace authentication, owner checks, block checks, profile visibility checks, conversation membership checks or database constraints.</p>
+<h2 id="serializer-rules">Serializer rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Response serializers находятся в <code>apps/backend/src/common/serializers</code>. Public serializers не должны отдавать:</p>
+<ul>
+<li><code>email</code>;</li>
+<li><code>passwordHash</code>;</li>
+<li><code>birthDate</code>;</li>
+<li>refresh/session fields;</li>
+<li><code>deletedAt</code>;</li>
+<li>private settings;</li>
+<li>internal moderation fields.</li>
+</ul>
+<p>Self/private serializers могут отдавать больше данных владельцу, но всё равно не должны отдавать password/session/token fields. Private profile mode enforced на backend serializer, а не только на frontend.</p>
+<h2 id="profiles-mvp-security-rules">Profiles MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Profiles MVP использует backend как источник истины для profile data:</p>
+<ul>
+<li><code>GET /profiles/me</code> и <code>PATCH /profiles/me</code> работают только с authenticated <code>CurrentUser</code>.</li>
+<li><code>PATCH /profiles/me</code> берет <code>userId</code> только из access token, а не из request body.</li>
+<li>Через self-update можно менять только <code>displayName</code>, <code>bio</code>, <code>gender</code>, <code>lookingFor</code>, <code>city</code>, <code>country</code> и <code>isDiscoverable</code>.</li>
+<li><code>userId</code>, <code>email</code>, <code>password</code>, <code>birthDate</code>, <code>handle</code>, <code>status</code>, <code>role</code>, <code>photos</code>, moderation fields и direct <code>privacySettings</code> не принимаются в profile update payload.</li>
+<li><code>GET /profiles/:handle</code> использует case-insensitive lookup и public serializer.</li>
+<li>Public profile response не содержит <code>email</code>, <code>birthDate</code>, private settings, refresh/session fields, raw tokens или internal moderation fields.</li>
+<li>Недоступный чужой profile с <code>isDiscoverable=false</code> или private visibility mode возвращает <code>403 Forbidden</code>.</li>
+<li>Если viewer и target связаны block в любую сторону, <code>GET /profiles/:handle</code> возвращает not-found style response и не раскрывает факт блокировки.</li>
+<li>Frontend profile page не хранит private profile data, access token или refresh token в <code>localStorage</code>/<code>sessionStorage</code>; profile data загружается через authenticated backend API.</li>
+</ul>
+<h2 id="profile-photos--media-mvp-security-rules">Profile Photos / Media MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Profile Photos / Media MVP использует <code>ProfilePhotoStorage</code> boundary. Текущая реализация - local adapter для development/MVP, а production S3/CDN/media pipeline, async moderation и metadata processing будут отдельными задачами.</p>
+<p>Security rules:</p>
+<ul>
+<li>Все endpoints <code>GET /media/profile-photos/me</code>, <code>POST /media/profile-photos</code>, <code>PATCH /media/profile-photos/:photoId/primary</code> и <code>DELETE /media/profile-photos/:photoId</code> требуют authenticated <code>CurrentUser</code>.</li>
+<li>Backend берет owner identity только из access token, а не из <code>userId</code>, <code>profileId</code>, <code>photoId</code>, <code>isOwner</code> или любых frontend flags в body/query/path.</li>
+<li>Upload принимает только multipart field <code>file</code>.</li>
+<li>Разрешены только <code>image/jpeg</code>, <code>image/png</code> и <code>image/webp</code>.</li>
+<li>Максимальный размер файла - <code>5 MB</code>.</li>
+<li>Storage filename генерируется backend через storage adapter random UUID; original filename не используется как имя файла в storage и не возвращается клиенту.</li>
+<li>Local adapter path <code>apps/backend/uploads/profile-photos</code> не коммитится в репозиторий.</li>
+<li>Path traversal protection for local deletes lives in <code>LocalProfilePhotoStorageService</code>; <code>MediaService</code> owns best-effort cleanup policy, not filesystem path construction.</li>
+<li>Public responses не должны отдавать <code>storageKey</code>, filesystem path, original filename или moderation internals.</li>
+<li>Self response может видеть <code>moderationStatus</code>, но всё равно не должен видеть filesystem/storage internals.</li>
+<li>Public profile serializers отдают только photos с <code>publicUrl</code>, <code>moderationStatus=approved</code> и <code>publishedAt</code>.</li>
+<li>Owner checks mandatory для set primary и delete.</li>
+<li>DB constraints остаются последним слоем защиты для one-primary-per-user и запрета published photo без approved state.</li>
+</ul>
+<p>Known MVP limitations:</p>
+<ul>
+<li>EXIF/metadata stripping пока не реализован и должен быть добавлен перед production media pipeline.</li>
+<li>Image dimension validation, malware scanning, perceptual hashing и async moderation не входят в этот MVP шаг.</li>
+<li>Локальное хранение подходит для development/early MVP, но не для production scale.</li>
+</ul>
+<h2 id="discovery-mvp-security-rules">Discovery MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Discovery MVP реализует <code>GET /discovery/cards</code> как backend-owned выдачу анкет. Frontend не является источником истины для доступности карточек.</p>
+<p>Security rules:</p>
+<ul>
+<li>Endpoint требует authenticated <code>CurrentUser</code> через <code>JwtAccessGuard</code>.</li>
+<li>Actor identity берется только из access token, не из body/query/frontend state.</li>
+<li>Response uses explicit safe card shape, not raw Prisma <code>Profile</code>, <code>User</code>, <code>ProfilePhoto</code>, <code>Like</code>, <code>Match</code> or <code>Block</code> rows.</li>
+<li>Discovery excludes current user, inactive/deleted users, incomplete profiles, non-discoverable profiles and profiles without an explicit open/discoverable <code>PrivacySettings</code> row.</li>
+<li>Public photos in cards require <code>publicUrl</code>, <code>moderationStatus=approved</code> and <code>publishedAt</code>.</li>
+<li>Cards require at least one approved, published public photo for MVP.</li>
+<li>Blocks apply in both directions and hide both users from each other.</li>
+<li>Active LIKE/SKIP cooldown from the current user hides the target until <code>expiresAt</code>.</li>
+<li>Expired LIKE/SKIP does not hide the target.</li>
+<li>Active match hides the matched user while <code>status=active</code> and <code>expiresAt &gt; now</code>.</li>
+<li>Expired match does not hide the user, preserving future rediscovery/rematch.</li>
+<li><code>limit</code> is server-clamped to max <code>20</code>; unlimited lists are forbidden.</li>
+<li>Sorting is stable and non-random for MVP.</li>
+</ul>
+<p>Discovery responses must not expose raw <code>birthDate</code>, email, password/passwordHash, refresh/session fields, <code>storageKey</code>, local paths, original filenames, private profile/privacy fields, block/report/moderation internals or raw Prisma rows.</p>
+<p>Known MVP limitations:</p>
+<ul>
+<li>Ranking, random ordering, geolocation/radius, premium filters, notifications, chat/messages and admin/moderation panels are outside Step 15.</li>
+<li>Race behavior around likes/matches database constraints should be covered by integration/e2e tests with a test database later.</li>
+</ul>
+<h2 id="likes-mvp-security-rules">Likes MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Likes MVP реализует только <code>LIKE</code> и <code>SKIP/PASS</code>. Superlike не входит в Step 12. Matches реализуются отдельно в Step 13 через <code>MatchesService</code>; Step 14 добавляет block-aware enforcement; Step 15 подключает backend discovery feed; Step 16 добавляет chat только между участниками match.</p>
+<p>Security rules:</p>
+<ul>
+<li>Все endpoints <code>POST /likes/:targetProfileUserId</code> и <code>POST /likes/:targetProfileUserId/skip</code> требуют authenticated <code>CurrentUser</code>.</li>
+<li><code>targetProfileUserId</code> означает <code>profiles.user_id</code>; backend не вводит отдельный profile id.</li>
+<li>Backend берет actor identity только из access token, а не из body/query/path или frontend state.</li>
+<li>Self-like и self-skip запрещены.</li>
+<li>Actor должен быть active и not deleted.</li>
+<li>Target user должен быть active и not deleted.</li>
+<li>Target profile должен быть доступен по текущим profile access rules: discoverable/open для другого пользователя.</li>
+<li>Active block в любую сторону между actor и target запрещает LIKE/SKIP.</li>
+<li><code>like</code> сохраняется как <code>LikeKind.like</code>, <code>skip</code>/<code>pass</code> сохраняется как <code>LikeKind.pass</code>.</li>
+<li>LIKE cooldown - 3 days; SKIP/PASS cooldown - 1 day.</li>
+<li>Active interaction blocks another LIKE/SKIP for the same actor/target until <code>expiresAt</code>.</li>
+<li>Expired interaction does not block a new LIKE/SKIP.</li>
+<li>Duplicate active interaction returns safe <code>409 Active interaction already exists</code>.</li>
+<li>DB overlap constraint conflicts are mapped to the same safe <code>409</code>, without leaking constraint details.</li>
+<li>Response shape is explicit and safe: <code>interaction.targetProfileUserId</code>, <code>interaction.action</code>, <code>interaction.expiresAt</code>; raw Prisma <code>Like</code> rows are never returned.</li>
+</ul>
+<p>Known MVP limitations:</p>
+<ul>
+<li>Race/exclusion constraint behavior should be covered by integration/e2e tests with a test database in a later step.</li>
+<li>Superlike rules are intentionally outside Step 12; block effects are enforced by Step 14 in likes/matches/profile reads and by Step 15 in discovery.</li>
+</ul>
+<h2 id="matches-mvp-security-rules">Matches MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Matches MVP реализует mutual matches from active LIKE interactions. Chat creation and messages are owned by Step 16 <code>ChatModule</code>; notifications and moderation review remain outside Step 13.</p>
+<p>Security rules:</p>
+<ul>
+<li><code>GET /matches/me</code> requires authenticated <code>CurrentUser</code>.</li>
+<li>Match creation is owned by <code>MatchesService</code>; <code>LikesService</code> delegates after successful LIKE.</li>
+<li>A match can be created only when the new LIKE has a reciprocal active <code>LikeKind.like</code>.</li>
+<li>Active LIKE means <code>kind=like</code> and <code>expiresAt &gt; now</code>.</li>
+<li>SKIP/PASS never creates a match.</li>
+<li>Self-match is rejected.</li>
+<li>Match pairs are normalized by stable user id order before write, so <code>A-B</code> and <code>B-A</code> cannot create separate active pairs.</li>
+<li>Active match means <code>status=active</code> and <code>expiresAt &gt; now</code>.</li>
+<li>Active duplicate match is not created.</li>
+<li>Blocked pairs in either direction cannot create a new match.</li>
+<li>Expired match does not block future rematch.</li>
+<li>DB overlap constraint conflicts are mapped to the existing active match or a safe conflict.</li>
+<li><code>/matches/me</code> returns only matches where the current user is a participant and filters out blocked pairs.</li>
+<li>Match response shape is explicit and safe, including nullable <code>conversationId</code>; raw Prisma <code>Match</code>, <code>User</code>, <code>Profile</code> and <code>ProfilePhoto</code> rows are never returned.</li>
+<li>Match responses must not expose <code>email</code>, <code>birthDate</code>, <code>passwordHash</code>, refresh/session fields, <code>storageKey</code>, local path, original filename or private profile settings.</li>
+<li>Conversation state is represented as <code>conversationId</code> plus <code>conversationStarted</code>; starting/opening the conversation is done by <code>POST /matches/:matchId/conversation</code>.</li>
+</ul>
+<p>Known MVP limitations:</p>
+<ul>
+<li>No cron/job marks expired matches. For MVP, services filter active matches by <code>status=active</code> and <code>expiresAt &gt; now</code>.</li>
+<li>Race/exclusion behavior should be smoke-tested on a temporary PostgreSQL database before PR; broader e2e coverage can follow later.</li>
+<li>Blocks can end active matches with <code>status=blocked</code>; unblocking does not restore old matches.</li>
+</ul>
+<h2 id="chat-mvp-security-rules">Chat MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Chat MVP owns one-to-one text conversations between match participants.</p>
+<p>Security rules:</p>
+<ul>
+<li><code>GET /chat/conversations</code>, <code>GET /chat/conversations/:conversationId/messages</code>, <code>POST /chat/conversations/:conversationId/messages</code> and <code>POST /matches/:matchId/conversation</code> require authenticated <code>CurrentUser</code>.</li>
+<li>Actor and sender identity always come from <code>CurrentUser</code>; frontend cannot choose sender user id.</li>
+<li>Conversation creation is allowed only through <code>POST /matches/:matchId/conversation</code>.</li>
+<li>Only match participants can create/open a conversation for that match.</li>
+<li>Active match (<code>status=active</code>, <code>expiresAt &gt; now</code>) can create a new conversation.</li>
+<li>Expired match without an existing conversation cannot create a new chat.</li>
+<li>Existing conversation remains available after match expiration.</li>
+<li>Conversation creation writes <code>Conversation</code> and both <code>ConversationParticipant</code> rows in a transaction.</li>
+<li>Race on unique <code>conversation.matchId</code> maps to reading and returning the existing conversation.</li>
+<li>List returns only conversations where current user is an active participant.</li>
+<li>Message reads require current user active membership and use not-found style if an active block exists in either direction.</li>
+<li>Sends require current user active membership, active conversation status and one other active participant.</li>
+<li>Active block in either direction prevents sends with safe <code>403</code>.</li>
+<li>Inactive/deleted current user cannot list/start/send.</li>
+<li>Inactive/deleted other participant blocks new messages.</li>
+<li>Message <code>text</code> is trimmed on backend, whitespace-only text returns <code>400</code>, max length is <code>2000</code>.</li>
+<li>Chat supports plain text only in Step 16; no attachments/media messages.</li>
+<li>Message body must not be logged with PII or tokens.</li>
+<li>Responses use explicit safe shapes and never raw Prisma rows.</li>
+</ul>
+<p>Known MVP limitations:</p>
+<ul>
+<li>WebSocket/realtime, typing indicators, read receipts, attachments/media messages, encryption, admin panel and complex chat search are outside Step 16. In-app notifications are implemented separately in Step 18 without realtime delivery.</li>
+</ul>
+<h2 id="notifications-mvp-security-rules">Notifications MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Notifications MVP реализует только in-app уведомления внутри приложения.</p>
+<p>Security rules:</p>
+<ul>
+<li><code>GET /notifications</code>, <code>GET /notifications/unread-count</code>, <code>POST /notifications/:notificationId/read</code> и <code>POST /notifications/read-all</code> require authenticated <code>CurrentUser</code>.</li>
+<li>Recipient/owner identity always comes from <code>CurrentUser</code>; frontend cannot choose which user&rsquo;s notifications to read or mark.</li>
+<li>Notification events are created from backend-owned match/message flows, not from frontend requests.</li>
+<li><code>match_created</code> notifications are created only after a new <code>Match</code> row is created and only for both participants with the other participant as actor.</li>
+<li>Existing active match and race-existing match paths must not create duplicate notifications.</li>
+<li><code>message_received</code> notifications are created only for the other active participant after successful message send.</li>
+<li>Sender never receives their own message notification.</li>
+<li>Active block in either direction prevents creating new visible notifications and hides existing actor notifications from list/count.</li>
+<li><code>NotificationSettings.matchesEnabled</code> and <code>NotificationSettings.messagesEnabled</code> are respected when creating events.</li>
+<li>Notification rows store message keys and references only; raw message body is not stored.</li>
+<li>Match/message notifications require a safe actor. Unsafe actorless match/message notifications are hidden; system notifications may have <code>actor=null</code>.</li>
+<li>Responses use explicit safe shapes and never raw Prisma rows.</li>
+</ul>
+<p>Notifications responses must not expose email, raw <code>birthDate</code>, password/passwordHash, refresh/session fields, storage keys, local paths, original filenames, private profile/privacy fields, block/report internals or raw message body.</p>
+<p>Known MVP limitations:</p>
+<ul>
+<li>Push notifications, email notifications, WebSocket/realtime, background workers/queues, Redis/Valkey, mobile notifications, notification preferences UI, admin notification tools and complex templates are outside Step 18.</li>
+</ul>
+<h2 id="blocks--reports-mvp-security-rules">Blocks / Reports MVP security rules<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Blocks and reports are owned by <code>ModerationModule</code>.</p>
+<p>Block rules:</p>
+<ul>
+<li><code>POST /blocks/:targetUserId</code>, <code>DELETE /blocks/:targetUserId</code> and <code>GET /blocks/me</code> require authenticated <code>CurrentUser</code>.</li>
+<li>Backend takes <code>blockerUserId</code> only from <code>CurrentUser</code>; frontend user ids are untrusted.</li>
+<li>Self-block is rejected.</li>
+<li>Duplicate block returns idempotent success and does not create duplicate rows.</li>
+<li>Unblock uses hard delete scoped to <code>blockerUserId=CurrentUser.id</code> and is idempotent.</li>
+<li>Block applies in both directions for visibility and interactions: public profile reads, LIKE/SKIP, match creation and <code>/matches/me</code>.</li>
+<li>Creating a block ends active matches between the users with <code>status=blocked</code> and <code>endedAt=now</code>.</li>
+<li>Unblocking does not automatically restore old matches.</li>
+<li><code>GET /blocks/me</code> returns only outgoing blocks for the current user and uses cursor pagination.</li>
+</ul>
+<p>Report rules:</p>
+<ul>
+<li><code>POST /reports</code> requires authenticated <code>CurrentUser</code>.</li>
+<li>Backend takes <code>reporterUserId</code> only from <code>CurrentUser</code>.</li>
+<li>Self-report is rejected.</li>
+<li><code>reason</code> must be an existing <code>ReportReasonCode</code>.</li>
+<li><code>details</code> is optional, trimmed, empty string becomes <code>null</code>, max length is <code>1000</code>.</li>
+<li>Public response status is only <code>&quot;received&quot;</code> and never exposes internal <code>ReportStatus</code>, notes, resolver data or review workflow.</li>
+</ul>
+<p>Frontend support is intentionally small in Step 14: matches page can send block/report actions. Admin panel, full moderation workflow, chat/messages, notifications and discovery ranking remain out of scope.</p>
+<h2 id="pagination-and-anti-abuse">Pagination and anti-abuse<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>List endpoints для discover, likes, matches, messages, reports и moderation должны использовать server-side pagination. Общий cursor pagination pattern находится в <code>apps/backend/src/common/pagination</code>:</p>
+<ul>
+<li>default <code>limit</code>: <code>20</code>;</li>
+<li>max <code>limit</code>: <code>50</code>;</li>
+<li>discovery cards max <code>limit</code>: <code>20</code>;</li>
+<li>frontend не может запросить unlimited list.</li>
+</ul>
+<p>Для dating app это часть anti-scraping и anti-abuse foundation: большие списки профилей, сообщений или жалоб нельзя отдавать одним запросом.</p>
+<h2 id="database-securityintegrity-baseline">Database security/integrity baseline<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<ul>
+<li>Greenfield schema применяется через Prisma migrations, а не через <code>prisma db push</code>.</li>
+<li>Migrations не должны содержать реальные email, пароли, refresh tokens, дампы БД или другие PII.</li>
+<li>DB-level constraints защищают критичные invariants даже при ошибке в application code.</li>
+<li>Case-insensitive unique indexes запрещают дубли email/handle, отличающиеся только регистром.</li>
+<li>Check constraints запрещают self-like, self-match, self-block и self-report.</li>
+<li>Expiring likes use <code>expires_at</code> and an overlap exclusion constraint so active interactions cannot overlap, while expired interactions and future rematch flows remain possible.</li>
+<li>Match pairs use canonical <code>user_a_id &lt; user_b_id</code> ordering plus active-window overlap protection; expired matches do not block future rematch.</li>
+<li>Photo constraints запрещают published photo без approved moderation state и несколько primary photos для одного пользователя.</li>
+<li>Messages должны быть связаны с <code>conversation_participants</code>, чтобы sender был участником conversation.</li>
+<li>Raw passwords и raw refresh tokens не должны появляться ни в migrations, ни в seeds, ни в logs.</li>
+</ul>
+<p>Полные security rules будут расширяться по мере реализации auth, chat, media, moderation и хранения данных.</p>
+
+  <footer class="footline">
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <a id="R-logo" class="R-default direction-row" href="/index.html">
+          <span class="logo-title default-animation">Yuni Docs</span>
+        </a>
+        <search><form action="/search/index.html" method="get">
+          <div class="searchbox default-animation">
+            <button class="search-detail" type="submit" title="Search (CTRL+ALT+f)"><i class="fas fa-fw fa-search"></i></button>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-fw fa-times" title="Clear search"></i></button>
+          </div>
+        </form></search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks default-animation">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/index.html"><a class="padding" href="/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main default-animation">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="" data-nav-id="/project/index.html"><input type="checkbox" id="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5" aria-controls="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5"><label for="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu О проекте</span></label><a class="padding default-animation" href="/project/index.html">О проекте</a><ul id="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5" class="collapsible-menu">
+            <li class="" data-nav-id="/project/state/index.html"><a class="padding" href="/project/state/index.html">Текущее состояние</a></li>
+            <li class="" data-nav-id="/project/roadmap/index.html"><a class="padding" href="/project/roadmap/index.html">Roadmap</a></li>
+            <li class="" data-nav-id="/project/features/index.html"><a class="padding" href="/project/features/index.html">Матрица фич</a></li></ul></li>
+            <li class="" data-nav-id="/stages/index.html"><a class="padding" href="/stages/index.html">Этапы разработки</a></li>
+            <li class="" data-nav-id="/architecture/index.html"><input type="checkbox" id="R-section-9e2fbae00589891720aedcdff0084e07" aria-controls="R-subsections-9e2fbae00589891720aedcdff0084e07"><label for="R-section-9e2fbae00589891720aedcdff0084e07"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Архитектура</span></label><a class="padding default-animation" href="/architecture/index.html">Архитектура</a><ul id="R-subsections-9e2fbae00589891720aedcdff0084e07" class="collapsible-menu">
+            <li class="" data-nav-id="/architecture/backend/index.html"><a class="padding" href="/architecture/backend/index.html">Backend</a></li>
+            <li class="" data-nav-id="/architecture/frontend/index.html"><a class="padding" href="/architecture/frontend/index.html">Frontend</a></li>
+            <li class="" data-nav-id="/architecture/domain-model/index.html"><a class="padding" href="/architecture/domain-model/index.html">Domain Model</a></li></ul></li>
+            <li class="" data-nav-id="/modules/index.html"><input type="checkbox" id="R-section-86070686ce713af8e2516d0daffc06f4" aria-controls="R-subsections-86070686ce713af8e2516d0daffc06f4"><label for="R-section-86070686ce713af8e2516d0daffc06f4"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Backend-модули</span></label><a class="padding default-animation" href="/modules/index.html">Backend-модули</a><ul id="R-subsections-86070686ce713af8e2516d0daffc06f4" class="collapsible-menu">
+            <li class="" data-nav-id="/modules/auth/index.html"><a class="padding" href="/modules/auth/index.html">auth</a></li>
+            <li class="" data-nav-id="/modules/profiles/index.html"><a class="padding" href="/modules/profiles/index.html">profiles</a></li>
+            <li class="" data-nav-id="/modules/media/index.html"><a class="padding" href="/modules/media/index.html">media</a></li>
+            <li class="" data-nav-id="/modules/discovery/index.html"><a class="padding" href="/modules/discovery/index.html">discovery</a></li>
+            <li class="" data-nav-id="/modules/likes/index.html"><a class="padding" href="/modules/likes/index.html">likes</a></li>
+            <li class="" data-nav-id="/modules/matches/index.html"><a class="padding" href="/modules/matches/index.html">matches</a></li>
+            <li class="" data-nav-id="/modules/chat/index.html"><a class="padding" href="/modules/chat/index.html">chat</a></li>
+            <li class="" data-nav-id="/modules/moderation/index.html"><a class="padding" href="/modules/moderation/index.html">moderation</a></li>
+            <li class="" data-nav-id="/modules/notifications/index.html"><a class="padding" href="/modules/notifications/index.html">notifications</a></li></ul></li>
+            <li class="" data-nav-id="/api/index.html"><a class="padding" href="/api/index.html">API</a></li>
+            <li class="" data-nav-id="/database/index.html"><input type="checkbox" id="R-section-ffbd3c632901f0c6472eed450e4e91f8" aria-controls="R-subsections-ffbd3c632901f0c6472eed450e4e91f8"><label for="R-section-ffbd3c632901f0c6472eed450e4e91f8"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu База данных</span></label><a class="padding default-animation" href="/database/index.html">База данных</a><ul id="R-subsections-ffbd3c632901f0c6472eed450e4e91f8" class="collapsible-menu">
+            <li class="" data-nav-id="/database/schema/index.html"><a class="padding" href="/database/schema/index.html">Схема и миграции</a></li></ul></li>
+            <li class="" data-nav-id="/security/index.html"><input type="checkbox" id="R-section-66815ecaaecfc1c209e5637d03b258b2" aria-controls="R-subsections-66815ecaaecfc1c209e5637d03b258b2"><label for="R-section-66815ecaaecfc1c209e5637d03b258b2"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Безопасность</span></label><a class="padding default-animation" href="/security/index.html">Безопасность</a><ul id="R-subsections-66815ecaaecfc1c209e5637d03b258b2" class="collapsible-menu">
+            <li class="" data-nav-id="/security/data-exposure/index.html"><a class="padding" href="/security/data-exposure/index.html">Data Exposure Rules</a></li></ul></li>
+            <li class="" data-nav-id="/testing/index.html"><a class="padding" href="/testing/index.html">Тестирование</a></li>
+            <li class="" data-nav-id="/onboarding/index.html"><input type="checkbox" id="R-section-0460cb8850cf3b8ece07dc5c51a10e63" aria-controls="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63"><label for="R-section-0460cb8850cf3b8ece07dc5c51a10e63"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Онбординг</span></label><a class="padding default-animation" href="/onboarding/index.html">Онбординг</a><ul id="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63" class="collapsible-menu">
+            <li class="" data-nav-id="/onboarding/docker/index.html"><a class="padding" href="/onboarding/docker/index.html">Local Docker Workflow</a></li></ul></li>
+            <li class="" data-nav-id="/decisions/index.html"><a class="padding" href="/decisions/index.html">ADR — Решения</a></li>
+            <li class="" data-nav-id="/process/index.html"><a class="padding" href="/process/index.html">Процесс</a></li>
+            <li class="parent " data-nav-id="/docs/index.html"><input type="checkbox" id="R-section-b5fa667da3c6d162416dac7e8c63bf8a" aria-controls="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" checked><label for="R-section-b5fa667da3c6d162416dac7e8c63bf8a"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Docs</span></label><a class="padding default-animation" href="/docs/index.html">Docs</a><ul id="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" class="collapsible-menu">
+            <li class="active hidden " data-nav-id="/docs/security/readme/index.html"><a class="padding" href="/docs/security/readme/index.html"></a></li></ul></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts default-animation">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin" class="default-animation"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer" class="default-animation"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/js/perfect-scrollbar/perfect-scrollbar.min.js?1782659603" defer></script>
+    <script src="/js/theme.js?1782659603" defer></script>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>

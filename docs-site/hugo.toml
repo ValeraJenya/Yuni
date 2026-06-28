@@ -1,0 +1,8 @@
+baseURL = "/"
+title = "Yuni Docs"
+theme = "relearn"
+
+[params]
+  themeVariant = "relearn-dark"
+  disableLandingPage = true
+  collapsibleMenu = true

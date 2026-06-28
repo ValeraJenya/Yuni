@@ -1,0 +1,9 @@
+[submodule "docs-site/themes/book"]
+	path = docs-site/themes/book
+	url = https://github.com/alex-shpak/hugo-book
+[submodule "docs-site/themes/lotusdocs"]
+	path = docs-site/themes/lotusdocs
+	url = https://github.com/colinwilson/lotusdocs
+[submodule "docs-site/themes/relearn"]
+	path = docs-site/themes/relearn
+	url = https://github.com/McShelby/hugo-theme-relearn

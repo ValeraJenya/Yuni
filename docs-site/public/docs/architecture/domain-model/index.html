@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html id="R-html" lang="en" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.163.3">
+    <meta name="generator" content="Relearn 9.0.3+36307e4ed23582638ab689240ac7b427217803ee">
+    <meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+    <meta name="description" content="Domain ModelYuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и реализованные NestJS modules.
+Authusers хранит account identity, password_hash, status, verification и lifecycle timestamps. refresh_tokens хранит hashed refresh tokens, expiry, revocation state, last use и легкие device metadata. Raw passwords и raw tokens нельзя сохранять или логировать.">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:description" content="Domain ModelYuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и реализованные NestJS modules.
+Authusers хранит account identity, password_hash, status, verification и lifecycle timestamps. refresh_tokens хранит hashed refresh tokens, expiry, revocation state, last use и легкие device metadata. Raw passwords и raw tokens нельзя сохранять или логировать.">
+    <meta property="og:url" content="//localhost:1313/docs/architecture/domain-model/index.html">
+    <meta property="og:site_name" content="Yuni Docs">
+    <meta property="og:description" content="Domain ModelYuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и реализованные NestJS modules.
+Authusers хранит account identity, password_hash, status, verification и lifecycle timestamps. refresh_tokens хранит hashed refresh tokens, expiry, revocation state, last use и легкие device metadata. Raw passwords и raw tokens нельзя сохранять или логировать.">
+    <meta property="og:locale" content="en">
+    <meta property="og:type" content="article">
+    <meta property="article:section" content="Docs">
+    <meta itemprop="description" content="Domain ModelYuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и реализованные NestJS modules.
+Authusers хранит account identity, password_hash, status, verification и lifecycle timestamps. refresh_tokens хранит hashed refresh tokens, expiry, revocation state, last use и легкие device metadata. Raw passwords и raw tokens нельзя сохранять или логировать.">
+    <meta itemprop="wordCount" content="1189">
+    <title></title>
+    <link href="/css/auto-complete/auto-complete.min.css?1782659603" rel="stylesheet">
+    <script src="/js/auto-complete/auto-complete.min.js?1782659603" defer></script>
+    <script src="/js/search-lunr.js?1782659603" defer></script>
+    <script src="/js/search.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/searchindex.en.js?1782659603";
+    </script>
+    <script src="/js/lunr/lunr.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.stemmer.support.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.multi.min.js?1782659603" defer></script>
+    <script src="/js/lunr/lunr.en.min.js?1782659603" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['en'];
+    </script>
+    <link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/fonts/fontawesome/css/all.min.css?1782659603" rel="stylesheet"></noscript>
+    <link href="/css/perfect-scrollbar/perfect-scrollbar.min.css?1782659603" rel="stylesheet">
+    <link href="/css/theme.css?1782659603" rel="stylesheet">
+    <link href="/css/format-html.css?1782659603" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/docs\/architecture\/domain-model\/index.html';
+      window.relearn.relBasePath='..\/..\/..';
+      window.relearn.relBaseUri='..\/..\/..';
+      window.relearn.absBaseUri='\/\/localhost:1313';
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // translations
+      window.T_Copy_to_clipboard = `Copy text to clipboard`;
+      window.T_Copied_to_clipboard = `Text copied to clipboard!`;
+      window.T_Link_copied_to_clipboard = `Link copied to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      window.T_Browser_unsupported_feature = `This browser doesn't support this feature`;
+      // variant stuff
+      window.relearn.themevariants = [ 'relearn-dark' ];
+      window.relearn.customvariantprefix = "my-custom-";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.localStorage.getItem(window.relearn.absBaseUri + "/variant") ?? "";
+        if( !variant ||
+            (!variant.startsWith(window.relearn.customvariantprefix) && !window.relearn.themevariants.includes(variant)) ||
+            (variant.startsWith(window.relearn.customvariantprefix) && !window.localStorage.getItem(window.relearn.absBaseUri + "/variantstylesheet-" + variant)) ){
+          variant = window.relearn.themevariants[0];
+          window.localStorage.setItem(window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-origin="/docs/architecture/domain-model/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar" class="default-animation">
+        <div class="topbar-wrapper default-animation">
+          <div class="topbar-sidebar-divider default-animation"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar default-animation" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button></span>
+            </div>
+            <div class="topbar-button topbar-button-toc default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-table-list"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+<nav class="TableOfContents">
+  <ul>
+    <li><a href="#auth">Auth</a></li>
+    <li><a href="#users">Users</a></li>
+    <li><a href="#profiles">Profiles</a></li>
+    <li><a href="#discovery">Discovery</a></li>
+    <li><a href="#media-and-photos">Media And Photos</a></li>
+    <li><a href="#likes">Likes</a></li>
+    <li><a href="#matches">Matches</a></li>
+    <li><a href="#chat">Chat</a></li>
+    <li><a href="#notifications">Notifications</a></li>
+    <li><a href="#moderation">Moderation</a></li>
+  </ul>
+</nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/index.html"><span itemprop="name">Yuni Documentation</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/docs/index.html"><span itemprop="name">Docs</span></a><meta itemprop="position" content="2">&nbsp;>&nbsp;</li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><a href="/docs/index.html" title="Docs (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a></span>
+            </div>
+            <div class="topbar-button topbar-button-next default-animation" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle"><span><i class="fa-fw fas fa-chevron-right"></i></span></span>
+            </div>
+            <div class="topbar-button topbar-button-more default-animation" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show">
+<span class="btn cstyle button link noborder notitle interactive"><button onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button></span>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable docs" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id=""></h1>
+
+<h1 id="domain-model">Domain Model<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h1>
+<p>Yuni разделен на доменные блоки, которые хорошо ложатся на PostgreSQL tables и реализованные NestJS modules.</p>
+<h2 id="auth">Auth<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>users</code> хранит account identity, <code>password_hash</code>, status, verification и lifecycle timestamps. <code>refresh_tokens</code> хранит hashed refresh tokens, expiry, revocation state, last use и легкие device metadata. Raw passwords и raw tokens нельзя сохранять или логировать.</p>
+<h2 id="users">Users<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>users</code> - стабильная owner identity для auth, profiles, likes, matches, conversations, notifications, blocks, reports, privacy settings и notification settings. Большинство owner checks должны начинаться с authenticated <code>user.id</code>.</p>
+<h2 id="profiles">Profiles<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>profiles</code> хранит один underlying dating profile и использует <code>user_id</code> как primary key. Public handle находится в <code>profiles.handle</code>, а не в <code>users</code>, потому что публичная идентичность относится к presentation layer профиля.</p>
+<p>Для MVP handle - технический URL-friendly identifier: латинские буквы, цифры, underscore, dot, длина 3-30 символов. Пользовательский текст профиля может поддерживать обычный язык ввода, включая кириллицу.</p>
+<p><code>birth_date</code> хранится вместо age, чтобы backend вычислял возраст на момент запроса. Discoverability профиля должна комбинироваться с privacy settings, approved primary photo checks и block checks.</p>
+<p>Open/private presentation моделируется через <code>privacy_settings</code>, без второй таблицы профиля. В open mode backend может отдавать более полный профиль. В private mode backend должен отдавать меньший набор данных, например вычисленный age и selected interests. User-uploaded photos в private mode не показываются; вместо них используется <code>privacy_settings.anonymous_avatar_key</code> для системного rabbit avatar.</p>
+<p>Discovery eligibility - backend rule, поддерживаемый схемой. Профиль eligible только если account/profile active, discoverability включена, privacy settings разрешают discovery, minimum profile completion выполнен, block filters прошли и есть минимум одно approved published public photo.</p>
+<h2 id="discovery">Discovery<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p>Discovery MVP (<code>GET /discovery/cards</code>) is a read boundary over existing tables, not a new database model. It uses <code>Profile.userId</code> as the card identity and cursor because <code>profiles.user_id</code> is the Profile primary key.</p>
+<p>Cards are eligible only when the target user is active/not deleted, the profile is completed and discoverable, privacy settings are explicitly open/discoverable, the pair has no active block in either direction, the current user has no active LIKE/SKIP cooldown for the target, and there is no active match between the users. Expired LIKE/SKIP and expired matches do not block rediscovery.</p>
+<p>Discovery returns computed age instead of raw <code>birth_date</code>, and only approved/published <code>publicUrl</code> photos. Ranking, random ordering, geolocation/radius and premium filters are future improvements.</p>
+<h2 id="media-and-photos">Media And Photos<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>profile_photos</code> хранит object storage keys, optional public URLs, dimensions, ordering, primary-photo state, moderation status и publishing timestamps. PostgreSQL не хранит image binaries. Фото может быть uploaded и moderated до публикации; profile responses должны отдавать только approved и published photos.</p>
+<h2 id="likes">Likes<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>likes</code> хранит directional decisions между двумя users. В Step 12 реализованы только временные <code>LIKE</code> и <code>SKIP/PASS</code>:</p>
+<ul>
+<li>API <code>like</code> сохраняется как <code>LikeKind.like</code>;</li>
+<li>API <code>skip</code>/<code>pass</code> сохраняется как <code>LikeKind.pass</code>;</li>
+<li><code>superlike</code> не реализован в MVP.</li>
+</ul>
+<p>У Profile нет отдельного id: target profile в likes API обозначается как <code>targetProfileUserId</code>, то есть <code>profiles.user_id</code>.</p>
+<p>LIKE действует 3 days, SKIP/PASS действует 1 day. <code>expires_at</code> задает cooldown window: active interaction blocks another LIKE/SKIP for the same liker/liked pair until expiration, while expired interactions do not block a new action.</p>
+<p>Схема не использует вечный unique <code>(liker_user_id, liked_user_id)</code>, потому что это мешало бы future rematch. Вместо этого DB-level overlap exclusion constraint защищает от пересекающихся active interactions for the same pair. Race behavior for this constraint should be covered in a later integration/e2e step with a test database.</p>
+<h2 id="matches">Matches<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>matches</code> представляет mutual relationship между двумя users. Step 13 создает match только при mutual active LIKE: обе directional записи <code>likes</code> должны быть <code>LikeKind.like</code>, и обе должны иметь <code>expires_at &gt; now()</code>. Step 14 запрещает создание match, если между пользователями есть block в любую сторону.</p>
+<p>Пара хранится в canonical order: <code>user_a_id &lt; user_b_id</code>. Это не permission model, а стабильная нормализация пары, чтобы <code>A-B</code> и <code>B-A</code> не создавали разные active matches.</p>
+<p>Новые matches получают стандартный 7-day <code>expires_at</code>. Match считается active только если <code>status=active</code> и <code>expires_at &gt; now()</code>. В Step 13 нет cron/job, который переводит status в <code>expired</code>; services фильтруют active matches по <code>expires_at</code>. При block active match между пользователями завершается через <code>status=blocked</code> и <code>ended_at=now</code>; unblock не восстанавливает старый match.</p>
+<p>Вечный unique на пару пользователей не используется, потому что он блокировал бы future rematch. Вместо него DB-level exclusion constraint запрещает overlapping active match windows for the same canonical pair. Expired match не блокирует future rematch.</p>
+<p><code>conversations.match_id</code> остается nullable unique relation to match. Chat не реализуется в Step 13: если future conversation уже существует, она может оставаться в Messages после исчезновения match из <code>/matches/me</code>.</p>
+<h2 id="chat">Chat<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>conversations</code> - chat thread. <code>conversation_participants</code> - access-control boundary для chat reads/writes. <code>messages</code> требует, чтобы sender был участником conversation через composite foreign key, что делает owner checks понятными.</p>
+<p>Step 16 Chat MVP использует уже существующие <code>Conversation</code>, <code>ConversationParticipant</code>, <code>Message</code>, <code>Match</code> и <code>Block</code>. Новая Prisma migration не нужна.</p>
+<p>Conversation создается только из match через <code>POST /matches/:matchId/conversation</code>. Active match (<code>status=active</code>, <code>expires_at &gt; now</code>) может создать новую conversation. Если match expired и conversation еще нет, новый чат не создается. Если conversation уже была создана раньше, она остается доступной через <code>/chat/conversations</code> даже после истечения match.</p>
+<p><code>conversations.match_id</code> уникален, поэтому repeated start возвращает existing conversation idempotently. Race на unique <code>match_id</code> должен обрабатываться application service как safe read-existing path.</p>
+<p>Messages MVP - plain text only. API принимает поле <code>text</code>, а DB хранит его в <code>messages.body</code>. Backend trim-ит текст, запрещает пустые сообщения и ограничивает длину <code>2000</code> символов. In-app notifications for received messages are handled by Step 18 without storing message body in notification rows. Realtime, typing, read receipts, attachments/media messages, encryption and complex search are future work.</p>
+<p>Blocks apply to chat in both directions: blocked conversations are hidden from list, message read uses not-found style, and send returns safe <code>403</code>.</p>
+<h2 id="notifications">Notifications<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>notifications</code> хранит in-app notification events for the recipient user. Step 18 реализует только <code>match_created</code>, <code>message_received</code> и reserved <code>system</code> notifications.</p>
+<p>Notification rows store lightweight references and <code>message_key</code>, not rendered text snapshots, raw message body, email, birth date, private profile data, storage keys or moderation internals. <code>actor_user_id</code> is nullable so deleted actors can be handled safely; public list serializers hide actorless match/message notifications and allow <code>actor=null</code> only for system notifications.</p>
+<p>Notifications lifecycle: created, unread/read via nullable <code>read_at</code>, list with cursor pagination, unread count, mark one read and mark all read. Owner checks start from authenticated <code>CurrentUser.id</code>, and users can only read or mutate their own notifications.</p>
+<p>Match notifications are created only after a new <code>Match</code> row is created, one for each participant with the other participant as actor. Message notifications are created only for the other active participant after a successful message send. Active blocks in either direction prevent new visible notification events and hide existing actor notifications from list/count.</p>
+<p>Notifications are in-app only. Push/email notifications, WebSocket/realtime delivery, queues/workers, Redis/Valkey, mobile notifications, notification preferences UI, admin notification tools and complex templates are future work.</p>
+<h2 id="moderation">Moderation<span class="btn cstyle anchor copyanchor scrollanchor link noborder notitle interactive"><button type="button" title="Copy link to clipboard"><i class="fa-fw fas fa-link fa-lg"></i></button></span></h2>
+<p><code>blocks</code> и <code>reports</code> - first-class entities. Blocks directional, duplicate blocker/blocked pairs запрещены. Step 14 использует hard delete для unblock: active block row существует только пока blocker держит block, а repeated block возвращает idempotent success. Blocks влияют в обе стороны на public profile visibility, discovery, LIKE/SKIP, match creation и <code>/matches/me</code>.</p>
+<p>Reports user-focused для MVP: reporter, reported user, reason code, optional comment и review status. Public API возвращает только safe <code>&quot;received&quot;</code> status, не internal moderation workflow. Optional message, conversation и photo references оставляют место для richer moderation context без превращения MVP в большую content moderation систему.</p>
+<p>MVP report reason codes: <code>spam</code>, <code>fake_profile</code>, <code>harassment</code>, <code>sexual_content</code>, <code>hate_speech</code>, <code>scam_or_money</code>, <code>underage_suspected</code>, <code>violence_or_threats</code>, <code>other</code>.</p>
+
+  <footer class="footline">
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <a id="R-logo" class="R-default direction-row" href="/index.html">
+          <span class="logo-title default-animation">Yuni Docs</span>
+        </a>
+        <search><form action="/search/index.html" method="get">
+          <div class="searchbox default-animation">
+            <button class="search-detail" type="submit" title="Search (CTRL+ALT+f)"><i class="fas fa-fw fa-search"></i></button>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-fw fa-times" title="Clear search"></i></button>
+          </div>
+        </form></search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks default-animation">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/index.html"><a class="padding" href="/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main default-animation">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="" data-nav-id="/project/index.html"><input type="checkbox" id="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5" aria-controls="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5"><label for="R-section-2ca1f4ebdc59348ffdc31d97a51a98d5"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu О проекте</span></label><a class="padding default-animation" href="/project/index.html">О проекте</a><ul id="R-subsections-2ca1f4ebdc59348ffdc31d97a51a98d5" class="collapsible-menu">
+            <li class="" data-nav-id="/project/state/index.html"><a class="padding" href="/project/state/index.html">Текущее состояние</a></li>
+            <li class="" data-nav-id="/project/roadmap/index.html"><a class="padding" href="/project/roadmap/index.html">Roadmap</a></li>
+            <li class="" data-nav-id="/project/features/index.html"><a class="padding" href="/project/features/index.html">Матрица фич</a></li></ul></li>
+            <li class="" data-nav-id="/stages/index.html"><a class="padding" href="/stages/index.html">Этапы разработки</a></li>
+            <li class="" data-nav-id="/architecture/index.html"><input type="checkbox" id="R-section-9e2fbae00589891720aedcdff0084e07" aria-controls="R-subsections-9e2fbae00589891720aedcdff0084e07"><label for="R-section-9e2fbae00589891720aedcdff0084e07"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Архитектура</span></label><a class="padding default-animation" href="/architecture/index.html">Архитектура</a><ul id="R-subsections-9e2fbae00589891720aedcdff0084e07" class="collapsible-menu">
+            <li class="" data-nav-id="/architecture/backend/index.html"><a class="padding" href="/architecture/backend/index.html">Backend</a></li>
+            <li class="" data-nav-id="/architecture/frontend/index.html"><a class="padding" href="/architecture/frontend/index.html">Frontend</a></li>
+            <li class="" data-nav-id="/architecture/domain-model/index.html"><a class="padding" href="/architecture/domain-model/index.html">Domain Model</a></li></ul></li>
+            <li class="" data-nav-id="/modules/index.html"><input type="checkbox" id="R-section-86070686ce713af8e2516d0daffc06f4" aria-controls="R-subsections-86070686ce713af8e2516d0daffc06f4"><label for="R-section-86070686ce713af8e2516d0daffc06f4"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Backend-модули</span></label><a class="padding default-animation" href="/modules/index.html">Backend-модули</a><ul id="R-subsections-86070686ce713af8e2516d0daffc06f4" class="collapsible-menu">
+            <li class="" data-nav-id="/modules/auth/index.html"><a class="padding" href="/modules/auth/index.html">auth</a></li>
+            <li class="" data-nav-id="/modules/profiles/index.html"><a class="padding" href="/modules/profiles/index.html">profiles</a></li>
+            <li class="" data-nav-id="/modules/media/index.html"><a class="padding" href="/modules/media/index.html">media</a></li>
+            <li class="" data-nav-id="/modules/discovery/index.html"><a class="padding" href="/modules/discovery/index.html">discovery</a></li>
+            <li class="" data-nav-id="/modules/likes/index.html"><a class="padding" href="/modules/likes/index.html">likes</a></li>
+            <li class="" data-nav-id="/modules/matches/index.html"><a class="padding" href="/modules/matches/index.html">matches</a></li>
+            <li class="" data-nav-id="/modules/chat/index.html"><a class="padding" href="/modules/chat/index.html">chat</a></li>
+            <li class="" data-nav-id="/modules/moderation/index.html"><a class="padding" href="/modules/moderation/index.html">moderation</a></li>
+            <li class="" data-nav-id="/modules/notifications/index.html"><a class="padding" href="/modules/notifications/index.html">notifications</a></li></ul></li>
+            <li class="" data-nav-id="/api/index.html"><a class="padding" href="/api/index.html">API</a></li>
+            <li class="" data-nav-id="/database/index.html"><input type="checkbox" id="R-section-ffbd3c632901f0c6472eed450e4e91f8" aria-controls="R-subsections-ffbd3c632901f0c6472eed450e4e91f8"><label for="R-section-ffbd3c632901f0c6472eed450e4e91f8"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu База данных</span></label><a class="padding default-animation" href="/database/index.html">База данных</a><ul id="R-subsections-ffbd3c632901f0c6472eed450e4e91f8" class="collapsible-menu">
+            <li class="" data-nav-id="/database/schema/index.html"><a class="padding" href="/database/schema/index.html">Схема и миграции</a></li></ul></li>
+            <li class="" data-nav-id="/security/index.html"><input type="checkbox" id="R-section-66815ecaaecfc1c209e5637d03b258b2" aria-controls="R-subsections-66815ecaaecfc1c209e5637d03b258b2"><label for="R-section-66815ecaaecfc1c209e5637d03b258b2"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Безопасность</span></label><a class="padding default-animation" href="/security/index.html">Безопасность</a><ul id="R-subsections-66815ecaaecfc1c209e5637d03b258b2" class="collapsible-menu">
+            <li class="" data-nav-id="/security/data-exposure/index.html"><a class="padding" href="/security/data-exposure/index.html">Data Exposure Rules</a></li></ul></li>
+            <li class="" data-nav-id="/testing/index.html"><a class="padding" href="/testing/index.html">Тестирование</a></li>
+            <li class="" data-nav-id="/onboarding/index.html"><input type="checkbox" id="R-section-0460cb8850cf3b8ece07dc5c51a10e63" aria-controls="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63"><label for="R-section-0460cb8850cf3b8ece07dc5c51a10e63"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Онбординг</span></label><a class="padding default-animation" href="/onboarding/index.html">Онбординг</a><ul id="R-subsections-0460cb8850cf3b8ece07dc5c51a10e63" class="collapsible-menu">
+            <li class="" data-nav-id="/onboarding/docker/index.html"><a class="padding" href="/onboarding/docker/index.html">Local Docker Workflow</a></li></ul></li>
+            <li class="" data-nav-id="/decisions/index.html"><a class="padding" href="/decisions/index.html">ADR — Решения</a></li>
+            <li class="" data-nav-id="/process/index.html"><a class="padding" href="/process/index.html">Процесс</a></li>
+            <li class="parent " data-nav-id="/docs/index.html"><input type="checkbox" id="R-section-b5fa667da3c6d162416dac7e8c63bf8a" aria-controls="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" checked><label for="R-section-b5fa667da3c6d162416dac7e8c63bf8a"><i class="fa-fw fas fa-chevron-right"></i><span class="a11y-only">Submenu Docs</span></label><a class="padding default-animation" href="/docs/index.html">Docs</a><ul id="R-subsections-b5fa667da3c6d162416dac7e8c63bf8a" class="collapsible-menu">
+            <li class="active hidden " data-nav-id="/docs/architecture/domain-model/index.html"><a class="padding" href="/docs/architecture/domain-model/index.html"></a></li></ul></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts default-animation">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin" class="default-animation"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding default-animation">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols default-animation">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer" class="default-animation"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/js/perfect-scrollbar/perfect-scrollbar.min.js?1782659603" defer></script>
+    <script src="/js/theme.js?1782659603" defer></script>
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>

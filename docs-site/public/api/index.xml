@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>API :: Yuni Docs</title>
+    <link>//localhost:1313/api/index.html</link>
+    <description>Исходник: docs/api/README.md. Реализованы: auth/session, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP, Chat MVP, Notifications MVP.&#xA;Подготовка к ручной проверке&#xD;corepack pnpm install --frozen-lockfile copy .env.example .env corepack pnpm prisma:migrate:dev corepack pnpm prisma:generate corepack pnpm dev:backend&#xD;В .env нужен корректный DATABASE_URL:&#xA;DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni&#xD;Error и access-control conventions&#xD;Код Значение 400 Request validation error 401 Не аутентифицирован или session/token invalid 403 Аутентифицирован, но нет доступа к ресурсу 404 Ресурс отсутствует 409 Конфликт уникальности или доменного состояния 429 Rate limit exceeded Backend не раскрывает security-sensitive details в ошибках.</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <atom:link href="//localhost:1313/api/index.xml" rel="self" type="application/rss+xml" />
+  </channel>
+</rss>
