@@ -14,6 +14,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAccessGuard } from '../auth/guards/jwt-access.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { ChatService } from './chat.service';
+import { AnswerGameDto } from './dto/answer-game.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 
 @UseGuards(JwtAccessGuard)
@@ -36,6 +37,50 @@ export class ChatController {
     @Query() query: CursorPaginationQueryDto,
   ) {
     return this.chatService.getMessages(currentUser, conversationId, query);
+  }
+
+  @Get('conversations/:conversationId/stage')
+  getConversationStage(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+  ) {
+    return this.chatService.getConversationStage(currentUser, conversationId);
+  }
+
+  @Get('starters')
+  getStarters() {
+    return this.chatService.getStarters();
+  }
+
+  @Get('conversations/:conversationId/game/current')
+  getCurrentGame(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+  ) {
+    return this.chatService.getCurrentGame(currentUser, conversationId);
+  }
+
+  @Post('conversations/:conversationId/game/postpone')
+  postponeCurrentGame(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+  ) {
+    return this.chatService.postponeCurrentGame(currentUser, conversationId);
+  }
+
+  @Post('conversations/:conversationId/game/:gameId/answer')
+  answerGame(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Param('gameId', ParseUUIDPipe) gameId: string,
+    @Body() dto: AnswerGameDto,
+  ) {
+    return this.chatService.answerGame(
+      currentUser,
+      conversationId,
+      gameId,
+      dto.answer,
+    );
   }
 
   @UseRateLimit(RATE_LIMIT_POLICIES.chatSend)
