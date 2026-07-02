@@ -97,6 +97,7 @@ model User {
   matchesAsUserB       Match[]               @relation("MatchesUserB")
   conversationMembers  ConversationParticipant[]
   sentMessages         Message[]             @relation("MessagesSent")
+  gameAnswers          GameAnswer[]
   blockedUsers         Block[]               @relation("BlocksFrom")
   blockedByUsers       Block[]               @relation("BlocksTo")
   reportsFiled         Report[]              @relation("ReportsFiled")
@@ -253,12 +254,20 @@ model Conversation {
   id           String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   matchId      String?                   @unique @map("match_id") @db.Uuid
   status       ConversationStatus        @default(active)
+  stage        Int                       @default(1)
+  stage1StartedAt DateTime?              @map("stage1_started_at") @db.Timestamptz(6)
+  stage2StartedAt DateTime?              @map("stage2_started_at") @db.Timestamptz(6)
+  stage3StartedAt DateTime?              @map("stage3_started_at") @db.Timestamptz(6)
+  stageUpdatedAt  DateTime?              @map("stage_updated_at") @db.Timestamptz(6)
+  user1VoiceTotalSec Int                 @default(0) @map("user1_voice_total_sec")
+  user2VoiceTotalSec Int                 @default(0) @map("user2_voice_total_sec")
   createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   match        Match?                    @relation(fields: [matchId], references: [id], onDelete: SetNull)
   participants ConversationParticipant[]
   messages     Message[]
+  games        ChatGame[]
   reports      Report[]
   notifications Notification[]
 
@@ -286,16 +295,19 @@ model ConversationParticipant {
 model Message {
   id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   conversationId String                     @map("conversation_id") @db.Uuid
-  senderUserId   String                     @map("sender_user_id") @db.Uuid
+  senderUserId   String?                    @map("sender_user_id") @db.Uuid
   body           String
+  voiceDurationSec Int?                   @map("voice_duration_sec")
+  messageWeight  Int                      @default(1) @map("message_weight")
+  isSystemMessage Boolean                  @default(false) @map("is_system_message")
   status         MessageStatus              @default(sent)
   createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   editedAt       DateTime?                  @map("edited_at") @db.Timestamptz(6)
   deletedAt      DateTime?                  @map("deleted_at") @db.Timestamptz(6)
 
   conversation   Conversation               @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User                       @relation("MessagesSent", fields: [senderUserId], references: [id], onDelete: Cascade)
-  senderMember   ConversationParticipant    @relation("ParticipantMessages", fields: [conversationId, senderUserId], references: [conversationId, userId], onDelete: Cascade)
+  sender         User?                      @relation("MessagesSent", fields: [senderUserId], references: [id], onDelete: Cascade)
+  senderMember   ConversationParticipant?   @relation("ParticipantMessages", fields: [conversationId, senderUserId], references: [conversationId, userId], onDelete: Cascade)
   readBy         ConversationParticipant[]  @relation("LastReadMessage")
   reports        Report[]
   notifications  Notification[]
@@ -303,6 +315,50 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([senderUserId])
   @@map("messages")
+}
+
+model ChatGame {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId  String      @map("conversation_id") @db.Uuid
+  stage           Int
+  gameType        String      @map("game_type")
+  question        String
+  options         Json?
+  shownAt         DateTime    @default(now()) @map("shown_at") @db.Timestamptz(6)
+  completedAt     DateTime?   @map("completed_at") @db.Timestamptz(6)
+  postponedUntil  DateTime?   @map("postponed_until") @db.Timestamptz(6)
+  postponeCount   Int         @default(0) @map("postpone_count")
+
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  answers         GameAnswer[]
+
+  @@unique([conversationId, question])
+  @@index([conversationId, stage, completedAt])
+  @@map("chat_games")
+}
+
+model GameAnswer {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gameId      String    @map("game_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  answer      String
+  answeredAt  DateTime  @default(now()) @map("answered_at") @db.Timestamptz(6)
+
+  game        ChatGame  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@index([userId])
+  @@map("game_answers")
+}
+
+model ConversationStarter {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  text      String
+  isActive  Boolean @default(true) @map("is_active")
+
+  @@index([isActive])
+  @@map("conversation_starters")
 }
 
 model Block {

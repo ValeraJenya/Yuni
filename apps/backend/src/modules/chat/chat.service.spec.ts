@@ -31,6 +31,7 @@ const CONVERSATION_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const OTHER_CONVERSATION_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const MATCH_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const MESSAGE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+const GAME_ID = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
 const FIXED_NOW = new Date('2026-06-09T12:00:00.000Z');
 
 const CURRENT_USER: AuthenticatedUser = {
@@ -51,6 +52,22 @@ interface PrismaMock {
   message: {
     findMany: jest.Mock;
     create: jest.Mock;
+    aggregate: jest.Mock;
+  };
+  chatGame: {
+    findFirst: jest.Mock;
+    findMany: jest.Mock;
+    findUniqueOrThrow: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    count: jest.Mock;
+  };
+  gameAnswer: {
+    create: jest.Mock;
+    count: jest.Mock;
+  };
+  conversationStarter: {
+    findMany: jest.Mock;
   };
   match: {
     findUnique: jest.Mock;
@@ -133,6 +150,7 @@ describe('ChatService', () => {
             conversationId: CONVERSATION_ID,
             senderUserId: OTHER_USER_ID,
             text: 'Hello there',
+            isSystemMessage: false,
             status: MessageStatus.sent,
             createdAt: new Date('2026-06-09T10:00:00.000Z'),
           },
@@ -324,6 +342,7 @@ describe('ChatService', () => {
           conversationId: CONVERSATION_ID,
           senderUserId: OTHER_USER_ID,
           text: 'Newest',
+          isSystemMessage: false,
           status: MessageStatus.sent,
           createdAt: new Date('2026-06-09T10:01:00.000Z'),
         },
@@ -441,6 +460,9 @@ describe('ChatService', () => {
         conversationId: CONVERSATION_ID,
         senderUserId: CURRENT_USER_ID,
         body: 'hello <b>world</b>',
+        voiceDurationSec: null,
+        messageWeight: 1,
+        isSystemMessage: false,
         status: MessageStatus.sent,
         createdAt: FIXED_NOW,
       },
@@ -470,6 +492,7 @@ describe('ChatService', () => {
         conversationId: CONVERSATION_ID,
         senderUserId: CURRENT_USER_ID,
         text: 'hello <b>world</b>',
+        isSystemMessage: false,
         status: MessageStatus.sent,
         createdAt: FIXED_NOW,
       },
@@ -540,6 +563,9 @@ describe('ChatService', () => {
       data: {
         matchId: MATCH_ID,
         status: ConversationStatus.active,
+        stage: 1,
+        stage1StartedAt: FIXED_NOW,
+        stageUpdatedAt: FIXED_NOW,
         createdAt: FIXED_NOW,
         updatedAt: FIXED_NOW,
         participants: {
@@ -655,6 +681,257 @@ describe('ChatService', () => {
     });
     expect(result.conversation.conversationId).toBe(CONVERSATION_ID);
   });
+
+  it('advances from stage 1 to stage 2 after two completed games', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.conversation.findFirst.mockResolvedValue(makeConversation({ stage: 1 }));
+    prisma.chatGame.findFirst.mockResolvedValue(
+      makeGame({
+        stage: 1,
+        answers: [{ userId: OTHER_USER_ID }],
+      }),
+    );
+    prisma.gameAnswer.count.mockResolvedValue(2);
+    prisma.chatGame.count.mockResolvedValue(2);
+    prisma.chatGame.findUniqueOrThrow.mockResolvedValue(
+      makeGame({
+        stage: 1,
+        completedAt: FIXED_NOW,
+      }),
+    );
+
+    await service.answerGame(CURRENT_USER, CONVERSATION_ID, GAME_ID, 'yes');
+
+    expect(prisma.conversation.update).toHaveBeenCalledWith({
+      where: {
+        id: CONVERSATION_ID,
+      },
+      data: {
+        stage: 2,
+        stageUpdatedAt: FIXED_NOW,
+        updatedAt: FIXED_NOW,
+        stage2StartedAt: FIXED_NOW,
+        user1VoiceTotalSec: 0,
+        user2VoiceTotalSec: 0,
+      },
+      select: {
+        id: true,
+      },
+    });
+    expect(prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          body: '🎉 Вы хорошо познакомились! Теперь доступны голосовые сообщения',
+          senderUserId: null,
+          isSystemMessage: true,
+        }),
+      }),
+    );
+  });
+
+  it('advances from stage 2 to stage 3 after three completed stage 2 games', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.conversation.findFirst.mockResolvedValue(
+      makeConversation({
+        stage: 2,
+        stage2StartedAt: new Date('2026-06-09T11:00:00.000Z'),
+      }),
+    );
+    prisma.chatGame.findFirst.mockResolvedValue(
+      makeGame({
+        stage: 2,
+        answers: [{ userId: OTHER_USER_ID }],
+      }),
+    );
+    prisma.gameAnswer.count.mockResolvedValue(2);
+    prisma.chatGame.count.mockResolvedValue(3);
+    prisma.chatGame.findUniqueOrThrow.mockResolvedValue(
+      makeGame({
+        stage: 2,
+        completedAt: FIXED_NOW,
+      }),
+    );
+
+    await service.answerGame(CURRENT_USER, CONVERSATION_ID, GAME_ID, 'yes');
+
+    expect(prisma.conversation.update).toHaveBeenCalledWith({
+      where: {
+        id: CONVERSATION_ID,
+      },
+      data: {
+        stage: 3,
+        stageUpdatedAt: FIXED_NOW,
+        updatedAt: FIXED_NOW,
+        stage3StartedAt: FIXED_NOW,
+      },
+      select: {
+        id: true,
+      },
+    });
+    expect(prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          body: '🎊 Отличное общение! Теперь все возможности открыты',
+          senderUserId: null,
+          isSystemMessage: true,
+        }),
+      }),
+    );
+  });
+
+  it('clips stage 2 voice duration to the remaining per-user limit', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.conversation.findFirst.mockResolvedValue(
+      makeConversation({
+        stage: 2,
+        user1VoiceTotalSec: 70,
+      }),
+    );
+    prisma.message.create.mockImplementation(async (args) =>
+      makeMessage({
+        body: args.data.body,
+        senderUserId: args.data.senderUserId,
+        voiceDurationSec: args.data.voiceDurationSec,
+        messageWeight: args.data.messageWeight,
+        createdAt: args.data.createdAt,
+      }),
+    );
+
+    const result = await service.sendMessage(CURRENT_USER, CONVERSATION_ID, {
+      text: 'voice',
+      messageType: 'voice',
+      voiceDurationSec: 60,
+    });
+
+    expect(prisma.message.create).toHaveBeenCalledWith({
+      data: {
+        conversationId: CONVERSATION_ID,
+        senderUserId: CURRENT_USER_ID,
+        body: 'voice',
+        voiceDurationSec: 20,
+        messageWeight: 1,
+        isSystemMessage: false,
+        status: MessageStatus.sent,
+        createdAt: FIXED_NOW,
+      },
+      select: expect.any(Object),
+    });
+    expect(prisma.conversation.update).toHaveBeenCalledWith({
+      where: {
+        id: CONVERSATION_ID,
+      },
+      data: {
+        updatedAt: FIXED_NOW,
+        user1VoiceTotalSec: {
+          increment: 20,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+    expect(result.message.voiceDurationSec).toBe(20);
+  });
+
+  it('binds stage 2 user1 voice total to match userA regardless of participant order', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.conversation.findFirst.mockResolvedValue(
+      makeConversation({
+        stage: 2,
+        user1VoiceTotalSec: 10,
+        participants: [
+          makeParticipant(OTHER_USER_ID),
+          makeParticipant(CURRENT_USER_ID),
+        ],
+      }),
+    );
+    prisma.message.create.mockImplementation(async (args) =>
+      makeMessage({
+        body: args.data.body,
+        senderUserId: args.data.senderUserId,
+        voiceDurationSec: args.data.voiceDurationSec,
+        messageWeight: args.data.messageWeight,
+        isSystemMessage: args.data.isSystemMessage,
+        createdAt: args.data.createdAt,
+      }),
+    );
+
+    await service.sendMessage(CURRENT_USER, CONVERSATION_ID, {
+      text: 'voice',
+      messageType: 'voice',
+      voiceDurationSec: 15,
+    });
+
+    expect(prisma.conversation.update).toHaveBeenCalledWith({
+      where: {
+        id: CONVERSATION_ID,
+      },
+      data: {
+        updatedAt: FIXED_NOW,
+        user1VoiceTotalSec: {
+          increment: 15,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+  });
+
+  it('rejects a second game postpone', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.conversation.findFirst.mockResolvedValue(makeConversation());
+    prisma.chatGame.findFirst.mockResolvedValue(
+      makeGame({
+        postponeCount: 1,
+      }),
+    );
+
+    await expect(
+      service.postponeCurrentGame(CURRENT_USER, CONVERSATION_ID),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    expect(prisma.chatGame.update).not.toHaveBeenCalled();
+  });
+
+  it('requires conversation ownership for all new conversation endpoints', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.conversation.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.getConversationStage(CURRENT_USER, CONVERSATION_ID),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.getCurrentGame(CURRENT_USER, CONVERSATION_ID),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.postponeCurrentGame(CURRENT_USER, CONVERSATION_ID),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.answerGame(CURRENT_USER, CONVERSATION_ID, GAME_ID, 'yes'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    for (const call of prisma.conversation.findFirst.mock.calls) {
+      expect(call[0].where.AND).toEqual(
+        expect.arrayContaining([
+          {
+            participants: {
+              some: {
+                userId: CURRENT_USER_ID,
+                leftAt: null,
+              },
+            },
+          },
+        ]),
+      );
+    }
+  });
 });
 
 function createService() {
@@ -671,6 +948,22 @@ function createService() {
     message: {
       findMany: jest.fn(),
       create: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    chatGame: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      count: jest.fn(),
+    },
+    gameAnswer: {
+      create: jest.fn(),
+      count: jest.fn(),
+    },
+    conversationStarter: {
+      findMany: jest.fn(),
     },
     match: {
       findUnique: jest.fn(),
@@ -678,6 +971,10 @@ function createService() {
     $transaction: jest.fn(),
   };
   prisma.$transaction.mockImplementation(async (callback) => callback(prisma));
+  prisma.message.aggregate.mockResolvedValue({ _sum: { messageWeight: 0 } });
+  prisma.chatGame.findFirst.mockResolvedValue(null);
+  prisma.chatGame.findMany.mockResolvedValue([]);
+  prisma.chatGame.count.mockResolvedValue(0);
   const moderationService: ModerationServiceMock = {
     assertNoBlockBetween: jest.fn().mockResolvedValue(undefined),
   };
@@ -715,6 +1012,17 @@ function makeConversation(
     id: string;
     status: ConversationStatus;
     updatedAt: Date;
+    stage: number;
+    stage1StartedAt: Date | null;
+    stage2StartedAt: Date | null;
+    stage3StartedAt: Date | null;
+    stageUpdatedAt: Date | null;
+    user1VoiceTotalSec: number;
+    user2VoiceTotalSec: number;
+    match: {
+      userAId: string;
+      userBId: string;
+    } | null;
     participants: ReturnType<typeof makeParticipant>[];
     messages: ReturnType<typeof makeMessage>[];
   }> = {},
@@ -723,6 +1031,17 @@ function makeConversation(
     id: overrides.id ?? CONVERSATION_ID,
     status: overrides.status ?? ConversationStatus.active,
     updatedAt: overrides.updatedAt ?? FIXED_NOW,
+    stage: overrides.stage ?? 1,
+    stage1StartedAt: overrides.stage1StartedAt ?? FIXED_NOW,
+    stage2StartedAt: overrides.stage2StartedAt ?? null,
+    stage3StartedAt: overrides.stage3StartedAt ?? null,
+    stageUpdatedAt: overrides.stageUpdatedAt ?? FIXED_NOW,
+    user1VoiceTotalSec: overrides.user1VoiceTotalSec ?? 0,
+    user2VoiceTotalSec: overrides.user2VoiceTotalSec ?? 0,
+    match: overrides.match ?? {
+      userAId: CURRENT_USER_ID,
+      userBId: OTHER_USER_ID,
+    },
     participants:
       overrides.participants ?? [
         makeParticipant(CURRENT_USER_ID),
@@ -747,6 +1066,7 @@ function makeParticipant(
 
   return {
     userId,
+    joinedAt: FIXED_NOW,
     leftAt: overrides.leftAt ?? null,
     user: {
       id: userId,
@@ -789,8 +1109,11 @@ function makeMessage(
   overrides: Partial<{
     id: string;
     conversationId: string;
-    senderUserId: string;
+    senderUserId: string | null;
     body: string;
+    voiceDurationSec: number | null;
+    messageWeight: number;
+    isSystemMessage: boolean;
     status: MessageStatus;
     createdAt: Date;
   }> = {},
@@ -800,8 +1123,41 @@ function makeMessage(
     conversationId: overrides.conversationId ?? CONVERSATION_ID,
     senderUserId: overrides.senderUserId ?? OTHER_USER_ID,
     body: overrides.body ?? 'Hello',
+    voiceDurationSec: overrides.voiceDurationSec ?? null,
+    messageWeight: overrides.messageWeight ?? 1,
+    isSystemMessage: overrides.isSystemMessage ?? false,
     status: overrides.status ?? MessageStatus.sent,
     createdAt: overrides.createdAt ?? FIXED_NOW,
+  };
+}
+
+function makeGame(
+  overrides: Partial<{
+    id: string;
+    conversationId: string;
+    stage: number;
+    gameType: string;
+    question: string;
+    options: Prisma.JsonValue | null;
+    shownAt: Date;
+    completedAt: Date | null;
+    postponedUntil: Date | null;
+    postponeCount: number;
+    answers: { userId: string }[];
+  }> = {},
+) {
+  return {
+    id: overrides.id ?? GAME_ID,
+    conversationId: overrides.conversationId ?? CONVERSATION_ID,
+    stage: overrides.stage ?? 1,
+    gameType: overrides.gameType ?? 'question',
+    question: overrides.question ?? 'Question?',
+    options: overrides.options ?? null,
+    shownAt: overrides.shownAt ?? FIXED_NOW,
+    completedAt: overrides.completedAt ?? null,
+    postponedUntil: overrides.postponedUntil ?? null,
+    postponeCount: overrides.postponeCount ?? 0,
+    answers: overrides.answers ?? [],
   };
 }
 
