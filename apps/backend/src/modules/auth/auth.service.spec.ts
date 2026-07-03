@@ -6,10 +6,11 @@ import type { ConfigService } from '@nestjs/config';
 import type { JwtService } from '@nestjs/jwt';
 import { UserStatus } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { validate } from 'class-validator';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import { AuthService } from './auth.service';
 import type { LoginDto } from './dto/login.dto';
-import type { RegisterDto } from './dto/register.dto';
+import { RegisterDto } from './dto/register.dto';
 
 jest.mock('argon2', () => ({
   hash: jest.fn(async (value: string) => `hash:${value}`),
@@ -247,6 +248,26 @@ describe('AuthService', () => {
 
       expect(prisma.user.findFirst).not.toHaveBeenCalled();
       expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects passwords longer than 128 characters during dto validation', async () => {
+      const dto = Object.assign(
+        new RegisterDto(),
+        makeRegisterDto({ password: 'a'.repeat(129) }),
+      );
+
+      const errors = await validate(dto);
+
+      expect(errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            property: 'password',
+            constraints: expect.objectContaining({
+              maxLength: 'password must be shorter than or equal to 128 characters',
+            }),
+          }),
+        ]),
+      );
     });
   });
 
