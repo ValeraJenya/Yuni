@@ -40,10 +40,12 @@ interface PrismaMock {
   report: {
     create: jest.Mock;
   };
+  $transaction: jest.Mock;
 }
 
 interface BlockCreateArgs {
   data: {
+    blockerUserId: string;
     blockedUserId: string;
     createdAt: Date;
   };
@@ -124,6 +126,113 @@ describe('ModerationService', () => {
       },
     });
     expectNoPrivateModerationKeys(result);
+  });
+
+  it('creates a block and ends active matches in the same transaction', async () => {
+    const { service, prisma } = createService();
+    const tx = createPrismaMock();
+    prisma.user.findUnique
+      .mockResolvedValueOnce(activeUser())
+      .mockResolvedValueOnce(activeUser());
+    prisma.block.findUnique.mockResolvedValue(null);
+    prisma.$transaction.mockImplementation(
+      async (callback: (tx: PrismaMock) => Promise<unknown>) => callback(tx),
+    );
+    tx.block.create.mockImplementation(async (args: BlockCreateArgs) => ({
+      blockedUserId: args.data.blockedUserId,
+      createdAt: args.data.createdAt,
+    }));
+
+    const result = await service.blockUser(CURRENT_USER, TARGET_USER_ID);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.block.create).toHaveBeenCalledWith({
+      data: {
+        blockerUserId: CURRENT_USER.id,
+        blockedUserId: TARGET_USER_ID,
+        createdAt: FIXED_NOW,
+      },
+      select: {
+        blockedUserId: true,
+        createdAt: true,
+      },
+    });
+    expect(tx.match.updateMany).toHaveBeenCalledWith({
+      where: {
+        status: MatchStatus.active,
+        expiresAt: {
+          gt: FIXED_NOW,
+        },
+        OR: [
+          {
+            userAId: CURRENT_USER.id,
+            userBId: TARGET_USER_ID,
+          },
+          {
+            userAId: TARGET_USER_ID,
+            userBId: CURRENT_USER.id,
+          },
+        ],
+      },
+      data: {
+        status: MatchStatus.blocked,
+        endedAt: FIXED_NOW,
+      },
+    });
+    expect(prisma.block.create).not.toHaveBeenCalled();
+    expect(prisma.match.updateMany).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      block: {
+        blockedUserId: TARGET_USER_ID,
+        createdAt: FIXED_NOW,
+        status: 'blocked',
+      },
+    });
+  });
+
+  it('rolls back block creation when ending active matches fails', async () => {
+    const { service, prisma } = createService();
+    const tx = createPrismaMock();
+    const committedBlocks: Array<{
+      blockedUserId: string;
+      createdAt: Date;
+    }> = [];
+    let stagedBlock: {
+      blockedUserId: string;
+      createdAt: Date;
+    } | null = null;
+    prisma.user.findUnique
+      .mockResolvedValueOnce(activeUser())
+      .mockResolvedValueOnce(activeUser());
+    prisma.block.findUnique.mockResolvedValue(null);
+    tx.block.create.mockImplementation(async (args: BlockCreateArgs) => {
+      stagedBlock = {
+        blockedUserId: args.data.blockedUserId,
+        createdAt: args.data.createdAt,
+      };
+      return stagedBlock;
+    });
+    tx.match.updateMany.mockRejectedValue(new Error('match update failed'));
+    prisma.$transaction.mockImplementation(
+      async (callback: (tx: PrismaMock) => Promise<unknown>) => {
+        const result = await callback(tx);
+
+        if (stagedBlock) {
+          committedBlocks.push(stagedBlock);
+        }
+
+        return result;
+      },
+    );
+
+    await expect(
+      service.blockUser(CURRENT_USER, TARGET_USER_ID),
+    ).rejects.toThrow('match update failed');
+
+    expect(tx.block.create).toHaveBeenCalledTimes(1);
+    expect(tx.match.updateMany).toHaveBeenCalledTimes(1);
+    expect(committedBlocks).toEqual([]);
+    expect(prisma.block.create).not.toHaveBeenCalled();
   });
 
   it('returns idempotent success for duplicate blocks without creating a row', async () => {
@@ -376,7 +485,20 @@ describe('ModerationService', () => {
 });
 
 function createService() {
-  const prisma: PrismaMock = {
+  const prisma = createPrismaMock();
+
+  prisma.$transaction.mockImplementation(
+    async (callback: (tx: PrismaMock) => Promise<unknown>) => callback(prisma),
+  );
+
+  return {
+    service: new ModerationService(prisma as unknown as PrismaService),
+    prisma,
+  };
+}
+
+function createPrismaMock(): PrismaMock {
+  return {
     user: {
       findUnique: jest.fn(),
     },
@@ -393,11 +515,7 @@ function createService() {
     report: {
       create: jest.fn(),
     },
-  };
-
-  return {
-    service: new ModerationService(prisma as unknown as PrismaService),
-    prisma,
+    $transaction: jest.fn(),
   };
 }
 
