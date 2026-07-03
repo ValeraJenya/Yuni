@@ -18,6 +18,8 @@ import { CreateReportDto } from './dto/create-report.dto';
 const TARGET_USER_NOT_FOUND_MESSAGE = 'User not found';
 const BLOCKED_INTERACTION_MESSAGE = 'Forbidden';
 
+type ModerationTransactionClient = Prisma.TransactionClient | PrismaService;
+
 export interface BlockResponse {
   block: {
     blockedUserId: string;
@@ -71,19 +73,23 @@ export class ModerationService {
     }
 
     try {
-      const block = await this.prisma.block.create({
-        data: {
-          blockerUserId: currentUser.id,
-          blockedUserId: targetUserId,
-          createdAt: now,
-        },
-        select: {
-          blockedUserId: true,
-          createdAt: true,
-        },
-      });
+      const block = await this.prisma.$transaction(async (tx) => {
+        const createdBlock = await tx.block.create({
+          data: {
+            blockerUserId: currentUser.id,
+            blockedUserId: targetUserId,
+            createdAt: now,
+          },
+          select: {
+            blockedUserId: true,
+            createdAt: true,
+          },
+        });
 
-      await this.endActiveMatchesBetween(currentUser.id, targetUserId, now);
+        await this.endActiveMatchesBetween(currentUser.id, targetUserId, now, tx);
+
+        return createdBlock;
+      });
 
       return this.toBlockResponse(block);
     } catch (error) {
@@ -274,12 +280,13 @@ export class ModerationService {
     leftUserId: string,
     rightUserId: string,
     now = new Date(),
+    client: ModerationTransactionClient = this.prisma,
   ): Promise<void> {
     if (leftUserId === rightUserId) {
       return;
     }
 
-    await this.prisma.match.updateMany({
+    await client.match.updateMany({
       where: {
         status: MatchStatus.active,
         expiresAt: {
