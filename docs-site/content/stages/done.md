@@ -31,3 +31,4 @@ weight: 10
 | 22 | Media production foundation | [#22](https://github.com/ValeraJenya/Yuni/pull/22) | 2026-06-25 |
 | 23 | Media storage adapter (refactor) | [#23](https://github.com/ValeraJenya/Yuni/pull/23) | 2026-06-25 |
 | 24 | Project documentation foundation | [#24](https://github.com/ValeraJenya/Yuni/pull/24) | 2026-06-26 |
+| 27 | [Этапный чат — схема и бэкенд]({{< relref "/tasks/027" >}}) | [PR](https://github.com/ValeraJenya/Yuni/pull/29) | 2026-06-30 |

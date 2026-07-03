@@ -13,4 +13,3 @@ weight: 20
 | 024 | [Atomic block and match lifecycle]({{< relref "/tasks/024" >}}) | P1 | idea |
 | 025 | [Production deployment readiness]({{< relref "/tasks/025" >}}) | P1 | idea |
 | 026 | [PostgreSQL integration checks in CI]({{< relref "/tasks/026" >}}) | P2 | idea |
-| 027 | [Этапный чат — схема и бэкенд]({{< relref "/tasks/027" >}}) | P1 | approved |
