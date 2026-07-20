@@ -32,6 +32,8 @@ weight: 80
 - Дублирующийся block → idempotent success (duplicate row не создаётся)
 - Unblock — hard delete; строка не сохраняется
 - Block завершает active match: `status=blocked`, `ended_at=now`
+- `Conversation.status` при этом не меняется: chat скрыт и send запрещён только пока существует строка `Block`
+- Unblock удаляет `Block`, поэтому прежний conversation и история снова становятся доступны без явного reopening
 - Unblock не восстанавливает матч
 - Block влияет в обе стороны: discovery, LIKE/SKIP, matches, chat, notifications
 
@@ -65,3 +67,4 @@ Response не содержит `blockerUserId`, `reporterUserId`, `email`, `birt
 - Admin/moderation panel не реализован
 - Автоматическая обработка жалоб не реализована
 - Отдельный frontend UI для управления блокировками отсутствует (только action из matches page)
+- Полный atomic Conversation/chat lifecycle не реализован; Task 024 остаётся `in_progress`
