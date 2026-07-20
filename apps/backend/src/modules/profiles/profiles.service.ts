@@ -14,6 +14,7 @@ import {
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { ModerationService } from '../moderation/moderation.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { calculateProfileCompletion } from './profile-completion.policy';
 
 const selfProfileInclude = {
   photos: true,
@@ -52,7 +53,7 @@ export class ProfilesService {
     assertFound(profile);
 
     return {
-      profile: toSelfProfile(profile),
+      profile: this.toSelfProfileView(profile),
     };
   }
 
@@ -75,7 +76,7 @@ export class ProfilesService {
       assertFound(profile);
 
       return {
-        profile: toSelfProfile(profile),
+        profile: this.toSelfProfileView(profile),
       };
     }
 
@@ -86,7 +87,7 @@ export class ProfilesService {
     });
 
     return {
-      profile: toSelfProfile(profile),
+      profile: this.toSelfProfileView(profile),
     };
   }
 
@@ -181,5 +182,9 @@ export class ProfilesService {
       isDiscoverable: profile.isDiscoverable,
       privacySettings: profile.user.privacySettings,
     };
+  }
+
+  private toSelfProfileView(profile: SelfProfileRecord): SelfProfileView {
+    return toSelfProfile(profile, calculateProfileCompletion(profile));
   }
 }

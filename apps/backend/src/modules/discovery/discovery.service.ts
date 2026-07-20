@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import {
   MatchStatus,
-  PhotoModerationStatus,
   Prisma,
   ProfileVisibilityMode,
   UserStatus,
@@ -9,6 +8,10 @@ import {
 import { buildCursorPage } from '../../common/pagination/cursor-pagination';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import {
+  buildProfileCompletionWhere,
+  buildQualifyingProfilePhotoWhere,
+} from '../profiles/profile-completion.policy';
 import {
   DISCOVERY_DEFAULT_LIMIT,
   DISCOVERY_MAX_LIMIT,
@@ -26,15 +29,7 @@ const discoveryProfileSelect = {
   country: true,
   createdAt: true,
   photos: {
-    where: {
-      publicUrl: {
-        not: null,
-      },
-      moderationStatus: PhotoModerationStatus.approved,
-      publishedAt: {
-        not: null,
-      },
-    },
+    where: buildQualifyingProfilePhotoWhere(),
     select: {
       publicUrl: true,
     },
@@ -149,20 +144,7 @@ export class DiscoveryService {
         not: currentUserId,
       },
       isDiscoverable: true,
-      completedAt: {
-        not: null,
-      },
-      photos: {
-        some: {
-          publicUrl: {
-            not: null,
-          },
-          moderationStatus: PhotoModerationStatus.approved,
-          publishedAt: {
-            not: null,
-          },
-        },
-      },
+      ...buildProfileCompletionWhere(),
       user: {
         status: UserStatus.active,
         deletedAt: null,

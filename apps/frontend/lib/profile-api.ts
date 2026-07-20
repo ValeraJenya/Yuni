@@ -12,6 +12,22 @@ export interface SelfProfilePhoto {
   publishedAt: string | null
 }
 
+export type ProfileCompletionField =
+  | "displayName"
+  | "birthDate"
+  | "bio"
+  | "gender"
+  | "lookingFor"
+  | "city"
+  | "country"
+  | "photo"
+
+export interface ProfileCompletion {
+  isComplete: boolean
+  missingFields: ProfileCompletionField[]
+  percentage: number
+}
+
 export interface SelfProfile {
   userId: string
   handle: string
@@ -23,7 +39,7 @@ export interface SelfProfile {
   city: string | null
   country: string | null
   isDiscoverable?: boolean
-  completedAt?: string | null
+  completion: ProfileCompletion
   photos: SelfProfilePhoto[]
 }
 

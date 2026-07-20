@@ -3,6 +3,7 @@ import {
   ProfileVisibilityMode,
   UserStatus,
 } from '@prisma/client';
+import type { ProfileCompletionResult } from '../../modules/profiles/profile-completion.policy';
 
 export interface SafeAuthUser {
   id: string;
@@ -37,7 +38,6 @@ export interface ProfileSource {
   city?: string | null;
   country?: string | null;
   isDiscoverable?: boolean;
-  completedAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
   photos?: ProfilePhotoSource[];
@@ -91,7 +91,7 @@ export interface SelfProfileView {
   city: string | null;
   country: string | null;
   isDiscoverable: boolean | undefined;
-  completedAt: Date | null | undefined;
+  completion: ProfileCompletionResult;
   photos: SelfProfilePhotoView[];
 }
 
@@ -168,7 +168,10 @@ export function toCompactProfile(
   };
 }
 
-export function toSelfProfile(profile: ProfileSource): SelfProfileView {
+export function toSelfProfile(
+  profile: ProfileSource,
+  completion: ProfileCompletionResult,
+): SelfProfileView {
   return {
     userId: profile.userId,
     handle: profile.handle,
@@ -180,7 +183,7 @@ export function toSelfProfile(profile: ProfileSource): SelfProfileView {
     city: profile.city ?? null,
     country: profile.country ?? null,
     isDiscoverable: profile.isDiscoverable,
-    completedAt: profile.completedAt,
+    completion,
     photos: [...(profile.photos ?? [])]
       .sort((left, right) => left.position - right.position)
       .map(toSelfProfilePhoto),

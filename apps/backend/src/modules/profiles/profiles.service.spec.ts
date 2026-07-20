@@ -41,7 +41,6 @@ interface SelfProfileFixture {
   city: string | null;
   country: string | null;
   isDiscoverable: boolean;
-  completedAt: Date | null;
   photos: ProfilePhotoFixture[];
 }
 
@@ -97,6 +96,11 @@ describe('ProfilesService', () => {
       displayName: 'Person One',
       birthDate: profile.birthDate,
       bio: 'Self profile bio',
+      completion: {
+        isComplete: true,
+        missingFields: [],
+        percentage: 100,
+      },
       photos: [
         {
           id: 'photo-approved',
@@ -178,6 +182,11 @@ describe('ProfilesService', () => {
       bio: null,
       city: 'Tbilisi',
       isDiscoverable: false,
+      completion: {
+        isComplete: false,
+        missingFields: ['bio'],
+        percentage: 88,
+      },
     });
   });
 
@@ -326,7 +335,6 @@ function makeSelfProfile(
     city: 'Astrakhan',
     country: 'RU',
     isDiscoverable: true,
-    completedAt: new Date('2026-01-01T00:00:00.000Z'),
     photos: [
       makePhoto({
         id: 'photo-approved',

@@ -94,9 +94,12 @@ describe('DiscoveryService', () => {
     const where = getFindManyWhere(prisma);
     expect(where).toMatchObject({
       isDiscoverable: true,
-      completedAt: {
-        not: null,
-      },
+      displayName: { not: '' },
+      bio: { not: null },
+      gender: { not: null },
+      lookingFor: { not: null },
+      city: { not: null },
+      country: { not: null },
       user: {
         privacySettings: {
           is: {
