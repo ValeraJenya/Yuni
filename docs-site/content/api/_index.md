@@ -4,7 +4,7 @@ weight: 50
 ---
 
 
-Исходник: `docs/api/README.md`. Реализованы: auth/session, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP, Chat MVP, Notifications MVP.
+Исходник: `docs/api/README.md`. Реализованы: auth/session, Profiles MVP, Profile Photos / Media MVP, Likes MVP, Matches MVP, Blocks/Reports MVP, Discovery MVP, staged Chat, Notifications MVP.
 
 ## Подготовка к ручной проверке
 
@@ -122,5 +122,21 @@ curl -i http://localhost:4000/auth/me \
 curl -i "http://localhost:4000/discovery/cards?limit=20" \
   -H "Authorization: Bearer <accessToken>"
 ```
+
+## Chat и staged-chat
+
+Базовые endpoints: list conversations, read messages, send message и start conversation from match. Backend дополнительно владеет stages 1–3, игровыми вопросами и переходами с system messages.
+
+| Метод | Путь | Назначение |
+|---|---|---|
+| `GET` | `/chat/conversations/:conversationId/stage` | stage, timestamps, voice limits |
+| `GET` | `/chat/starters` | до четырёх активных starter-фраз |
+| `GET` | `/chat/conversations/:conversationId/game/current` | текущая игра или `null` |
+| `POST` | `/chat/conversations/:conversationId/game/postpone` | один postpone на минуту |
+| `POST` | `/chat/conversations/:conversationId/game/:gameId/answer` | ответ участника |
+
+`POST /chat/conversations/:conversationId/messages` принимает `text`, optional `messageType` (`text`/`voice`/`attachment`) и для voice — `voiceDurationSec`. Response message включает `isSystemMessage`; `senderUserId` nullable; voice message дополнительно содержит `voiceDurationSec` и `messageWeight`.
+
+Stage 1 запрещает voice, stage 2 применяет 60 сек/сообщение и persisted total 90 сек/участника, stage 3 снимает staged type gates. Файлы audio/attachment endpoint не принимает: duration — число от клиента, server-side inspection/trimming отсутствует. Starter seed также отсутствует.
 
 Полная API документация с примерами для всех endpoints: `docs/api/README.md`.
