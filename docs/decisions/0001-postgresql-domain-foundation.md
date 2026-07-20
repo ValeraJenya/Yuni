@@ -14,7 +14,7 @@ Yuni хранит один underlying profile на пользователя и �
 
 Dating flows представлены напрямую, но без лишней сложности: directional likes поддерживают `like`, `superlike`, `pass`; matches имеют `matched_at`, стандартный 7-дневный `expires_at` и понятные lifecycle statuses; photos поддерживают upload, moderation, primary selection и publishing без хранения бинарников в PostgreSQL. Match expiration для MVP реализуется request-time логикой, без обязательной scheduled cleanup инфраструктуры.
 
-Discovery eligibility - backend rule, который поддерживается схемой: активный account/profile state, включенная discoverability, разрешение privacy discovery, минимальное заполнение профиля, block filters и минимум одно approved published primary photo.
+Discovery eligibility - backend rule, который поддерживается схемой: активный account/profile state, включенная discoverability, разрешение privacy discovery, минимальное заполнение профиля, block filters и минимум одно approved published photo с non-null public URL. Task 021 уточнила исходное решение: primary status не является completion gate; любое qualifying photo достаточно, а текущий primary lifecycle остаётся отдельной media concern.
 
 MVP report reason codes зафиксированы: `spam`, `fake_profile`, `harassment`, `sexual_content`, `hate_speech`, `scam_or_money`, `underage_suspected`, `violence_or_threats`, `other`.
 

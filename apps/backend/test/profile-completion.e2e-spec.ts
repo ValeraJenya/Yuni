@@ -6,6 +6,10 @@ import type { AddressInfo } from 'node:net';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { PrismaService } from '../src/common/prisma/prisma.service';
+import {
+  PROFILE_PHOTO_STORAGE,
+  type ProfilePhotoStorage,
+} from '../src/modules/media/storage/profile-photo-storage.port';
 
 interface AuthResponse {
   accessToken: string;
@@ -42,6 +46,7 @@ interface DiscoveryResponse {
 describe('profile completion lifecycle (PostgreSQL e2e)', () => {
   let app: NestExpressApplication;
   let prisma: PrismaService;
+  let profilePhotoStorage: ProfilePhotoStorage;
   let baseUrl: string;
   const createdUserIds: string[] = [];
   const uploadedPhotos: Array<{ token: string; photoId: string }> = [];
@@ -63,32 +68,63 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
     const address = app.getHttpServer().address() as AddressInfo;
     baseUrl = `http://127.0.0.1:${address.port}`;
     prisma = app.get(PrismaService);
+    profilePhotoStorage = app.get(PROFILE_PHOTO_STORAGE);
   });
 
   afterAll(async () => {
-    for (const { token, photoId } of uploadedPhotos) {
-      await fetch(`${baseUrl}/media/profile-photos/${photoId}`, {
-        method: 'DELETE',
-        headers: authorization(token),
-      }).catch(() => undefined);
-    }
+    const storedPhotos =
+      createdUserIds.length > 0
+        ? await prisma.profilePhoto.findMany({
+            where: { userId: { in: createdUserIds } },
+            select: { storageKey: true },
+          })
+        : [];
 
-    if (createdUserIds.length > 0) {
-      await prisma.user.deleteMany({
-        where: {
-          id: { in: createdUserIds },
-        },
-      });
-    }
+    try {
+      for (const { token, photoId } of uploadedPhotos) {
+        await fetch(`${baseUrl}/media/profile-photos/${photoId}`, {
+          method: 'DELETE',
+          headers: authorization(token),
+        }).catch(() => undefined);
+      }
+    } finally {
+      for (const { storageKey } of storedPhotos) {
+        await profilePhotoStorage
+          .deleteProfilePhoto(storageKey)
+          .catch(() => undefined);
+      }
 
-    await app.close();
+      if (createdUserIds.length > 0) {
+        await prisma.user.deleteMany({
+          where: {
+            id: { in: createdUserIds },
+          },
+        });
+      }
+
+      await app.close();
+    }
   });
 
   it('keeps self completion and discovery eligibility synchronized', async () => {
     const suffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const userA = await register(`task021_a_${suffix}`, `task021-a-${suffix}@example.test`);
+    createdUserIds.push(userA.user.id);
     const userB = await register(`task021_b_${suffix}`, `task021-b-${suffix}@example.test`);
-    createdUserIds.push(userA.user.id, userB.user.id);
+    createdUserIds.push(userB.user.id);
+
+    await expect(
+      prisma.profile.update({
+        where: { userId: userA.user.id },
+        data: { bio: '\t\r\n' },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.profile.update({
+        where: { userId: userA.user.id },
+        data: { displayName: '\u00a0\u2003\ufeff' },
+      }),
+    ).rejects.toThrow();
 
     const initialA = await requestJson<CompletionResponse>('/profiles/me', {
       headers: authorization(userA.accessToken),
@@ -103,11 +139,9 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
     await completeFields(userB.accessToken);
 
     const photoA = await uploadPhoto(userA.accessToken);
+    uploadedPhotos.push({ token: userA.accessToken, photoId: photoA.photo.id });
     const photoB = await uploadPhoto(userB.accessToken);
-    uploadedPhotos.push(
-      { token: userA.accessToken, photoId: photoA.photo.id },
-      { token: userB.accessToken, photoId: photoB.photo.id },
-    );
+    uploadedPhotos.push({ token: userB.accessToken, photoId: photoB.photo.id });
 
     for (const upload of [photoA, photoB]) {
       expect(upload.photo).toMatchObject({
@@ -122,8 +156,8 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
       });
     }
 
-    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id);
-    await expectDiscovery(userB.accessToken, userA.user.id, userB.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, true);
+    await expectDiscovery(userB.accessToken, userA.user.id, userB.user.id, true);
 
     const missingBio = await updateProfile(userB.accessToken, { bio: '' });
     expect(missingBio.profile.completion).toEqual({
@@ -131,10 +165,10 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
       missingFields: ['bio'],
       percentage: 88,
     });
-    await expectDiscovery(userA.accessToken, null, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, false);
 
     await updateProfile(userB.accessToken, { bio: 'Restored profile bio' });
-    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, true);
 
     await requestJson(`/media/profile-photos/${photoB.photo.id}`, {
       method: 'DELETE',
@@ -152,27 +186,27 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
       missingFields: ['photo'],
       percentage: 88,
     });
-    await expectDiscovery(userA.accessToken, null, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, false);
 
     const replacementPhoto = await uploadPhoto(userB.accessToken);
     uploadedPhotos.push({
       token: userB.accessToken,
       photoId: replacementPhoto.photo.id,
     });
-    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, true);
 
     const hiddenProfile = await updateProfile(userB.accessToken, {
       isDiscoverable: false,
     });
     expect(hiddenProfile.profile.completion.isComplete).toBe(true);
-    await expectDiscovery(userA.accessToken, null, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, false);
     await updateProfile(userB.accessToken, { isDiscoverable: true });
 
     await prisma.privacySettings.update({
       where: { userId: userB.user.id },
       data: { profileVisibilityMode: 'private' },
     });
-    await expectDiscovery(userA.accessToken, null, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, false);
     expect(
       (await requestJson<CompletionResponse>('/profiles/me', {
         headers: authorization(userB.accessToken),
@@ -186,13 +220,13 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
         discoverable: false,
       },
     });
-    await expectDiscovery(userA.accessToken, null, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, false);
 
     await prisma.privacySettings.update({
       where: { userId: userB.user.id },
       data: { discoverable: true },
     });
-    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id);
+    await expectDiscovery(userA.accessToken, userB.user.id, userA.user.id, true);
   });
 
   async function register(handle: string, email: string): Promise<AuthResponse> {
@@ -263,8 +297,9 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
 
   async function expectDiscovery(
     token: string,
-    expectedOtherUserId: string | null,
+    otherUserId: string,
     selfUserId: string,
+    shouldIncludeOther: boolean,
   ): Promise<void> {
     const response = await requestJson<DiscoveryResponse>('/discovery/cards', {
       headers: authorization(token),
@@ -272,10 +307,10 @@ describe('profile completion lifecycle (PostgreSQL e2e)', () => {
     const userIds = response.cards.map((card) => card.userId);
 
     expect(userIds).not.toContain(selfUserId);
-    if (expectedOtherUserId) {
-      expect(userIds).toContain(expectedOtherUserId);
+    if (shouldIncludeOther) {
+      expect(userIds).toContain(otherUserId);
     } else {
-      expect(userIds).toEqual([]);
+      expect(userIds).not.toContain(otherUserId);
     }
   }
 

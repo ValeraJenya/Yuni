@@ -42,7 +42,7 @@ describe('profile completion policy', () => {
         bio: null,
         gender: '',
         lookingFor: '\t',
-        city: '  ',
+        city: '\u00a0\u2003\ufeff',
         country: undefined,
         photos: [],
       }),
