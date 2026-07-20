@@ -29,7 +29,7 @@ Query параметры: `limit` (optional, default 20, max 20), `cursor` (opti
 - Исключает текущего пользователя
 - Исключает inactive/deleted users
 - Требует `profiles.is_discoverable=true`
-- Требует `profiles.completed_at` (заполненный профиль)
+- Использует общий `buildProfileCompletionWhere()` predicate: семь обязательных полей и минимум одно подходящее фото (`publicUrl != null`, `moderationStatus=approved`, `publishedAt != null`). Поле `profiles.completed_at` больше не существует
 - Требует явные open и discoverable `privacy_settings`
 - Требует минимум одно `approved` + `published` фото с `publicUrl`
 - Исключает active block в обе стороны

@@ -49,7 +49,7 @@ Self responses НЕ отдают: `passwordHash`, refresh token, `token_hash`, c
 
 ### Self Profile — может включать
 
-`userId`, `handle`, `displayName`, `birthDate`, `bio`, `gender`, `lookingFor`, `city`, `country`, `isDiscoverable`, `completedAt`, own photos с `moderationStatus`.
+`userId`, `handle`, `displayName`, `birthDate`, `bio`, `gender`, `lookingFor`, `city`, `country`, `isDiscoverable`, вычисляемый `completion` (`isComplete`, `missingFields`, `percentage`), own photos с `moderationStatus`.
 
 **Нельзя:** email, password/session, refresh tokens, `storageKey`, local path, internal moderation notes.
 
