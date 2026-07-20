@@ -10,7 +10,7 @@ Profile completion lifecycle
 
 ## Статус
 
-in_progress
+review
 
 ## Приоритет
 
@@ -136,8 +136,10 @@ therefore requires the full process.
 
 ## Подтверждение scope-check
 
-Кто подтвердил: project owner  
-Дата: 2026-07-20  
+Кто подтвердил: project owner
+
+Дата: 2026-07-20
+
 Формат подтверждения: explicit confirmation in the implementation request.
 
 ## План реализации
@@ -179,7 +181,14 @@ therefore requires the full process.
 
 ## Evidence после выполнения
 
-Pending implementation, checks and blind review.
+- Backend unit: 18 suites / 183 tests passed.
+- Backend build and TypeScript lint passed.
+- Prisma generate passed; all migrations deployed to a disposable PostgreSQL 16 test database.
+- Real-PostgreSQL HTTP e2e lifecycle passed.
+- Frontend lint/typecheck/build passed with pre-existing warnings and no errors.
+- `git diff --check` passed.
+- `AGENTS.md` and `docs/QUALITY_GATES.md` are unchanged because Task 021 does not change global workflow, security rules, documentation structure or global gates; its PostgreSQL e2e command is task-specific.
+- Independent blind review pending.
 
 ## Не проверялось
 
@@ -194,3 +203,4 @@ Pending implementation, checks and blind review.
 ## История статуса
 
 - 2026-07-20: created and moved to `in_progress` after owner scope confirmation.
+- 2026-07-20: implementation and required checks completed; moved to `review`.

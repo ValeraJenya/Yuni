@@ -74,7 +74,9 @@ Yuni - monorepo dating app. В репозитории есть:
 
 - Task 000 (project documentation foundation) merged в `main` через PR #24 (`6d3d399`) и закрыта со статусом `done`.
 - Документация README/onboarding синхронизирована с фактическим состоянием кода: реализованные домены auth, profiles, discovery, likes, matches, chat, moderation, notifications и media. Это docs-only изменение без правок кода, API contract, Prisma или Docker.
-- Активных продуктовых задач в работе нет; backlog задач 021–026 описан в `docs/ROADMAP.md`.
+- Task 021 (Profile completion lifecycle) реализована в ветке `codex/task-021-profile-completion-lifecycle` и находится в `review`: backend вычисляет completion из семи обязательных полей и qualifying photo, Discovery использует общий predicate, `profiles.completed_at` удаляется миграцией, frontend использует серверный процент.
+- Проверки Task 021 на ветке: 18 backend suites / 183 unit tests passed; backend build/lint passed; real-PostgreSQL e2e passed; frontend lint/typecheck/build passed с существующими warnings.
+- Backlog задач 022–026 описан в `docs/ROADMAP.md`.
 
 ## Не включено
 

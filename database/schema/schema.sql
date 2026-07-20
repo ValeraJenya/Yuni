@@ -55,13 +55,17 @@ CREATE TABLE profiles (
   latitude numeric(9,6),
   longitude numeric(9,6),
   is_discoverable boolean NOT NULL DEFAULT true,
-  completed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT profiles_handle_not_blank CHECK (length(trim(handle)) > 0),
   CONSTRAINT profiles_handle_format CHECK (handle ~ '^[a-zA-Z0-9_][a-zA-Z0-9_.-]{2,29}$'),
   CONSTRAINT profiles_display_name_not_blank CHECK (length(trim(display_name)) > 0),
-  CONSTRAINT profiles_birth_date_reasonable CHECK (birth_date <= current_date)
+  CONSTRAINT profiles_birth_date_reasonable CHECK (birth_date <= current_date),
+  CONSTRAINT profiles_bio_not_blank_if_set CHECK (bio IS NULL OR length(trim(bio)) > 0),
+  CONSTRAINT profiles_gender_not_blank_if_set CHECK (gender IS NULL OR length(trim(gender)) > 0),
+  CONSTRAINT profiles_looking_for_not_blank_if_set CHECK (looking_for IS NULL OR length(trim(looking_for)) > 0),
+  CONSTRAINT profiles_city_not_blank_if_set CHECK (city IS NULL OR length(trim(city)) > 0),
+  CONSTRAINT profiles_country_not_blank_if_set CHECK (country IS NULL OR length(trim(country)) > 0)
 );
 
 CREATE UNIQUE INDEX profiles_handle_unique_idx ON profiles (lower(handle));

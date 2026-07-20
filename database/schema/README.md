@@ -37,7 +37,7 @@ corepack pnpm docker:migrate
 - `notification_settings` хранит notification preferences.
 - `notifications` хранит in-app notification events с recipient, optional actor, type, message key, read state и optional references на match/conversation/message.
 
-Step 15 Discovery MVP uses the existing `users`, `profiles`, `profile_photos`, `privacy_settings`, `likes`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
+Discovery uses the existing `users`, `profiles`, `profile_photos`, `privacy_settings`, `likes`, `matches` and `blocks` tables. Task 021 removed the unused stored completion timestamp; eligibility now evaluates the shared required-field and qualifying-photo policy directly.
 
 Step 16 Chat MVP uses the existing `conversations`, `conversation_participants`, `messages`, `matches` and `blocks` tables. It does not require a new table, Prisma schema change or migration.
 
@@ -59,7 +59,7 @@ Step 18 Notifications MVP adds the `notifications` table and `NotificationType` 
 
 ## Fixed MVP Rules
 
-- Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, minimum profile completion, block filters и минимум одно approved published public photo.
+- Discovery eligibility требует active user/profile state, включенной profile discoverability, включенной privacy discoverability, вычисленного minimum profile completion, block filters и минимум одно approved published public photo.
 - Chat creation requires a match participant and active match unless an existing conversation already exists. Existing conversations remain available after match expiration.
 - Active block in either direction hides chat list/read access and prevents new messages.
 - Message text is plain text only for MVP, trimmed by backend, non-empty and max `2000` characters.
@@ -78,6 +78,6 @@ Step 18 Notifications MVP adds the `notifications` table and `NotificationType` 
 - Owner checks строить через `user_id` и conversation membership joins.
 - Чтение сообщений должно идти через `conversation_participants` для текущего пользователя.
 - Фото хранят object storage keys и metadata, не бинарники. В profile responses можно отдавать только approved и published photos.
-- Discovery visibility должна проверять `users.status`, `profiles.is_discoverable`, `privacy_settings.discoverable`, `profiles.completed_at`, block state, active LIKE/SKIP cooldowns, active matches и approved published public photo.
+- Discovery visibility должна проверять `users.status`, `profiles.is_discoverable`, `privacy_settings.discoverable`, все обязательные profile fields, block state, active LIKE/SKIP cooldowns, active matches и approved published public photo.
 - Private profile mode должен enforced на backend serializers. User photos в private mode не показываются.
 - Notification responses must use explicit safe shapes and must not expose message bodies, private profile fields, media storage internals, block/report internals or raw Prisma rows.

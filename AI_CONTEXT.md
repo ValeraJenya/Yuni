@@ -96,7 +96,7 @@ corepack pnpm check   # Prisma validate, backend tests, build, lint, frontend ty
 
 | ID | Задача | Приоритет | Статус |
 |---|---|---|---|
-| 021 | Profile completion lifecycle | P0 | research — уточнить completion, discoverability, обязательные поля |
+| 021 | Profile completion lifecycle | P0 | review — computed backend policy, migration, API/frontend integration и PostgreSQL e2e реализованы |
 | 022 | Frontend media URL resolution | P1 | research — единый способ resolution backend media URLs на frontend |
 | 023 | Safe image processing and media lifecycle | P1 | idea — EXIF stripping, image sanitization, pending/private lifecycle |
 

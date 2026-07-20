@@ -12,7 +12,7 @@
 
 ### Profiles
 
-**`profiles`** — один профиль на пользователя. PK: `user_id` (совпадает с `users.id`). FK → `users.id` ON DELETE CASCADE. `handle` unique (case-insensitive через expression index). `birth_date` хранится как DATE; backend вычисляет возраст на момент запроса. `completed_at` — признак завершённости профиля. `is_discoverable` управляет eligibility для discovery.
+**`profiles`** — один профиль на пользователя. PK: `user_id` (совпадает с `users.id`). FK → `users.id` ON DELETE CASCADE. `handle` unique (case-insensitive через expression index). `birth_date` хранится как DATE; backend вычисляет возраст на момент запроса. Completion является вычисляемым backend-состоянием и не хранится в таблице. Nullable required strings (`bio`, `gender`, `looking_for`, `city`, `country`) допускают только `NULL` или trimmed-non-empty смысловое значение; Task 021 нормализует whitespace-only значения в `NULL` и закрепляет это CHECK constraints. `is_discoverable` остаётся отдельным eligibility gate.
 
 **`profile_photos`** — фото профиля. FK `user_id → profiles.user_id` ON DELETE CASCADE. `storage_key` unique; `(user_id, position)` unique. Partial unique index обеспечивает максимум одно `is_primary = true` на пользователя. `moderation_status`: `pending | approved | rejected`. CHECK constraint запрещает `published_at IS NOT NULL` при `moderation_status != 'approved'`.
 

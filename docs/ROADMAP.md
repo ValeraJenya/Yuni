@@ -25,13 +25,14 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 
 ## Сейчас
 
-Нет активных задач.
+| ID | Название | Статус | Priority | Зависимости | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 021 | Profile completion lifecycle | review | P0 | Task 000 | Computed backend policy, API/frontend integration, migration and PostgreSQL e2e implemented; independent review pending. |
 
 ## Запланировано
 
 | ID | Название | Статус | Priority | Зависимости | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 021 | Profile completion lifecycle | research | P0 | Task 000 | Уточнить состояние completion, discoverability и обязательных полей. |
 | 022 | Frontend media URL resolution | research | P1 | Task 000 | Проверить единый способ resolution backend media URLs на frontend. |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF stripping, image sanitization, pending/private lifecycle. Step 20.2 / PR #23 / ca50baf уже создал profile photo storage boundary как основу. |
 | 024 | Atomic block and match lifecycle | idea | P1 | Task 000 | Проверить consistency block/match/chat side effects. |
