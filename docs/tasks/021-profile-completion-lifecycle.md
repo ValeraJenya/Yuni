@@ -10,7 +10,7 @@ Profile completion lifecycle
 
 ## Статус
 
-review
+done
 
 ## Приоритет
 
@@ -188,7 +188,7 @@ therefore requires the full process.
 - Frontend lint/typecheck/build passed with pre-existing warnings and no errors.
 - `git diff --check` passed.
 - `AGENTS.md` and `docs/QUALITY_GATES.md` are unchanged because Task 021 does not change global workflow, security rules, documentation structure or global gates; its PostgreSQL e2e command is task-specific.
-- Independent blind review pending.
+- Independent blind review completed: T021-01 (medium), T021-02 (low) and T021-03 (low) were fixed in `852c67f`, confirmed `resolved`, with no new findings.
 
 ## Не проверялось
 
@@ -204,3 +204,4 @@ therefore requires the full process.
 
 - 2026-07-20: created and moved to `in_progress` after owner scope confirmation.
 - 2026-07-20: implementation and required checks completed; moved to `review`.
+- 2026-07-20: all blind-review findings resolved and rechecked; moved to `done`.

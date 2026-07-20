@@ -4,7 +4,7 @@
 
 Статусы: `done` — реализовано и покрыто тестами; `partial` — реализовано, но с известными ограничениями; `planned` — не реализовано.
 
-Последнее обновление: 2026-07-20. Baseline `6d3d399`; Task 021 изменения проверены в feature branch до independent review.
+Последнее обновление: 2026-07-20. Baseline `6d3d399`; Task 021 изменения проверены в feature branch и прошли independent blind review.
 
 ---
 

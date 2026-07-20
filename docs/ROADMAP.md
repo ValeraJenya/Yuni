@@ -25,9 +25,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 
 ## Сейчас
 
-| ID | Название | Статус | Priority | Зависимости | Notes |
-| --- | --- | --- | --- | --- | --- |
-| 021 | Profile completion lifecycle | review | P0 | Task 000 | Computed backend policy, API/frontend integration, migration and PostgreSQL e2e implemented; independent review pending. |
+Нет активных задач.
 
 ## Запланировано
 
@@ -46,6 +44,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | --- | --- | --- | --- | --- |
 | 000 | Project documentation foundation | done | P0 | PR #24 / 6d3d399 |
 | Step 20.2 | Profile photo storage boundary | done | P0 | PR #23 / ca50baf |
+| 021 | Profile completion lifecycle | done | P0 | Branch commits `3abd405`–`852c67f`; checks and independent blind review passed. |
 
 ## Отложено
 
