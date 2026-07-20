@@ -1,308 +1,112 @@
-## ID
+# Task 027 — Этапный чат: схема и бэкенд
 
-027
+## Метаданные
 
-## Название
+- Статус: `in_progress`
+- Приоритет: P1
+- Owner: TBD — требует назначения
+- Executor: TBD — требует назначения
+- Reviewer: TBD — требует назначения
+- Создана: 2026-06-28
+- Последнее обновление: 2026-07-21
+- Базовая реализация: PR #29 / commit `5e38042`
 
-Этапный чат — схема и бэкенд
+## Проблема и цель
 
-## Статус
+После создания матча пользователи попадали в пустой чат без контекста. Цель Task 027 — дать backend-контракт трёх этапов общения, игровых вопросов, стартовых фраз и ограничений возможностей по этапу.
 
-done
+Task 028 и Task 029 зарезервированы соответственно для UI игр/анимаций и frontend этапов staged-chat. Их scope и статус эта задача не меняет.
 
-## Приоритет
+## Фактически реализовано
 
-P1
+### Схема и staged metadata
 
-## Owner
+- `Conversation` хранит `stage`, timestamps начала/обновления этапов и голосовые totals обоих участников.
+- `Message` хранит nullable `voiceDurationSec`, `messageWeight` и `isSystemMessage`; у системного сообщения `senderUserId=null`.
+- Добавлены `ChatGame`, `GameAnswer` и `ConversationStarter`.
+- Новый conversation создаётся на этапе 1; backend является источником истины для stage.
 
-TBD
+### HTTP API
 
-## Executor
+Помимо list/read/send реализованы пять staged-endpoints:
 
-TBD
-
-## Reviewer
-
-TBD
-
-Для задач вне облегчённого режима reviewer должен быть назначен до merge.
-См. `docs/AI_REVIEW_PROTOCOL.md`.
-
-## Создана
-
-2026-06-28
-
-## Последнее обновление
-
-2026-06-28
-
-## Связанный audit finding / ADR / PR
-
-Зависит от Task 018 (Chat MVP, PR #18, done).
-
-## Проблема
-
-После создания матча пользователи попадают в пустой чат без контекста. Начать разговор с незнакомым человеком сложно: нет точки входа, нет структуры.
-
-## Цель
-
-Реализовать backend этапного чата: схему данных, логику переходов между этапами, механику игр и стартовых фраз. Новый чат создаётся с `stage=1`; переход между этапами происходит автоматически по завершении игр. Фронтенд (Task 028, 029) может опираться на готовые эндпоинты.
-
-## Зависимости
-
-- Task 018 (Chat MVP) — done; задача расширяет существующую модель `Conversation` и `Message`
-
-## Блокирует
-
-- Task 028 — UI игр и анимации
-- Task 029 — Фронтенд этапов
-
-## Затрагиваемые модули
-
-- `chat` (основной)
-- `prisma` (миграции)
-
-## Разрешённый scope
-
-- `apps/backend/prisma/schema.prisma` — добавить поля в `Conversation`, `Message`; новые модели `ChatGame`, `GameAnswer`, `ConversationStarter`
-- `apps/backend/prisma/migrations/` — новая миграция
-- `apps/backend/src/modules/chat/` — новые эндпоинты, обновить `POST /messages`
-- `docs/` — обновить API-документацию при изменении контракта
-
-## Явно запрещённый scope
-
-- UI игр и анимации (Task 028)
-- Фронтенд этапов (Task 029)
-- Голосовые сообщения как отдельная фича (отдельная задача)
-- Файловые вложения (отдельная задача)
-- Скрытые профили и их автораскрытие (отдельная задача)
-
-## Факты
-
-- Текущий чат: plain text only, без этапов, без игр (`apps/backend/src/modules/chat/`)
-- `Conversation` не имеет поля `stage`; `Message` не имеет `voiceDurationSec` / `messageWeight`
-- Игровые модели (`ChatGame`, `GameAnswer`) отсутствуют в схеме
-- Backend tests: `apps/backend/src/modules/chat/chat.service.spec.ts`
-
-## Принятые решения
-
-### Этапы общения
-
-| Этап | Доступно | Условие перехода на следующий |
+| Метод | Путь | Назначение |
 |---|---|---|
-| 1 — Начало знакомства | Только текст | 2 завершённые игры |
-| 2 — Среднее общение | Текст + голосовые (с лимитами) | 3–4 завершённые игры (уточнить — см. открытые вопросы) |
-| 3 — Конечный | Текст + голос + вложения | — |
+| `GET` | `/chat/conversations/:conversationId/stage` | stage, timestamps и voice limits текущего участника |
+| `GET` | `/chat/starters` | до четырёх активных стартовых фраз |
+| `GET` | `/chat/conversations/:conversationId/game/current` | текущая доступная игра или `null` |
+| `POST` | `/chat/conversations/:conversationId/game/postpone` | отложить текущую игру один раз на минуту |
+| `POST` | `/chat/conversations/:conversationId/game/:gameId/answer` | записать ответ участника |
 
-При переходе 1→2: системное сообщение `"🎉 Вы хорошо познакомились! Теперь доступны голосовые сообщения"`.
-При переходе 2→3: системное сообщение `"🎊 Отличное общение! Теперь все возможности открыты"`.
+Все conversation/game endpoints выполняют participant/visibility checks через chat service. `GET /chat/starters` возвращает только активные записи.
 
-### Стартовые фразы
+### Этапы, сообщения и игры
 
-При открытии нового чата первому пользователю показывается 3–4 варианта фраз (из `ConversationStarter`). Выбранная фраза отправляется как обычное сообщение. После первого сообщения подсказки исчезают.
+- Stage 1: voice запрещён; игры создаются на thresholds 5 и 10 условных сообщений.
+- Stage 2: voice metadata разрешена; одна запись ограничивается 60 секундами, общий persisted total участника — 90 секунд; игры создаются на thresholds 5, 10 и 15.
+- Stage 3: снимает staged-запреты на voice/attachment message type, но сам файл вложения или audio backend не принимает.
+- Text/attachment message имеет `messageWeight=1`; voice — `MAX(1, FLOOR(voiceDurationSec / 15))`.
+- Игра завершается после ответов обоих участников; два завершённых game на stage 1 переводят conversation на stage 2, три на stage 2 — на stage 3.
+- При переходах создаются системные сообщения с `isSystemMessage=true` и `senderUserId=null`.
+- Один пользователь не может ответить на одну игру дважды; postpone ограничен одним разом.
 
-### Логика появления игр
+## Реализовано частично
 
-**Этап 1:**
-- Игра 1 → после 5-го сообщения
-- Игра 2 → после 10-го сообщения
-- Обе завершены → переход на этап 2
+- Последовательный send на stage 2 ограничивает переданное значение `voiceDurationSec` остатком от 90 секунд и атомарно увеличивает persisted total вместе с созданием сообщения.
+- Unit-покрытие проверяет основную staged-логику, но не доказывает поведение конкурентных запросов в PostgreSQL.
+- Пул игровых вопросов находится в коде, однако стартовые фразы читаются из отдельной таблицы и требуют данных.
+- `messageType=attachment` проходит staged gate только на stage 3, но transport/storage вложений не реализован.
 
-**Этап 2:**
-- Игра 3 → после 5-го сообщения на этапе 2
-- Игра 4 → после 10-го сообщения
-- Игра 5 (опционально) → после 15-го сообщения
-- Все завершены → переход на этап 3
+## Подтверждённые открытые gaps
 
-### Правила игр
+1. Одновременные первые ответы двух участников могут оставить игру без `completedAt`. Игра и число ответов читаются вне завершающей транзакции; при PostgreSQL `READ COMMITTED` оба запроса могут не увидеть ответ друг друга. Это Task 043.
+2. Параллельные voice sends могут превысить общий лимит 90 секунд: остаток вычисляется по ранее прочитанному conversation. `voiceDurationSec` — клиентское число; backend не проверяет реальный audio-файл и физически его не обрезает. Это Task 044.
+3. Миграция создаёт `conversation_starters`, но seed/`INSERT`/`createMany` отсутствуют. На чистой БД `GET /chat/starters` возвращает пустой список. Это Task 045.
+4. Frontend DTO объявляет `ChatMessage.senderUserId` как обязательный `string`, хотя системные сообщения возвращают `null`; contract tests staged-response ↔ frontend DTO отсутствуют. Это Task 048.
 
-- Игра считается завершённой, когда оба участника ответили (`completedAt` проставляется)
-- Игра не создаётся пока кто-то печатает (фронтенд контролирует отображение; бэкенд отдаёт `current`)
-- Можно отложить игру 1 раз на 1 минуту (`postponeCount` max 1)
-- После истечения минуты игра появляется снова; повторное откладывание → `403`
-- Один и тот же вопрос не повторяется в рамках одного чата
+## Вынесенные задачи
 
-### Подсчёт условных сообщений
+| Task | Scope |
+|---|---|
+| 043 | Атомарное завершение игры при конкурентных ответах и real-DB race test |
+| 044 | Конкурентно безопасный voice total; server-verified audio duration/обрезка |
+| 045 | Воспроизводимый seed стартовых фраз и проверка clean database |
+| 048 | Nullable system sender и contract tests backend response/frontend DTO |
 
-- Текстовое: `messageWeight = 1`
-- Голосовое: `messageWeight = MAX(1, FLOOR(duration / 15))`
+## Продуктовая спецификация
 
-### Ограничения голосовых на этапе 2
+Ниже описан целевой UX; это не утверждение о полном текущем поведении.
 
-- Максимальная длина одного голосового: 60 сек
-- Суммарный лимит на одного участника за весь этап 2: 90 сек
-- `maxRecordTime = MIN(60, 90 - user_voice_total_sec)`
-- Когда лимит заканчивается во время записи: бэкенд физически обрезает аудио до остатка лимита (защита от DevTools / подмены длительности)
-- `user1VoiceTotalSec` / `user2VoiceTotalSec` хранятся в `Conversation`
-
-## Открытые вопросы
-
-- Фиксированное число игр на этапе 2 (3 или 4) — решить до начала реализации
-- Нужен ли отдельный `messageType` для системных сообщений о переходе этапа? Или достаточно обычного сообщения от системного actor?
-
-## Инварианты
-
-- Новый `Conversation` всегда создаётся с `stage=1`
-- `stage` на бэкенде — единственный источник истины; фронтенд не может передать `stage`
-- `voiceDurationSec` на бэкенде всегда проверяется и при необходимости обрезается
-- `postponeCount` не может превысить 1 для одной игры
-- Один пользователь не может оставить два `GameAnswer` для одной игры
-- Один и тот же вопрос (`ChatGame.question`) не повторяется в одном `Conversation`
-
-## Security checks
-
-- Owner / participant check на все новые эндпоинты (через `assertConversationMember`)
-- `stage` никогда не принимается от фронтенда; только читается из БД
-- `voiceDurationSec` принимается от фронтенда только как подсказка; бэкенд всегда верифицирует и обрезает аудио
-- `postponeCount` проверяется на бэкенде перед откладыванием; `403` при попытке превысить лимит
-- Дубль `GameAnswer` (один пользователь, одна игра) отклоняется через DB unique constraint или application check
-
-## Scope-check
-
-Задача затрагивает `chat`, `database/migrations`, API contract → требует полного процесса.
-
-## Подтверждение scope-check
-
-Кто подтвердил: TBD
-Дата: TBD
-Формат подтверждения: TBD
-
-## Изменения схемы Prisma
-
-### `Conversation` — добавить поля
-
-```prisma
-stage             Int       @default(1)
-stage1StartedAt   DateTime?
-stage2StartedAt   DateTime?
-stage3StartedAt   DateTime?
-stageUpdatedAt    DateTime?
-user1VoiceTotalSec Int      @default(0)
-user2VoiceTotalSec Int      @default(0)
-```
-
-### `Message` — добавить поля
-
-```prisma
-voiceDurationSec  Int?
-messageWeight     Int       @default(1)
-```
-
-### Новые модели
-
-```prisma
-model ChatGame {
-  id              String    @id @default(uuid())
-  conversationId  String
-  stage           Int
-  gameType        String
-  question        String
-  options         Json?
-  shownAt         DateTime  @default(now())
-  completedAt     DateTime?
-  postponedUntil  DateTime?
-  postponeCount   Int       @default(0)
-  conversation    Conversation @relation(fields: [conversationId], references: [id])
-  answers         GameAnswer[]
-}
-
-model GameAnswer {
-  id          String    @id @default(uuid())
-  gameId      String
-  userId      String
-  answer      String
-  answeredAt  DateTime  @default(now())
-  game        ChatGame  @relation(fields: [gameId], references: [id])
-}
-
-model ConversationStarter {
-  id        String  @id @default(uuid())
-  text      String
-  isActive  Boolean @default(true)
-}
-```
-
-## Новые эндпоинты
-
-| Метод | Путь | Описание |
+| Этап | Целевые возможности | Условие перехода |
 |---|---|---|
-| `GET` | `/chat/conversations/:id/stage` | Текущий этап, счётчики, voiceLimits |
-| `GET` | `/chat/starters` | Список активных стартовых фраз |
-| `GET` | `/chat/conversations/:id/game/current` | Текущая активная игра (если есть) |
-| `POST` | `/chat/conversations/:id/game/postpone` | Отложить игру (max 1 раз) |
-| `POST` | `/chat/conversations/:id/game/:gameId/answer` | Отправить ответ на игру |
+| 1 — начало знакомства | text, стартовые фразы, две игры | 2 завершённые игры |
+| 2 — среднее общение | text + voice с лимитами, три игры | 3 завершённые игры |
+| 3 — открытое общение | text + voice + attachments | конечный этап |
 
-### Обновить `POST /chat/conversations/:id/messages`
+Целевой UX стартовых фраз показывает 3–4 варианта до первого сообщения. Для production voice flow backend должен получать реальный файл, самостоятельно определять длительность и физически обрезать данные до разрешённого остатка; текущая реализация этого не делает.
 
-Добавить проверки:
-- Этап 1 + voice → `403`
-- Этап 1 или 2 + attachment → `403`
-- Voice → проверить лимит `voiceTotalSec`, обрезать аудио если нужно
-- После каждого сообщения → проверить, нужна ли новая игра (`messageWeight` накапливается)
+## Почему статус `in_progress`
 
-## План реализации
+PR #29 доставил базовую схему и staged-chat backend, но исходная цель не доказана полностью:
 
-1. Миграция: добавить поля в `Conversation` и `Message`, создать `ChatGame`, `GameAnswer`, `ConversationStarter`
-2. Обновить `ChatService.startConversation` → `stage=1`, `stage1StartedAt=now()`
-3. Обновить `ChatService.sendMessage` → считать `messageWeight`, накапливать счётчик, проверять игры, применять голосовые ограничения
-4. Реализовать `GET /stage`, `GET /starters`, `GET /game/current`
-5. Реализовать `POST /game/postpone` и `POST /game/:gameId/answer`
-6. Реализовать автопереход этапов + системные сообщения
-7. Добавить seed для `ConversationStarter` и пула вопросов для `ChatGame`
-8. Тесты для всех новых сервисных методов
+- не закрыты Tasks 043–045 и 048;
+- Owner, Executor и Reviewer не назначены;
+- нет real-PostgreSQL concurrency evidence для первых game answers и параллельных voice sends;
+- нет clean-DB проверки непустого starter catalog;
+- нет проверки реального audio duration/trimming;
+- нет contract tests между backend staged responses и frontend DTO.
 
-## План проверки
+## Definition of Done для закрытия
 
-- Новый чат создаётся с `stage=1`
-- `GET /stage` возвращает корректные данные (`stage`, счётчики, `voiceLimits`)
-- После 5 сообщений создаётся `ChatGame` запись
-- Голосовое на этапе 1 → `403`
-- Голосовое при остатке лимита 20 сек → аудио обрезается до 20 сек
-- Попытка отложить игру второй раз → `403`
-- Оба ответили → `completedAt` проставляется
-- После 2 завершённых игр → `stage` меняется на `2`, `stage2StartedAt` проставляется
-- Системное сообщение появляется при переходе этапа
-- Один и тот же вопрос не повторяется в рамках одного чата
-
-## Ручные проверки
-
-- Зарегистрировать двух пользователей, создать матч, открыть чат
-- Отправить 5 сообщений → проверить появление игры через `GET /game/current`
-- Ответить на игру от обоих → проверить `completedAt`
-- Попробовать отправить voice на этапе 1 → ожидать `403`
-- Отложить игру → попробовать ещё раз → ожидать `403`
-- Завершить 2 игры → проверить `stage=2` через `GET /stage`
-- Проверить системное сообщение в `GET /messages` при переходе
-
-## Definition of Done
-
-- Миграция применяется без ошибок
-- Все новые эндпоинты возвращают корректные данные
-- `POST /messages` применяет ограничения по этапам
-- Backend tests покрывают: переходы этапов, лимиты голосовых, логику игр, owner checks
-- Контракт эндпоинтов задокументирован в `docs/api/README.md`
-- `PROJECT_STATE.md` и `ROADMAP.md` обновлены после merge
-
-## Документация для обновления
-
-- `docs/api/README.md` — новые эндпоинты
-- `docs/PROJECT_STATE.md` — после merge
-- `docs/ROADMAP.md` — статус `done` после merge
-
-## Evidence после выполнения
-
-- TBD
-
-## Не проверялось
-
-- Race condition при одновременной отправке последнего сообщения обоими участниками (переход этапа) — требует интеграционного теста с реальной БД
-
-## Known limitations
-
-- Голосовые сообщения как фича не реализованы; поля `voiceDurationSec` и лимиты добавляются заранее для Task 028/029
-- Физическая обрезка аудио на бэкенде требует audio processing библиотеки — выбор библиотеки фиксируется в начале реализации
+- устранены или явно выведены из Task 027 с принятым owner-ом все четыре gaps;
+- добавлено real-DB evidence для concurrency-sensitive сценариев;
+- стартовые фразы воспроизводимо доступны на чистой БД;
+- реальный voice contract соответствует security claims;
+- backend/frontend staged DTO согласованы контрактными тестами;
+- назначен независимый reviewer и приложено evidence применимых checks.
 
 ## История статуса
 
-- 2026-06-28: created, status approved.
+- 2026-06-28: created, status `approved`.
+- 2026-06-30: PR #29 / `5e38042` реализовал базовую staged-chat схему и backend.
+- 2026-07-21: после двух независимых blind audits статус исправлен с `done` на `in_progress`; подтверждённые gaps выделены в Tasks 043, 044, 045 и 048.

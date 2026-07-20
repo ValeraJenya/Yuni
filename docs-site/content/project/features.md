@@ -8,7 +8,7 @@ weight: 30
 
 Статусы: `done` — реализовано и покрыто тестами; `partial` — реализовано, но с известными ограничениями; `planned` — не реализовано.
 
-Последнее обновление: 2026-06-26. Проверено на commit `6d3d399`.
+Последнее обновление: 2026-07-21. Проверено на commit `5779763`.
 
 ## Сводная таблица по доменам
 
@@ -20,7 +20,7 @@ weight: 30
 | Discovery | GET /cards | discover page, swipe, like/skip | ✓ | `done` |
 | Likes | like, skip | swipe actions + match overlay | ✓ | `done` |
 | Matches | GET /me, start conversation | matches page | ✓ | `done` |
-| Chat | conversations, messages, send | messages page | ✓ | `done` — нет realtime |
+| Chat | conversations, staged metadata, games, starters | messages page | ✓ | `partial` — concurrency/voice/seed gaps |
 | Moderation | block/unblock/list, report | action из matches page | ✓ | `done` — нет admin UI |
 | Notifications | list, unread-count, mark read | notifications page | ✓ | `done` — нет push/realtime |
 | Password reset | **нет** | UI stub (mock) | — | `planned` |
@@ -103,15 +103,20 @@ weight: 30
 
 ## Chat
 
-**Статус:** `done`
+**Статус:** `partial`
 
 | Аспект | Состояние |
 |---|---|
-| Endpoints | `GET /chat/conversations`, `GET /chat/conversations/:conversationId/messages`, `POST /chat/conversations/:conversationId/messages` |
-| Message limits | max 2000 символов, plain text only |
+| Endpoints | list/read/send плюс stage, starters и game current/postpone/answer |
+| Staged mechanics | stages 1–3; игры по message weight; system transition messages |
+| Message contract | text, `voiceDurationSec`, `messageWeight`, `isSystemMessage` |
 | Rate limits | 30 msg/min + 120 msg/10min |
 
-**Ограничения:** WebSocket/realtime не реализован. Read receipts, typing indicators, вложения не реализованы.
+**Ограничения:** WebSocket/realtime не реализован. `voiceDurationSec` доверяет числу клиента, реальной загрузки/обрезки audio нет. Concurrent game answers и voice sends имеют race conditions. Starter seed отсутствует.
+
+## Test inventory
+
+В репозитории зафиксированы 18 backend unit-spec файлов и 1 e2e-файл `profile-completion.e2e-spec.ts`. Docs-only синхронизация не утверждает число passed tests.
 
 ## Moderation (Blocks & Reports)
 
