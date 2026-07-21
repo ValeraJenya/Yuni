@@ -26,7 +26,7 @@ Yuni — dating app в монорепозитории. Стек: Next.js fronten
 | Moderation | block/unblock/list, report | `done` |
 | Notifications | list, unread-count, mark read/all | `done` |
 
-Инвентарь backend-тестов: 18 unit-spec файлов и 1 e2e-файл `profile-completion.e2e-spec.ts`. Это inventory, а не результат прогона.
+Инвентарь backend-тестов: 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts). Это inventory, а не результат прогона.
 
 **Не реализовано (known limitations):**
 - EXIF stripping и image sanitization
