@@ -100,7 +100,7 @@ Self profile may include:
 - `birthDate`;
 - `bio`, `gender`, `lookingFor`, `city`, `country`;
 - `isDiscoverable`;
-- `completedAt`;
+- computed `completion` containing only `isComplete`, the allowlisted `missingFields` keys and `percentage`;
 - own photos with `moderationStatus`.
 
 Self profile must not include:
@@ -243,6 +243,9 @@ Conversation list responses may include only:
 - `lastMessage.conversationId`;
 - `lastMessage.senderUserId`;
 - `lastMessage.text`;
+- `lastMessage.voiceDurationSec` when present;
+- `lastMessage.messageWeight` when present;
+- `lastMessage.isSystemMessage`;
 - `lastMessage.status`;
 - `lastMessage.createdAt`;
 - `updatedAt`;
@@ -253,11 +256,26 @@ Message list and send responses may include only:
 
 - `message.id`;
 - `message.conversationId`;
-- `message.senderUserId`;
+- nullable `message.senderUserId`;
 - `message.text`;
+- `message.voiceDurationSec` when present;
+- `message.messageWeight` when present;
+- `message.isSystemMessage`;
 - `message.status`;
 - `message.createdAt`;
 - `nextCursor` for list responses.
+
+Staged-chat responses may include only:
+
+- `voiceDurationSec` (Int?) — длительность голосового в секундах;
+- `messageWeight` (Int) — вес сообщения для подсчёта прогресса;
+- `isSystemMessage` (Boolean) — флаг системного сообщения;
+- `stage` (Int) — текущая стадия conversation;
+- `gamesCompleted` (Int) — количество завершённых игр;
+- `postponeCount` (Int) — количество отложений игры;
+- stage response: `stage`, nullable `stageStartedAt`, nullable `stageUpdatedAt` and `voiceLimits.maxRecordTimeSec`, `currentUserTotalSec`, `totalLimitSec`, `perMessageLimitSec`;
+- starters response: `starters[].id` and `starters[].text`;
+- current/postpone/answer game response: nullable `game` with `id`, `conversationId`, `stage`, `gameType`, `question`, nullable `options`, `shownAt`, nullable `completedAt`, nullable `postponedUntil` and `postponeCount`.
 
 Chat responses must not expose:
 
@@ -267,6 +285,8 @@ Chat responses must not expose:
 - `deletedAt`;
 - `editedAt`;
 - participant relation objects;
+- game answer rows or answer authors;
+- the other participant's voice total;
 - email;
 - `birthDate`;
 - password or `passwordHash`;
