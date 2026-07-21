@@ -6,7 +6,7 @@ Quick onboarding for any AI agent or LLM. Read this file first; follow links onl
 
 ## 1. Что за проект
 
-Yuni — dating app в монорепозитории. Стек: Next.js frontend, NestJS backend, PostgreSQL + Prisma, Docker Compose для локальной разработки. Production deployment не реализован. Разработка ведётся локально; CI запускается на GitHub Actions при PR и push в `main`. Verified state: commit `6d3d399`, 2026-06-26.
+Yuni — dating app в монорепозитории. Стек: Next.js frontend, NestJS backend, PostgreSQL + Prisma, Docker Compose для локальной разработки. Production deployment не реализован. Разработка ведётся локально; CI запускается на GitHub Actions при PR и push в `main`. Verified state: commit `5779763`, 2026-07-21.
 
 ---
 
@@ -22,16 +22,18 @@ Yuni — dating app в монорепозитории. Стек: Next.js fronten
 | Discovery | GET /cards (cursor, max 20) | `done` |
 | Likes | like, skip/pass | `done` |
 | Matches | GET /me, start conversation | `done` |
-| Chat | conversations, messages, send | `done` |
+| Chat | conversations, messages, staged-chat metadata/games/starters | `partial` |
 | Moderation | block/unblock/list, report | `done` |
 | Notifications | list, unread-count, mark read/all | `done` |
 
-Backend: 17 spec files, 166 tests passed.
+Инвентарь backend-тестов: 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts). Это inventory, а не результат прогона.
 
 **Не реализовано (known limitations):**
 - EXIF stripping и image sanitization
 - Object storage / CDN (только local adapter в `uploads/`)
 - Realtime / WebSocket для chat и notifications
+- Staged-chat concurrency guarantees для завершения игр и voice totals
+- Реальная загрузка/проверка/обрезка voice media и seed стартовых фраз
 - Production deployment architecture
 - Email verification, password reset backend
 - Admin/moderation panel
@@ -96,9 +98,9 @@ corepack pnpm check   # Prisma validate, backend tests, build, lint, frontend ty
 
 | ID | Задача | Приоритет | Статус |
 |---|---|---|---|
-| 021 | Profile completion lifecycle | P0 | research — уточнить completion, discoverability, обязательные поля |
-| 022 | Frontend media URL resolution | P1 | research — единый способ resolution backend media URLs на frontend |
-| 023 | Safe image processing and media lifecycle | P1 | idea — EXIF stripping, image sanitization, pending/private lifecycle |
+| 024 | Atomic block and match lifecycle | P1 | in_progress — Match закрывается, Conversation остаётся активным |
+| 027 | Этапный чат — схема и бэкенд | P1 | in_progress — базовая реализация есть, остаются выделенные gaps |
+| 057 | Privacy/notification settings API | P0 | idea — UI-настройки не имеют backend API |
 
 Полный backlog: `docs/ROADMAP.md`.
 

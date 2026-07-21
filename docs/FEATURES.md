@@ -4,7 +4,7 @@
 
 Статусы: `done` — реализовано и покрыто тестами; `partial` — реализовано, но с известными ограничениями; `planned` — не реализовано.
 
-Последнее обновление: 2026-06-26. Проверено на commit `6d3d399` (`origin/main`).
+Последнее обновление: 2026-07-21. Проверено на commit `5779763`. После merge PR #31–#33 в `main`; Task 021 изменения прошли independent blind review.
 
 ---
 
@@ -37,9 +37,10 @@
 | Frontend UI | profile page: просмотр, редактирование полей (displayName, bio, city, country, gender, lookingFor, isDiscoverable) | `apps/frontend/app/(app)/profile/page.tsx` |
 | Frontend API client | `profileApi` | `apps/frontend/lib/profile-api.ts` |
 | Backend tests | `profiles.service.spec.ts` | `apps/backend/src/modules/profiles/profiles.service.spec.ts` |
+| Profile completion | вычисляется backend из 7 обязательных полей + qualifying photo; self API возвращает `completion` | `apps/backend/src/modules/profiles/profile-completion.policy.ts` |
 
 **Ограничения:**
-- Profile completion lifecycle (обязательные поля, discoverability) уточняется в Task 021 (backlog).
+- `gender` и `lookingFor` временно остаются непустыми free-text строками; canonical enum contract требует отдельной задачи.
 - Поля interests, height, occupation, education присутствуют в frontend типах и mock-data, но не реализованы в backend profile schema как часть текущего MVP.
 
 ---
@@ -76,7 +77,7 @@
 | Frontend UI | discover page: карточки профилей с reveal-эффектом, swipe actions (like/skip) | `apps/frontend/app/(app)/discover/page.tsx`, `apps/frontend/features/discover/` |
 | Frontend API client | `discoveryApi` | `apps/frontend/lib/discovery-api.ts` |
 | Backend tests | `discovery.service.spec.ts` | `apps/backend/src/modules/discovery/discovery.service.spec.ts` |
-| Backend filters | исключает: self, inactive users, is_discoverable=false, нет completed_at, нет approved фото, active block в любую сторону, active LIKE/SKIP cooldown, active match | `docs/api/README.md` |
+| Backend filters | исключает: self, inactive users, is_discoverable=false, computed-incomplete profile, нет approved/published public photo, active block в любую сторону, active LIKE/SKIP cooldown, active match | `docs/api/README.md` |
 | Rate limits | 120 req/10min/user | `docs/api/README.md` |
 
 **Ограничения:**
@@ -128,23 +129,26 @@
 
 ## Chat
 
-**Статус:** `done`
+**Статус:** `partial`
 
 | Аспект | Состояние | Источник |
 |---|---|---|
-| Backend endpoints | `GET /chat/conversations`, `GET /chat/conversations/:conversationId/messages`, `POST /chat/conversations/:conversationId/messages` | `apps/backend/src/modules/chat/chat.controller.ts` |
+| Backend endpoints | list/read/send плюс stage, starters и game current/postpone/answer | `apps/backend/src/modules/chat/chat.controller.ts` |
 | Frontend UI | messages page: список conversations + просмотр + отправка сообщений | `apps/frontend/app/(app)/messages/page.tsx` |
 | Frontend API client | `chatApi` | `apps/frontend/lib/chat-api.ts` |
 | Backend tests | `chat.service.spec.ts` | `apps/backend/src/modules/chat/chat.service.spec.ts` |
 | Access control | send разрешён только active participant в active conversation; active block в любую сторону возвращает `403` | `docs/api/README.md` |
-| Message limits | max text 2000 символов; plain text only; тело не логируется | `docs/api/README.md` |
+| Message contract | text, staged metadata, voice duration/weight и system transition messages; тело не логируется | `docs/api/README.md` |
+| Staged mechanics | stages 1–3, игры по message-weight thresholds, postpone один раз, переходы после 2/3 завершённых игр | `apps/backend/src/modules/chat/chat.service.ts` |
 | Rate limits | 30 msg/min + 120 msg/10min | `docs/api/README.md` |
 
 **Ограничения:**
 - WebSocket/realtime **не реализован**; polling или ручное обновление.
 - Read receipts не реализованы.
 - Typing indicators не реализованы.
-- Вложения/медиа-сообщения не реализованы.
+- Настоящая загрузка/проверка длительности/обрезка voice media не реализована; `voiceDurationSec` — число от клиента.
+- На чистой БД `GET /chat/starters` возвращает пустой список: seed отсутствует.
+- Concurrent game answers и voice sends не защищены от подтверждённых race conditions.
 - Поиск по чату не реализован.
 
 ---
@@ -203,7 +207,7 @@
 | Security helpers | `assertOwner`, `assertConversationMember`, `assertMatchParticipant`, `assertCanAccessProfile`, `assertCanAccessPhoto` | `apps/backend/src/common/security/access-control.spec.ts` |
 | Docker Compose | local development workflow (postgres + backend + frontend) | `docker-compose.yml`, `docs/onboarding/local-docker-workflow.md` |
 | CI | GitHub Actions `quality-gates` на PR и push в main | `.github/` |
-| Backend tests | 17 spec files, 166 tests passed (verified on ca50baf) | `apps/backend/src/`, `docs/PROJECT_STATE.md` |
+| Backend test inventory | 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts) | `apps/backend/src/`, `apps/backend/test/` |
 | Frontend tests | отсутствуют | — |
 | Production deployment | **не реализован** | `docs/PROJECT_STATE.md` |
 | Demo mode | `DemoSessionProvider` (sessionStorage); `DemoGate` UI | `apps/frontend/lib/demo-session.tsx`, `apps/frontend/features/app-shell/components/demo-gate.tsx` |
@@ -220,7 +224,7 @@
 | Discovery | GET /cards | discover page, swipe, like/skip | ✓ | `done` |
 | Likes | like, skip | swipe actions + match overlay | ✓ | `done` |
 | Matches | GET /me, start conversation | matches page | ✓ | `done` |
-| Chat | conversations, messages, send | messages page | ✓ | `done` — нет realtime |
+| Chat | conversations, staged metadata, games, starters | messages page | ✓ | `partial` — concurrency/voice/seed gaps |
 | Moderation | block/unblock/list, report | action из matches page | ✓ | `done` — нет admin UI |
 | Notifications | list, unread-count, mark read | notifications page | ✓ | `done` — нет push/realtime |
 | Password reset | **нет** | UI stub (mock) | — | `planned` |
