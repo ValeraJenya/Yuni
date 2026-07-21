@@ -10,6 +10,6 @@ weight: 20
 | 021 | [Profile completion lifecycle]({{< relref "/tasks/021" >}}) | P0 | research |
 | 022 | [Frontend media URL resolution]({{< relref "/tasks/022" >}}) | P1 | research |
 | 023 | [Safe image processing and media lifecycle]({{< relref "/tasks/023" >}}) | P1 | idea |
-| 024 | [Atomic block and match lifecycle]({{< relref "/tasks/024" >}}) | P1 | idea |
+| 024 | [Atomic block and match lifecycle]({{< relref "/tasks/024" >}}) | P1 | in_progress |
 | 025 | [Production deployment readiness]({{< relref "/tasks/025" >}}) | P1 | idea |
 | 026 | [PostgreSQL integration checks in CI]({{< relref "/tasks/026" >}}) | P2 | idea |

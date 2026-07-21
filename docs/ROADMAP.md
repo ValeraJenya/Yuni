@@ -36,7 +36,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | --- | --- | --- | --- | --- | --- |
 | 022 | Frontend media URL resolution | research | P1 | Task 000 | Только profile page resolves relative uploads; Discovery, matches и messages используют URL как есть. |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |
-| 024 | Atomic block and match lifecycle | in_progress | P1 | Task 000 | PR #31 атомарно создаёт Block и закрывает active Match; Conversation не закрывается, а unblock восстанавливает доступ к старой переписке. |
+| 024 | Atomic block and match lifecycle | in_progress | P1 | Task 000 | Матчевая часть реализована (PR #31). Conversation при блокировке не закрывается — остаётся scope задачи. |
 | 025 | Production deployment readiness | idea | P1 | Task 000 | Deployment architecture, secrets, HTTPS, reverse proxy. |
 | 026 | PostgreSQL integration checks in CI | idea | P2 | Task 000 | Общий integration gate; текущий workflow не поднимает Postgres (Task 058), journey coverage — Task 053. |
 | 027 | Этапный чат — схема и бэкенд | in_progress | P1 | Task 018 | Базовый backend реализован; открытые gaps вынесены в Task 043/044/045/048. |
