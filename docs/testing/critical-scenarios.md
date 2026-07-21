@@ -79,6 +79,8 @@ Spec: `apps/backend/src/modules/profiles/profiles.service.spec.ts`
 | Сценарий | Тип | Что проверяется | Статус |
 |---|---|---|---|
 | GET /profiles/me для активного пользователя | happy | self-поля включены, `storageKey` отсутствует | `covered` |
+| Вычисленный completion | happy | стабильные missing fields, 8 gates, percentage и qualifying-photo predicate | `covered` |
+| Nullable/empty/whitespace required fields | negative | поле считается отсутствующим; Prisma predicate защищён DB CHECK invariant | `covered` |
 | GET /profiles/me для disabled/deleted пользователя | negative | `UnauthorizedException`, profile.findUnique не вызывается | `covered` |
 | GET /profiles/me когда profile row отсутствует | negative | `NotFoundException` | `covered` |
 | PATCH /profiles/me: обновляются только переданные поля | happy | `userId` берётся только из токена, не из body | `covered` |
@@ -128,7 +130,7 @@ Spec: `apps/backend/src/modules/discovery/discovery.service.spec.ts`
 | Inactive текущий пользователь | negative | `UnauthorizedException` до DB-запроса | `covered` |
 | Self-exclusion | negative | `userId: { not: CURRENT_USER.id }` в query | `covered` |
 | Inactive/deleted target users excluded | negative | `user.status=active`, `deletedAt=null` в where | `covered` |
-| Non-discoverable, incomplete, private, non-discoverable PrivacySettings | negative | `isDiscoverable=true`, `completedAt: not null`, `profileVisibilityMode=open`, `discoverable=true` | `covered` |
+| Non-discoverable, incomplete, private, non-discoverable PrivacySettings | negative | computed completion predicate, `isDiscoverable=true`, `profileVisibilityMode=open`, `discoverable=true` | `covered` |
 | Нет approved+published фото | negative | `photos.some.moderationStatus=approved`, `publishedAt: not null` | `covered` |
 | Block в любую сторону | negative | `blockedUsers.none` + `blockedByUsers.none` | `covered` |
 | Active LIKE cooldown | negative | `likesReceived.none.expiresAt > now` | `covered` |
@@ -140,6 +142,7 @@ Spec: `apps/backend/src/modules/discovery/discovery.service.spec.ts`
 | Cursor pagination: limit clamped to 20 | happy | `take: 21` (limit+1) при любом значении > 20 | `covered` |
 | Server-side max limit 20 enforcement | negative | `limit: 99` → `take: 21` в query | `covered` |
 | Unlimited list bypass | negative | limit clamped, нет возможности получить все данные | `covered` |
+| Full profile lifecycle с real PostgreSQL | integration/e2e | register A/B → fill → upload → mutual discovery; clear/restore field; delete/re-upload photo; visibility/privacy transitions; self exclusion | `covered` |
 
 ---
 

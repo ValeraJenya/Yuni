@@ -55,13 +55,17 @@ CREATE TABLE profiles (
   latitude numeric(9,6),
   longitude numeric(9,6),
   is_discoverable boolean NOT NULL DEFAULT true,
-  completed_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT profiles_handle_not_blank CHECK (length(trim(handle)) > 0),
   CONSTRAINT profiles_handle_format CHECK (handle ~ '^[a-zA-Z0-9_][a-zA-Z0-9_.-]{2,29}$'),
-  CONSTRAINT profiles_display_name_not_blank CHECK (length(trim(display_name)) > 0),
-  CONSTRAINT profiles_birth_date_reasonable CHECK (birth_date <= current_date)
+  CONSTRAINT profiles_display_name_not_blank CHECK (length(btrim(display_name, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0),
+  CONSTRAINT profiles_birth_date_reasonable CHECK (birth_date <= current_date),
+  CONSTRAINT profiles_bio_not_blank_if_set CHECK (bio IS NULL OR length(btrim(bio, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0),
+  CONSTRAINT profiles_gender_not_blank_if_set CHECK (gender IS NULL OR length(btrim(gender, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0),
+  CONSTRAINT profiles_looking_for_not_blank_if_set CHECK (looking_for IS NULL OR length(btrim(looking_for, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0),
+  CONSTRAINT profiles_city_not_blank_if_set CHECK (city IS NULL OR length(btrim(city, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0),
+  CONSTRAINT profiles_country_not_blank_if_set CHECK (country IS NULL OR length(btrim(country, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF')) > 0)
 );
 
 CREATE UNIQUE INDEX profiles_handle_unique_idx ON profiles (lower(handle));

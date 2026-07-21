@@ -100,7 +100,7 @@ Self profile may include:
 - `birthDate`;
 - `bio`, `gender`, `lookingFor`, `city`, `country`;
 - `isDiscoverable`;
-- `completedAt`;
+- computed `completion` containing only `isComplete`, the allowlisted `missingFields` keys and `percentage`;
 - own photos with `moderationStatus`.
 
 Self profile must not include:

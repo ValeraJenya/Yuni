@@ -34,7 +34,6 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 
 | ID | Название | Статус | Priority | Зависимости | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 021 | Profile completion lifecycle | research | P0 | Task 000 | Уточнить состояние completion, discoverability и обязательных полей. |
 | 022 | Frontend media URL resolution | research | P1 | Task 000 | Только profile page resolves relative uploads; Discovery, matches и messages используют URL как есть. |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |
 | 024 | Atomic block and match lifecycle | in_progress | P1 | Task 000 | PR #31 атомарно создаёт Block и закрывает active Match; Conversation не закрывается, а unblock восстанавливает доступ к старой переписке. |
@@ -81,6 +80,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | --- | --- | --- | --- | --- |
 | 000 | Project documentation foundation | done | P0 | PR #24 / 6d3d399 |
 | Step 20.2 | Profile photo storage boundary | done | P0 | PR #23 / ca50baf |
+| 021 | Profile completion lifecycle | done | P0 | Branch commits `3abd405`–`852c67f`; checks and independent blind review passed. |
 
 ## Отложено
 

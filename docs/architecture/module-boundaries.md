@@ -32,6 +32,7 @@ Owns profile questionnaire and profile visibility:
 - own profile read/update;
 - public profile by handle;
 - profile privacy behavior;
+- the shared computed profile-completion policy and its reusable Prisma predicate;
 - public/self profile serializers.
 
 ProfilesModule should not upload files, create matches or send messages.
@@ -209,6 +210,7 @@ Avoid:
 - reads `CurrentUser`;
 - checks active user;
 - updates only allowlisted profile fields;
+- returns completion computed from current profile fields and qualifying photos;
 - uses `assertCanAccessProfile` for public profile access;
 - returns `toSelfProfile` or `toPublicProfile`.
 
@@ -270,6 +272,7 @@ Avoid:
 - reads actor from `CurrentUser`;
 - verifies current user is active;
 - excludes self, inactive/deleted users and incomplete profiles;
+- consumes the ProfilesModule completion predicate instead of a stored completion flag;
 - requires discoverable profile plus explicit open/discoverable privacy settings;
 - requires approved/published `publicUrl` photos;
 - excludes blocked pairs in either direction;

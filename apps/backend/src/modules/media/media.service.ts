@@ -17,6 +17,7 @@ import {
   type SelfProfileView,
 } from '../../common/serializers';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
+import { calculateProfileCompletion } from '../profiles/profile-completion.policy';
 import {
   PROFILE_PHOTO_ALLOWED_MIME_TYPES,
   PROFILE_PHOTO_MAX_BYTES,
@@ -304,7 +305,12 @@ export class MediaService {
 
     assertFound(profile);
 
-    return toSelfProfile(this.sortProfilePhotos(profile));
+    const sortedProfile = this.sortProfilePhotos(profile);
+
+    return toSelfProfile(
+      sortedProfile,
+      calculateProfileCompletion(sortedProfile),
+    );
   }
 
   private sortProfilePhotos(profile: SelfProfileRecord): SelfProfileRecord {

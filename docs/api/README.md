@@ -196,9 +196,13 @@ curl -i http://localhost:4000/profiles/me \
 - `profile.displayName`;
 - `profile.birthDate` для владельца профиля;
 - `profile.bio`, `gender`, `lookingFor`, `city`, `country`, `isDiscoverable`;
+- вычисленный `profile.completion`:
+  - `isComplete: boolean`;
+  - `missingFields`: стабильный список из `displayName`, `birthDate`, `bio`, `gender`, `lookingFor`, `city`, `country`, `photo`;
+  - `percentage`: округлённая доля заполненных gates от 0 до 100;
 - `profile.photos` в owner/self shape, включая moderation status.
 
-Self response не должен отдавать `email`, `passwordHash`, refresh/session fields, raw tokens или private settings.
+Completion вычисляется на каждом чтении. Строковые gates требуют непустое trimmed-значение, а photo gate — хотя бы одно фото с `publicUrl`, `moderationStatus=approved` и установленным `publishedAt`. `isDiscoverable` и privacy settings не входят в completion. Self response не должен отдавать `email`, `passwordHash`, refresh/session fields, raw tokens или private settings.
 
 ### Update My Profile
 
@@ -349,9 +353,8 @@ Discovery filters on backend:
 - excludes current user;
 - excludes inactive/deleted users;
 - requires `profiles.is_discoverable=true`;
-- requires `profiles.completed_at`;
+- requires the shared computed completion policy: all seven required fields and at least one approved, published photo with `publicUrl`;
 - requires explicit open and discoverable `privacy_settings`;
-- requires at least one approved, published photo with `publicUrl`;
 - excludes active block in either direction;
 - excludes active LIKE/SKIP cooldown from current user where `expiresAt > now`;
 - excludes active match where `status=active` and `expiresAt > now`.

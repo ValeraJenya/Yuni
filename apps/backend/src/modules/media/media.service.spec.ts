@@ -64,7 +64,6 @@ interface ProfileFixture {
   city: string | null;
   country: string | null;
   isDiscoverable: boolean;
-  completedAt: Date | null;
   photos: ProfilePhotoFixture[];
 }
 
@@ -325,6 +324,11 @@ describe('MediaService', () => {
     });
     expect(result.photo).not.toHaveProperty('storageKey');
     expect(result.profile.photos).toHaveLength(1);
+    expect(result.profile.completion).toEqual({
+      isComplete: true,
+      missingFields: [],
+      percentage: 100,
+    });
   });
 
   it('uploads later photos as non-primary at the next position', async () => {
@@ -528,11 +532,18 @@ describe('MediaService', () => {
     prisma.profile.findUnique.mockResolvedValue(makeProfile({ photos: [] }));
     prisma.profilePhoto.findMany.mockResolvedValue([]);
 
-    await expect(
-      service.deleteProfilePhoto(CURRENT_USER, 'photo-delete'),
-    ).resolves.toMatchObject({
+    const result = await service.deleteProfilePhoto(CURRENT_USER, 'photo-delete');
+
+    expect(result).toMatchObject({
       success: true,
       photos: [],
+      profile: {
+        completion: {
+          isComplete: false,
+          missingFields: ['photo'],
+          percentage: 88,
+        },
+      },
     });
     expect(prisma.profilePhoto.delete).toHaveBeenCalledWith({
       where: { id: 'photo-delete' },
@@ -634,7 +645,6 @@ function makeProfile(overrides: Partial<ProfileFixture> = {}): ProfileFixture {
     city: 'Astrakhan',
     country: 'RU',
     isDiscoverable: true,
-    completedAt: new Date('2026-01-01T00:00:00.000Z'),
     photos: [],
     ...overrides,
   };

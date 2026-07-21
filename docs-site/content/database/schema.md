@@ -16,7 +16,7 @@ weight: 10
 
 ### Profiles
 
-**`profiles`** — один профиль на пользователя. PK: `user_id` (= `users.id`). FK → `users.id` ON DELETE CASCADE. `handle` unique (case-insensitive). `birth_date` как DATE; backend вычисляет возраст. `completed_at` — признак завершённости. `is_discoverable` — eligibility для discovery.
+**`profiles`** — один профиль на пользователя. PK: `user_id` (= `users.id`). FK → `users.id` ON DELETE CASCADE. `handle` unique (case-insensitive). `birth_date` как DATE; backend вычисляет возраст. Completion является вычисляемым backend-состоянием; колонка `completed_at` удалена миграцией `20260720120000_profile_completion_lifecycle`. `is_discoverable` — отдельный eligibility gate для discovery.
 
 **`profile_photos`** — фото профиля. FK `user_id → profiles.user_id` ON DELETE CASCADE. `storage_key` unique; `(user_id, position)` unique. Partial unique index: максимум одно `is_primary=true` на пользователя. `moderation_status`: `pending | approved | rejected`. CHECK: `published_at IS NOT NULL` требует `moderation_status=approved`.
 

@@ -76,6 +76,7 @@ Yuni - monorepo dating app. В репозитории есть:
 
 ## Текущая работа
 
+- Task 021 — `done`: backend вычисляет completion из семи обязательных полей и qualifying photo, Discovery использует общий predicate, `profiles.completed_at` удалена миграцией, frontend использует серверный процент. Проверки на ветке: 18 backend suites / 183 unit tests passed, backend build/lint passed, real-PostgreSQL e2e passed, frontend lint/typecheck/build passed. Independent blind review завершён: findings T021-01..03 исправлены и подтверждены как `resolved`.
 - Task 024 — `in_progress`: PR #31 реализовал транзакционный lifecycle Block/Match, но `Conversation` не закрывается.
 - Task 027 — `in_progress`: базовый staged-chat backend реализован, однако concurrency, voice validation/limit, starter seed и contract evidence вынесены в отдельные задачи.
 - Полный backlog и подтверждённые findings описаны в `docs/ROADMAP.md`.

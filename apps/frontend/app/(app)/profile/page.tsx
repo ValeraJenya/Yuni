@@ -190,21 +190,6 @@ function getProfilePhotos(profile: SelfProfile): string[] {
     .map((photo) => resolveProfilePhotoUrl(photo.publicUrl) as string)
 }
 
-function getCompletionPct(profile: SelfProfile): number {
-  const fields = [
-    profile.displayName,
-    profile.bio,
-    profile.gender,
-    profile.lookingFor,
-    profile.city,
-    profile.country,
-  ]
-  const filledFields = fields.filter((value) => Boolean(value)).length
-  const photoBonus = profile.photos.length > 0 ? 1 : 0
-
-  return Math.round(((filledFields + photoBonus) / (fields.length + 1)) * 100)
-}
-
 function createProfileForm(profile: SelfProfile): ProfileFormState {
   return {
     displayName: profile.displayName,
@@ -350,7 +335,7 @@ export default function ProfilePage() {
       lookingFor: profileRecord.lookingFor,
       isVerified: false,
       isPremium: false,
-      completionPct: getCompletionPct(profileRecord),
+      completionPct: profileRecord.completion.percentage,
       height: undefined as number | undefined,
       occupation: undefined as string | undefined,
       education: undefined as string | undefined,

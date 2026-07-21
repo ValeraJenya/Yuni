@@ -16,11 +16,11 @@ Yuni разделен на доменные блоки, которые хоро�
 
 Для MVP handle - технический URL-friendly identifier: латинские буквы, цифры, underscore, dot, длина 3-30 символов. Пользовательский текст профиля может поддерживать обычный язык ввода, включая кириллицу.
 
-`birth_date` хранится вместо age, чтобы backend вычислял возраст на момент запроса. Discoverability профиля должна комбинироваться с privacy settings, approved primary photo checks и block checks.
+`birth_date` хранится вместо age, чтобы backend вычислял возраст на момент запроса. Profile completion не хранится отдельной колонкой: backend вычисляет его из `displayName`, `birthDate`, `bio`, `gender`, `lookingFor`, `city`, `country` и хотя бы одного approved/published public photo. Primary photo, `isDiscoverable` и privacy settings не являются completion gates.
 
 Open/private presentation моделируется через `privacy_settings`, без второй таблицы профиля. В open mode backend может отдавать более полный профиль. В private mode backend должен отдавать меньший набор данных, например вычисленный age и selected interests. User-uploaded photos в private mode не показываются; вместо них используется `privacy_settings.anonymous_avatar_key` для системного rabbit avatar.
 
-Discovery eligibility - backend rule, поддерживаемый схемой. Профиль eligible только если account/profile active, discoverability включена, privacy settings разрешают discovery, minimum profile completion выполнен, block filters прошли и есть минимум одно approved published public photo.
+Discovery eligibility - backend rule, поддерживаемый схемой. Профиль eligible только если account/profile active, discoverability включена, privacy settings разрешают discovery, shared computed profile-completion predicate выполнен, block filters прошли и есть минимум одно approved published public photo.
 
 ## Discovery
 

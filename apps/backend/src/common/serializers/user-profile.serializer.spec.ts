@@ -1,4 +1,5 @@
 import { PhotoModerationStatus, ProfileVisibilityMode } from '@prisma/client';
+import { calculateProfileCompletion } from '../../modules/profiles/profile-completion.policy';
 import {
   toPublicProfile,
   toPublicProfilePhotos,
@@ -91,7 +92,20 @@ describe('user/profile serializers', () => {
   });
 
   it('keeps self profile fields and self photo moderation data', () => {
-    const result = toSelfProfile(makeProfile());
+    const profile = makeProfile();
+    const result = toSelfProfile(
+      profile,
+      calculateProfileCompletion({
+        displayName: profile.displayName,
+        birthDate: profile.birthDate,
+        bio: profile.bio,
+        gender: profile.gender,
+        lookingFor: profile.lookingFor,
+        city: profile.city,
+        country: profile.country,
+        photos: profile.photos ?? [],
+      }),
+    );
 
     expect(result).toEqual({
       userId: 'user-1',
@@ -104,7 +118,11 @@ describe('user/profile serializers', () => {
       city: 'Astrakhan',
       country: 'RU',
       isDiscoverable: true,
-      completedAt: new Date('2026-01-01T00:00:00.000Z'),
+      completion: {
+        isComplete: true,
+        missingFields: [],
+        percentage: 100,
+      },
       photos: [
         {
           id: 'photo-approved-lower-position',
@@ -171,7 +189,6 @@ function makeProfile(): ProfileSource {
     city: 'Astrakhan',
     country: 'RU',
     isDiscoverable: true,
-    completedAt: new Date('2026-01-01T00:00:00.000Z'),
     photos: makePhotos(),
   };
 }

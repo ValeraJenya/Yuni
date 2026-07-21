@@ -20,6 +20,8 @@ weight: 20
 
 Поля, которые можно обновить через `PATCH /profiles/me`: `displayName`, `bio`, `gender`, `lookingFor`, `city`, `country`, `isDiscoverable`.
 
+`GET/PATCH /profiles/me` возвращает вычисляемый объект `completion` с полями `isComplete`, `missingFields` и `percentage`. Completion вычисляется из текущих полей и подходящих фото, а не читается из хранимой колонки.
+
 ## Rate limits
 
 | Endpoint | Лимит |
@@ -34,12 +36,12 @@ weight: 20
 
 ## Prisma-модели
 
-- `profiles` — `user_id` (PK), `handle`, `display_name`, `bio`, `gender`, `looking_for`, `city`, `country`, `is_discoverable`, `completed_at`, `birth_date`
+- `profiles` — `user_id` (PK), `handle`, `display_name`, `bio`, `gender`, `looking_for`, `city`, `country`, `is_discoverable`, `birth_date`
 - `profile_photos` — включаются в profile response через serializer
 - `privacy_settings` — управляет видимостью профиля
 
 ## Известные ограничения
 
-- Profile completion lifecycle (обязательные поля, discoverability) уточняется в Task 021
+- `gender` и `lookingFor` временно остаются непустыми free-text строками; canonical enum contract требует отдельной задачи
 - Поля interests, height, occupation, education присутствуют в frontend-типах, но не реализованы в backend MVP
 - Изменить `handle`, `birthDate`, `email`, `role` через profile endpoint нельзя

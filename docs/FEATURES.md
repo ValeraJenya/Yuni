@@ -4,7 +4,7 @@
 
 Статусы: `done` — реализовано и покрыто тестами; `partial` — реализовано, но с известными ограничениями; `planned` — не реализовано.
 
-Последнее обновление: 2026-07-21. Проверено на commit `5779763` (`origin/main`).
+Последнее обновление: 2026-07-21, после merge PR #31–#33 в `main`. Task 021 изменения прошли independent blind review.
 
 ---
 
@@ -37,9 +37,10 @@
 | Frontend UI | profile page: просмотр, редактирование полей (displayName, bio, city, country, gender, lookingFor, isDiscoverable) | `apps/frontend/app/(app)/profile/page.tsx` |
 | Frontend API client | `profileApi` | `apps/frontend/lib/profile-api.ts` |
 | Backend tests | `profiles.service.spec.ts` | `apps/backend/src/modules/profiles/profiles.service.spec.ts` |
+| Profile completion | вычисляется backend из 7 обязательных полей + qualifying photo; self API возвращает `completion` | `apps/backend/src/modules/profiles/profile-completion.policy.ts` |
 
 **Ограничения:**
-- Profile completion lifecycle (обязательные поля, discoverability) уточняется в Task 021 (backlog).
+- `gender` и `lookingFor` временно остаются непустыми free-text строками; canonical enum contract требует отдельной задачи.
 - Поля interests, height, occupation, education присутствуют в frontend типах и mock-data, но не реализованы в backend profile schema как часть текущего MVP.
 
 ---
@@ -76,7 +77,7 @@
 | Frontend UI | discover page: карточки профилей с reveal-эффектом, swipe actions (like/skip) | `apps/frontend/app/(app)/discover/page.tsx`, `apps/frontend/features/discover/` |
 | Frontend API client | `discoveryApi` | `apps/frontend/lib/discovery-api.ts` |
 | Backend tests | `discovery.service.spec.ts` | `apps/backend/src/modules/discovery/discovery.service.spec.ts` |
-| Backend filters | исключает: self, inactive users, is_discoverable=false, нет completed_at, нет approved фото, active block в любую сторону, active LIKE/SKIP cooldown, active match | `docs/api/README.md` |
+| Backend filters | исключает: self, inactive users, is_discoverable=false, computed-incomplete profile, нет approved/published public photo, active block в любую сторону, active LIKE/SKIP cooldown, active match | `docs/api/README.md` |
 | Rate limits | 120 req/10min/user | `docs/api/README.md` |
 
 **Ограничения:**
