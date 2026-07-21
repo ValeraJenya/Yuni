@@ -1,8 +1,8 @@
 # Project State
 
-Last verified at: 2026-06-26
-Verified on commit: 6d3d399
-Last merged task / PR: PR #24 — Project documentation foundation (Task 000)
+Last verified at: 2026-07-21
+Verified on commit: 5779763
+Last merged task / PR: PR #31 — Atomic block and match lifecycle (Task 024, partial)
 
 ## Baseline `main`
 
@@ -10,10 +10,10 @@ Last merged task / PR: PR #24 — Project documentation foundation (Task 000)
 
 Подтверждённый baseline:
 
-- Verified on commit: `6d3d399`;
-- Last merged task / PR: PR #24 — Project documentation foundation (Task 000);
-- Task 000 merged в `main` через PR #24;
-- PR #24 — docs-only изменение и не меняет backend code, API contract, Prisma или Docker; code baseline неизменен с `ca50baf` (PR #23).
+- Verified on commit: `5779763`;
+- Last merged task / PR: PR #31 — Atomic block and match lifecycle (Task 024, partial);
+- Task 027 staged-chat backend merged через PR #29;
+- PR #31 атомарно создаёт `Block` и завершает active `Match`, но не закрывает `Conversation`, поэтому Task 024 остаётся `in_progress`.
 
 ## Факты baseline
 
@@ -53,13 +53,14 @@ Yuni - monorepo dating app. В репозитории есть:
 - current public URL contract: `/uploads/profile-photos/...`;
 - local storage - development/MVP решение.
 
-## Последние известные проверки
+## Инвентарь тестов
 
-После merge PR #23 были выполнены backend checks:
+По файлам репозитория зафиксированы:
 
-- backend test: 17 suites passed, 166 tests passed;
-- backend build: passed;
-- backend lint: passed.
+- 18 backend unit-spec файлов;
+- 1 PostgreSQL e2e-файл: `profile-completion.e2e-spec.ts`.
+
+Это инвентаризация файлов, а не утверждение о количестве пройденных тестов: в рамках docs-only синхронизации проверки не запускались.
 
 ## Current limitations
 
@@ -68,16 +69,17 @@ Yuni - monorepo dating app. В репозитории есть:
 - image sanitization и EXIF stripping не реализованы;
 - object storage/CDN не реализованы;
 - pending/private media lifecycle не реализован;
+- staged-chat starter seed отсутствует;
+- лимит голосовых этапа 2 и завершение игр имеют открытые concurrency gaps;
+- настоящая загрузка, проверка длительности и физическая обрезка аудио не реализованы;
 - production deployment architecture не реализована.
 
 ## Текущая работа
 
-- Task 000 (project documentation foundation) merged в `main` через PR #24 (`6d3d399`) и закрыта со статусом `done`.
-- Документация README/onboarding синхронизирована с фактическим состоянием кода: реализованные домены auth, profiles, discovery, likes, matches, chat, moderation, notifications и media. Это docs-only изменение без правок кода, API contract, Prisma или Docker.
-- Task 021 (Profile completion lifecycle) завершена в ветке `codex/task-021-profile-completion-lifecycle`: backend вычисляет completion из семи обязательных полей и qualifying photo, Discovery использует общий predicate, `profiles.completed_at` удаляется миграцией, frontend использует серверный процент.
-- Проверки Task 021 на ветке: 18 backend suites / 183 unit tests passed; backend build/lint passed; real-PostgreSQL e2e passed; frontend lint/typecheck/build passed с существующими warnings.
-- Independent blind review Task 021 завершён: findings T021-01..03 исправлены и подтверждены как `resolved`, новых findings нет.
-- Backlog задач 022–026 описан в `docs/ROADMAP.md`.
+- Task 021 — `done`: backend вычисляет completion из семи обязательных полей и qualifying photo, Discovery использует общий predicate, `profiles.completed_at` удалена миграцией, frontend использует серверный процент. Проверки на ветке: 18 backend suites / 183 unit tests passed, backend build/lint passed, real-PostgreSQL e2e passed, frontend lint/typecheck/build passed. Independent blind review завершён: findings T021-01..03 исправлены и подтверждены как `resolved`.
+- Task 024 — `in_progress`: PR #31 реализовал транзакционный lifecycle Block/Match, но `Conversation` не закрывается.
+- Task 027 — `in_progress`: базовый staged-chat backend реализован, однако concurrency, voice validation/limit, starter seed и contract evidence вынесены в отдельные задачи.
+- Полный backlog и подтверждённые findings описаны в `docs/ROADMAP.md`.
 
 ## Не включено
 

@@ -491,11 +491,11 @@ Response shape:
 
 Response contains only current user's active matches and filters out blocked pairs in either direction. It must not expose raw Prisma `Match`, `User`, `Profile` or `ProfilePhoto` rows, `email`, `birthDate`, `passwordHash`, refresh/session fields, `storageKey`, local file path, original filename or private profile settings.
 
-## Chat MVP
+## Chat and staged chat
 
 Все chat endpoints требуют `Authorization: Bearer <accessToken>`. Backend берет actor только из `CurrentUser`; frontend не может передать sender/participant user id.
 
-Step 16 реализует только текстовую one-to-one переписку между участниками match:
+Реализована one-to-one переписка между участниками match с backend-owned stages, игровыми вопросами и staged metadata:
 
 - conversation создается только через `POST /matches/:matchId/conversation`;
 - только участники match могут создать или открыть conversation;
@@ -506,7 +506,10 @@ Step 16 реализует только текстовую one-to-one переп
 - send разрешен только active participant (`leftAt=null`) в active conversation;
 - active block в любую сторону скрывает conversation из списка, read возвращает not-found style, send возвращает safe `403`;
 - current user должен быть active/not deleted для list/start/send;
-- inactive/deleted other participant blocks new messages.
+- inactive/deleted other participant blocks new messages;
+- новый conversation начинается на stage 1;
+- переход 1→2 происходит после двух завершённых игр, 2→3 — после трёх;
+- переходы создают system message с `senderUserId=null` и `isSystemMessage=true`.
 
 ### Start Conversation From Match
 
@@ -559,6 +562,7 @@ Response shape:
         "conversationId": "44444444-4444-4444-8444-444444444444",
         "senderUserId": "22222222-2222-4222-8222-222222222222",
         "text": "Hi",
+        "isSystemMessage": false,
         "status": "sent",
         "createdAt": "2026-06-09T12:01:00.000Z"
       },
@@ -586,7 +590,8 @@ Response shape:
       "id": "55555555-5555-4555-8555-555555555555",
       "conversationId": "44444444-4444-4444-8444-444444444444",
       "senderUserId": "11111111-1111-4111-8111-111111111111",
-      "text": "Plain text only",
+      "text": "Hello",
+      "isSystemMessage": false,
       "status": "sent",
       "createdAt": "2026-06-09T12:01:00.000Z"
     }
@@ -610,13 +615,37 @@ Message input rules:
 - backend trims `text`;
 - empty or whitespace-only text returns `400`;
 - max length is `2000`;
-- MVP supports plain text only;
+- optional `messageType`: `text` (default), `voice` или `attachment`;
+- `voice` требует integer `voiceDurationSec`; stage 1 отклоняет voice;
+- на stage 2 backend ограничивает client-provided duration до 60 секунд на сообщение и остатка от persisted total 90 секунд на участника;
+- `attachment` отклоняется до stage 3, но transport/storage файла текущим endpoint не реализован;
+- text/attachment получают `messageWeight=1`, voice — `MAX(1, FLOOR(voiceDurationSec / 15))`;
 - frontend renders text as React text, not `dangerouslySetInnerHTML`;
 - message body must not be logged.
 
+Message response всегда включает `isSystemMessage`. `senderUserId` nullable для системных сообщений. Для voice response также включает `voiceDurationSec` и `messageWeight`.
+
+### Staged-chat endpoints
+
+| Метод | Путь | Response |
+|---|---|---|
+| `GET` | `/chat/conversations/:conversationId/stage` | `stage`, `stageStartedAt`, `stageUpdatedAt`, `voiceLimits` |
+| `GET` | `/chat/starters` | до четырёх active `{ id, text }`, отсортированных по text |
+| `GET` | `/chat/conversations/:conversationId/game/current` | `{ game }`, где game nullable |
+| `POST` | `/chat/conversations/:conversationId/game/postpone` | текущая игра с `postponedUntil` и incremented `postponeCount` |
+| `POST` | `/chat/conversations/:conversationId/game/:gameId/answer` | актуальная игра после сохранения ответа |
+
+Stage response содержит `stage`, nullable `stageStartedAt`/`stageUpdatedAt` и `voiceLimits` с `maxRecordTimeSec`, `currentUserTotalSec`, `totalLimitSec` и `perMessageLimitSec`.
+
+Current/postponed/answered game содержит nullable wrapper `game` с `id`, `conversationId`, `stage`, `gameType`, `question`, nullable `options`, `shownAt`, nullable `completedAt`/`postponedUntil` и `postponeCount`.
+
+`POST .../answer` принимает `{"answer":"..."}` (trimmed, non-empty, max 2000). Повторный ответ того же user возвращает `409`. Postpone разрешён один раз на минуту; повторная попытка возвращает `403`.
+
+Текущие ограничения: `voiceDurationSec` является числом от клиента; upload реального audio, server-side duration inspection и физическая обрезка отсутствуют. Parallel voice sends могут обойти total 90 секунд. Concurrent first game answers могут не выставить `completedAt`. Таблица starters не имеет seed, поэтому clean DB возвращает пустой список.
+
 Chat responses must not expose email, raw `birthDate`, password/passwordHash, refresh/session fields, `storageKey`, local paths, original filenames, private profile/privacy fields, block/report/moderation internals, raw Prisma rows, `lastReadMessageId`, `deletedAt` or `editedAt`.
 
-Notifications are implemented separately in Step 18. Out of scope for Step 16: WebSocket/realtime, typing indicators, read receipts, attachments/media messages, encryption, admin panel and complex chat search.
+Out of scope текущей реализации: WebSocket/realtime, typing indicators, read receipts, actual attachment/audio transport and storage, encryption, admin panel and complex chat search.
 
 ## Notifications MVP
 

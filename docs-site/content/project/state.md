@@ -4,13 +4,14 @@ weight: 10
 ---
 
 
-Последняя проверка: 2026-06-26. Commit: `6d3d399`. Последний merged PR: PR #24 — Project documentation foundation (Task 000).
+Последняя проверка: 2026-07-21. Commit: `5779763`. Последний merged PR: PR #31 — Atomic block and match lifecycle (Task 024, partial).
 
 ## Baseline `main`
 
-- Verified commit: `6d3d399`
-- Last merged task / PR: PR #24 — Project documentation foundation (Task 000)
-- PR #24 — docs-only изменение; code baseline неизменён с `ca50baf` (PR #23)
+- Verified commit: `5779763`
+- Last merged task / PR: PR #31 — Atomic block and match lifecycle (Task 024, partial)
+- Task 027 staged-chat backend merged через PR #29
+- PR #31 атомарно создаёт `Block` и завершает active `Match`, но не закрывает `Conversation`
 
 ## Реализованные backend-домены
 
@@ -33,19 +34,26 @@ weight: 10
 - Публичный URL: `/uploads/profile-photos/...`
 - Local storage — development/MVP решение
 
-## Последние проверки (после PR #23)
+## Инвентарь тестов
 
-- Backend tests: 17 suites, 166 тестов — passed
-- Backend build: passed
-- Backend lint: passed
+- 18 backend unit-spec файлов
+- 1 PostgreSQL e2e-файл: `profile-completion.e2e-spec.ts`
+
+Это inventory файлов, а не результат прогона; docs-only синхронизация не запускала проверки.
 
 ## Подтверждённые ограничения
 
 - Image sanitization и EXIF stripping не реализованы
 - Object storage/CDN не реализованы
 - Pending/private media lifecycle не реализован
+- Staged-chat starter seed отсутствует
+- Game completion и voice totals имеют открытые concurrency gaps
+- Настоящая загрузка, проверка длительности и обрезка voice media не реализованы
 - Production deployment не реализован
 
 ## Активные задачи
 
-Нет. Backlog описан в [Roadmap]({{< relref "/project/roadmap" >}}).
+- Task 024 — `in_progress`: Match lifecycle реализован, закрытие `Conversation` остаётся
+- Task 027 — `in_progress`: базовый staged-chat backend есть, остаются concurrency/voice/seed/contract gaps
+
+Полный backlog описан в [Roadmap]({{< relref "/project/roadmap" >}}).

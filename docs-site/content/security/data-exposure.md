@@ -87,11 +87,17 @@ Self responses НЕ отдают: `passwordHash`, refresh token, `token_hash`, c
 
 ## Chat Response Shapes
 
-**Conversation list:** `conversationId`, `otherParticipant` (userId/handle/displayName/primaryPhotoUrl), `lastMessage`, `updatedAt`, `status`, `nextCursor`.
+**Conversation list:** `conversationId`, `otherParticipant` (userId/handle/displayName/primaryPhotoUrl), `lastMessage`, `updatedAt`, `status`, `nextCursor`. Safe `lastMessage` fields совпадают с message shape ниже.
 
-**Message:** `id`, `conversationId`, `senderUserId`, `text`, `status`, `createdAt`.
+**Message:** `id`, `conversationId`, nullable `senderUserId`, `text`, optional `voiceDurationSec`/`messageWeight`, `isSystemMessage`, `status`, `createdAt`.
 
-**Нельзя:** raw Prisma rows, `body` (DB field name), `lastReadMessageId`, `deletedAt`, `editedAt`, email, `birthDate`, `storageKey`.
+**Stage:** `stage`, nullable stage timestamps и `voiceLimits` (`maxRecordTimeSec`, `currentUserTotalSec`, `totalLimitSec`, `perMessageLimitSec`).
+
+**Starter:** только `id` и `text`.
+
+**Game:** nullable wrapper `game` с `id`, `conversationId`, `stage`, `gameType`, `question`, nullable `options`, `shownAt`, nullable `completedAt`/`postponedUntil` и `postponeCount`.
+
+**Нельзя:** raw Prisma rows, `body` (DB field name), `lastReadMessageId`, `deletedAt`, `editedAt`, game answers/authors, other participant voice total, email, `birthDate`, `storageKey`.
 
 ## Notifications Response Shape
 
