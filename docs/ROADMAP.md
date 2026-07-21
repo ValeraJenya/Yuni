@@ -26,7 +26,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 ## Сейчас
 
 | ID | Название | Статус | Комментарий |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | 024 | Atomic block and match lifecycle | in_progress | Матчевая часть реализована; закрытие Conversation остаётся |
 | 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; остаются concurrency, voice-limit, starters и contract gaps |
 
