@@ -45,10 +45,10 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 032 | Landing vs реальность | idea | P1 | — | Заявлена ручная верификация и круглосуточная модерация, по факту auto-approve |
 | 033 | Email verification | idea | P1 | — | Не реализован, любой email принимается |
 | 035 | Gender/lookingFor свободный текст | idea | P1 | — | Нет единого контракта frontend/backend/БД |
-| 036 | Non-root Docker runtime | idea | P2 | — | Backend и frontend Dockerfile не задают `USER`. |
-| 037 | Pin package manager | idea | P2 | — | Root `package.json` не фиксирует `packageManager`. |
-| 038 | Resolve orphan demo mode | idea | P2 | — | DemoSessionProvider/DemoGate/mock profiles существуют, но не подключены; docs описывают demo mode как рабочий. |
-| 039 | Critical integration/e2e policy | idea | P3 | Task 053 | Зафиксировать обязательное integration/e2e coverage для критических сценариев. |
+| 036 | Dockerfile без USER directive | idea | P2 | — | Backend и frontend работают от root |
+| 037 | packageManager не закреплён | idea | P2 | — | Версия pnpm не зафиксирована в package.json |
+| 038 | Мёртвый demo-mode код | idea | P2 | — | DemoSessionProvider/DemoGate существуют но нигде не подключены |
+| 039 | Политика integration/e2e покрытия | idea | P3 | — | Обязательное покрытие критических сценариев |
 | 040 | OAuth-кнопки декоративны | idea | P1 | — | Google/Apple без onClick, помечены Social placeholders |
 | 042 | Race condition блокировка vs match | idea | P1 | — | matches.service.ts проверяет блок вне транзакции до создания match |
 | 043 | Race condition game-answer | idea | P1 | — | Одновременные первые ответы могут не выставить completedAt |
@@ -57,22 +57,22 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 046 | Неатомарные write-пути | idea | P1 | — | register/like/match/message не атомарны с побочными эффектами |
 | 047 | Удалённое фото остаётся доступным | idea | P1 | — | DB-запись удаляется раньше файла, ошибка проглатывается |
 | 048 | Staged-chat contract alignment | idea | P2 | Task 027 | Nullable system sender расходится с frontend DTO; staged contract tests отсутствуют. |
-| 049 | Real database healthcheck | idea | P2 | — | `/health` всегда отвечает hardcoded `ok` без проверки PostgreSQL. |
-| 050 | Remaining dead UI controls | idea | P2 | Task 030 | Messages/profile содержат дополнительные кнопки без действий. |
-| 052 | Complete language switching | idea | P2 | — | Locale не сохраняется, не обновляет `html lang`, providers расходятся, часть текста hardcoded. |
-| 053 | Critical real-DB/HTTP coverage | idea | P2 | Task 026, 058 | Реальное покрытие заканчивается на Discovery; Like→Match→Chat→Block не имеет end-to-end journey tests. |
-| 054 | Verified-baseline drift prevention | idea | P3 | — | Ввести процесс, предотвращающий расхождение baseline/status docs с git history. |
-| 055 | Database docs migration sync | idea | P3 | — | Database docs отстали от staged-chat migrations и Task 021. |
-| 056 | CI/DevOps hardening | idea | P2 | — | Root containers, default Postgres/JWT values и Hugo без PR build gate. |
+| 049 | Fake healthcheck | idea | P2 | — | /health хардкод status ok без обращения к Postgres |
+| 050 | Дополнительные мёртвые кнопки | idea | P2 | — | messages и profile — Like/More/Improve/Premium/Add interests |
+| 052 | Переключатель языка неполон | idea | P2 | — | Не персистится, не обновляет html lang, разные instance провайдера |
+| 053 | Critical real-DB/HTTP coverage | idea | P2 | — | Реальное покрытие заканчивается на Discovery; Like→Match→Chat→Block не имеет end-to-end journey tests |
+| 054 | Дрейф документации | idea | P3 | — | Verified-baseline расходится с git-историей — процессный пункт |
+| 055 | Database-доки отстали от миграций | idea | P3 | — | staged-chat и Task 021 не отражены |
+| 056 | CI/DevOps проблемы | idea | P2 | — | Root-контейнеры, дефолтные креды, JWT плейсхолдеры, Hugo без PR-гейта |
 | 057 | Privacy/Notification settings API | idea | P0 | — | PrivacySettings/NotificationSettings создаются в БД но API для их изменения нет |
-| 058 | PostgreSQL service for CI e2e | idea | P2 | Task 026 | Workflow не содержит `services: postgres` и физически не может запустить PostgreSQL e2e. |
-| 059 | Real backend linting | idea | P2 | — | Backend `lint` запускает только `tsc --noEmit`; lint rules отсутствуют. |
-| 060 | Consistent UUID parameter validation | idea | P2 | — | `ParseUUIDPipe` применяется непоследовательно между controllers. |
-| 061 | Unified profile visibility state | idea | P2 | — | `isDiscoverable` и `PrivacySettings.discoverable` могут расходиться. |
-| 062 | Content-linked reports | idea | P3 | — | Report API привязывает жалобу только к пользователю, хотя схема поддерживает content references. |
+| 058 | CI не может запустить e2e | idea | P2 | — | В workflow нет services блока с Postgres |
+| 059 | Backend lint — это tsc --noEmit | idea | P2 | — | Реального линтера нет |
+| 060 | ParseUUIDPipe непоследователен | idea | P2 | — | Используется не во всех контроллерах |
+| 061 | Два флага видимости профиля | idea | P2 | — | isDiscoverable и PrivacySettings.discoverable рассинхронизированы |
+| 062 | Report не привязан к контенту | idea | P3 | — | Только к пользователю целиком, хотя схема поддерживает контент |
 | 063 | Юридические страницы /terms /privacy /help | idea | P0 | — | Страницы 404, но регистрация требует согласия с ними |
 | 064 | Невидимый текст в модалке фильтров Discovery | idea | P1 | — | CSS-баг, весь текст невидим |
-| 065 | Application delivery pipeline | idea | P2 | Task 025 | Есть quality и Hugo deploy, но нет build/publish/deploy backend/frontend ни в одно окружение. |
+| 065 | Нет CD-пайплайна для приложения | idea | P2 | — | Только docs-site деплоится, backend/frontend — нет |
 
 ## Выполнено
 
