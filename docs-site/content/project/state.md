@@ -36,8 +36,7 @@ weight: 10
 
 ## Инвентарь тестов
 
-- 18 backend unit-spec файлов
-- 1 PostgreSQL e2e-файл: `profile-completion.e2e-spec.ts`
+- 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts)
 
 Это inventory файлов, а не результат прогона; docs-only синхронизация не запускала проверки.
 

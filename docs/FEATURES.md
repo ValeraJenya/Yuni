@@ -4,7 +4,7 @@
 
 Статусы: `done` — реализовано и покрыто тестами; `partial` — реализовано, но с известными ограничениями; `planned` — не реализовано.
 
-Последнее обновление: 2026-07-21, после merge PR #31–#33 в `main`. Task 021 изменения прошли independent blind review.
+Последнее обновление: 2026-07-21. Проверено на commit `5779763`. После merge PR #31–#33 в `main`; Task 021 изменения прошли independent blind review.
 
 ---
 
@@ -207,7 +207,7 @@
 | Security helpers | `assertOwner`, `assertConversationMember`, `assertMatchParticipant`, `assertCanAccessProfile`, `assertCanAccessPhoto` | `apps/backend/src/common/security/access-control.spec.ts` |
 | Docker Compose | local development workflow (postgres + backend + frontend) | `docker-compose.yml`, `docs/onboarding/local-docker-workflow.md` |
 | CI | GitHub Actions `quality-gates` на PR и push в main | `.github/` |
-| Backend test inventory | 18 unit-spec файлов + 1 e2e-файл `profile-completion.e2e-spec.ts` | `apps/backend/src/`, `apps/backend/test/` |
+| Backend test inventory | 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts) | `apps/backend/src/`, `apps/backend/test/` |
 | Frontend tests | отсутствуют | — |
 | Production deployment | **не реализован** | `docs/PROJECT_STATE.md` |
 | Demo mode | `DemoSessionProvider` (sessionStorage); `DemoGate` UI | `apps/frontend/lib/demo-session.tsx`, `apps/frontend/features/app-shell/components/demo-gate.tsx` |

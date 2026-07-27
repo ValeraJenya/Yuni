@@ -116,7 +116,7 @@ weight: 30
 
 ## Test inventory
 
-В репозитории зафиксированы 18 backend unit-spec файлов и 1 e2e-файл `profile-completion.e2e-spec.ts`. Docs-only синхронизация не утверждает число passed tests.
+В репозитории зафиксированы: 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts). Docs-only синхронизация не утверждает результат прогона.
 
 ## Moderation (Blocks & Reports)
 
