@@ -18,7 +18,7 @@ weight: 20
 
 | ID | Название | Статус | Комментарий |
 |---|---|---|---|
-| 024 | Atomic block and match lifecycle | in_progress | Матчевая часть реализована; закрытие Conversation остаётся |
+| 024 | Atomic block and match lifecycle | review | Conversation теперь закрывается атомарно вместе с Match; ждёт прогона тестов и мержа |
 | 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; остаются concurrency, voice-limit, starters и contract gaps |
 
 ## Запланировано
@@ -27,7 +27,7 @@ weight: 20
 |---|---|---|---|---|---|
 | 022 | Frontend media URL resolution | research | P1 | Task 000 | Только profile page resolves relative uploads; Discovery, matches и messages используют URL как есть. |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |
-| 024 | Atomic block and match lifecycle | in_progress | P1 | Task 000 | Матчевая часть реализована (PR #31). Conversation при блокировке не закрывается — остаётся scope задачи. |
+| 024 | Atomic block and match lifecycle | review | P1 | Task 000 | Матчевая часть — PR #31. Conversation теперь закрывается атомарно в той же транзакции — код готов, ждёт прогона тестов и мержа. |
 | 025 | Production deployment readiness | idea | P1 | Task 000 | Deployment architecture, secrets, HTTPS, reverse proxy. |
 | 026 | PostgreSQL integration checks in CI | idea | P2 | Task 000 | Общий integration gate; текущий workflow не поднимает Postgres (Task 058), journey coverage — Task 053. |
 | 027 | Этапный чат — схема и бэкенд | in_progress | P1 | Task 018 | Базовый backend реализован; открытые gaps вынесены в Task 043/044/045/048. |
