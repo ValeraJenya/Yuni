@@ -42,7 +42,7 @@ weight: 20
 | 039 | Политика integration/e2e покрытия | idea | P3 | — | Обязательное покрытие критических сценариев |
 | 040 | OAuth-кнопки декоративны | idea | P1 | — | Google/Apple без onClick, помечены Social placeholders |
 | 042 | Race condition блокировка vs match | idea | P1 | — | matches.service.ts проверяет блок вне транзакции до создания match |
-| 043 | Race condition game-answer | idea | P1 | — | Одновременные первые ответы могут не выставить completedAt |
+| 043 | Race condition game-answer | review | P1 | — | SELECT FOR UPDATE сериализует завершение; доказано race-тестом на реальном Postgres |
 | 044 | Voice-limit bypass | idea | P1 | — | Лимит 90 сек обходится параллельными запросами |
 | 045 | Starters seed | idea | P1 | — | conversation_starters таблица всегда пустая на чистой БД |
 | 046 | Неатомарные write-пути | idea | P1 | — | register/like/match/message не атомарны с побочными эффектами |
