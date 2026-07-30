@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { SlidersHorizontal, RefreshCw, Sparkles, MapPin, ChevronDown, Lock, X, Check, Wifi, ShieldCheck } from "lucide-react"
 import { ProfileCard } from "@/features/discover/components/profile-card"
 import { RevealProfileCard } from "@/features/discover/components/reveal-profile-card"
@@ -107,17 +108,19 @@ function FilterToggle({
       onClick={onClick}
       className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl transition-all"
       style={{
-        background: active ? "oklch(0.65 0.26 12 / 0.10)" : "oklch(0.12 0.010 15 / 0.60)",
-        border: active ? "1px solid oklch(0.65 0.26 12 / 0.25)" : "1px solid oklch(0.20 0.010 15 / 0.55)",
-        boxShadow: active ? "0 0 14px oklch(0.65 0.26 12 / 0.08)" : "none",
+        background: active ? "color-mix(in oklab, var(--primary) 10%, transparent)" : "var(--muted)",
+        border: active
+          ? "1px solid color-mix(in oklab, var(--primary) 25%, transparent)"
+          : "1px solid var(--border)",
+        boxShadow: active ? "var(--elevation-sm)" : "none",
       }}
     >
-      <span style={{ color: active ? "oklch(0.65 0.26 12 / 0.80)" : "oklch(0.36 0.008 15)" }}>
+      <span style={{ color: active ? "var(--primary)" : "var(--muted-foreground)" }}>
         {icon}
       </span>
       <span
         className="flex-1 text-left font-sans"
-        style={{ fontSize: "13px", color: active ? "oklch(0.88 0.005 60)" : "oklch(0.50 0.008 15)" }}
+        style={{ fontSize: "13px", color: active ? "var(--foreground)" : "var(--muted-foreground)" }}
       >
         {label}
       </span>
@@ -126,12 +129,12 @@ function FilterToggle({
         style={{
           width: "20px",
           height: "20px",
-          background: active ? "oklch(0.65 0.26 12)" : "oklch(0.18 0.010 15)",
-          border: active ? "none" : "1px solid oklch(0.26 0.010 15)",
-          boxShadow: active ? "0 0 10px oklch(0.65 0.26 12 / 0.40)" : "none",
+          background: active ? "var(--primary)" : "var(--muted)",
+          border: active ? "none" : "1px solid var(--border)",
+          boxShadow: active ? "var(--elevation-sm)" : "none",
         }}
       >
-        {active && <Check size={11} color="white" strokeWidth={2.5} />}
+        {active && <Check size={11} color="var(--primary-foreground)" strokeWidth={2.5} />}
       </span>
     </button>
   )
@@ -161,23 +164,26 @@ function FilterSheet({
     setDraft(defaultFilters)
   }
 
+  // Returns null while closed, so document.body is never touched during SSR.
   if (!open) return null
 
-  return (
+  // Rendered into <body>: the page's <main> is a z-10 stacking context, so a
+  // sheet rendered inside it can never paint above the z-50 app nav.
+  return createPortal(
     <>
-      {/* Backdrop */}
+      {/* Backdrop — above the app nav (z-50) so the sheet is never overlapped */}
       <div
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-60"
         style={{ background: "oklch(0.04 0.005 15 / 0.75)", backdropFilter: "blur(4px)" }}
         onClick={onClose}
       />
 
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 md:right-auto md:top-0 md:bottom-0 z-50 flex flex-col"
+        className="fixed bottom-0 left-0 right-0 md:right-auto md:top-0 md:bottom-0 z-70 flex flex-col"
         style={{
-          background: "oklch(0.095 0.012 15)",
-          border: "1px solid oklch(0.18 0.012 15 / 0.80)",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
           borderRadius: "24px 24px 0 0",
           maxHeight: "88dvh",
           overflowY: "auto",
@@ -190,18 +196,18 @@ function FilterSheet({
         {/* Handle / header */}
         <div
           className="flex items-center justify-between px-6 py-5 flex-shrink-0"
-          style={{ borderBottom: "1px solid oklch(0.16 0.010 15 / 0.60)" }}
+          style={{ borderBottom: "1px solid var(--border)" }}
         >
           <div>
             <span
               className="font-sans uppercase tracking-[0.18em]"
-              style={{ fontSize: "9px", color: "oklch(0.65 0.26 12 / 0.65)" }}
+              style={{ fontSize: "9px", color: "var(--primary)" }}
             >
               {lang === "ru" ? "Параметры поиска" : "Search filters"}
             </span>
             <h2
               className="font-display font-light mt-0.5"
-              style={{ fontSize: "1.25rem", color: "oklch(0.90 0.005 60)", lineHeight: 1.1 }}
+              style={{ fontSize: "1.25rem", color: "var(--foreground)", lineHeight: 1.1 }}
             >
               {lang === "ru" ? "Фильтры" : "Filters"}
             </h2>
@@ -209,9 +215,9 @@ function FilterSheet({
           <button
             onClick={onClose}
             className="p-2 rounded-full transition-all"
-            style={{ color: "oklch(0.36 0.008 15)", background: "oklch(0.14 0.010 15 / 0.70)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.60 0.006 60)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.36 0.008 15)")}
+            style={{ color: "var(--muted-foreground)", background: "var(--muted)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted-foreground)")}
             aria-label={lang === "ru" ? "Закрыть" : "Close"}
           >
             <X size={16} />
@@ -224,12 +230,12 @@ function FilterSheet({
           {/* Age range */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="font-sans" style={{ fontSize: "12px", color: "oklch(0.48 0.008 15)" }}>
+              <span className="font-sans" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
                 {lang === "ru" ? "Возраст" : "Age"}
               </span>
               <span
                 className="font-sans font-medium"
-                style={{ fontSize: "12px", color: "oklch(0.72 0.005 60)" }}
+                style={{ fontSize: "12px", color: "var(--foreground)" }}
               >
                 {draft.ageMin} — {draft.ageMax}
               </span>
@@ -244,7 +250,7 @@ function FilterSheet({
                   value={draft.ageMin}
                   onChange={(e) => setDraft((d) => ({ ...d, ageMin: Number(e.target.value) }))}
                   className="w-full"
-                  style={{ accentColor: "oklch(0.65 0.26 12)" }}
+                  style={{ accentColor: "var(--primary)" }}
                 />
               </div>
               <div className="flex-1">
@@ -256,7 +262,7 @@ function FilterSheet({
                   value={draft.ageMax}
                   onChange={(e) => setDraft((d) => ({ ...d, ageMax: Number(e.target.value) }))}
                   className="w-full"
-                  style={{ accentColor: "oklch(0.65 0.26 12)" }}
+                  style={{ accentColor: "var(--primary)" }}
                 />
               </div>
             </div>
@@ -265,12 +271,12 @@ function FilterSheet({
           {/* Distance */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="font-sans" style={{ fontSize: "12px", color: "oklch(0.48 0.008 15)" }}>
+              <span className="font-sans" style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
                 {lang === "ru" ? "Расстояние" : "Distance"}
               </span>
               <span
                 className="font-sans font-medium"
-                style={{ fontSize: "12px", color: "oklch(0.72 0.005 60)" }}
+                style={{ fontSize: "12px", color: "var(--foreground)" }}
               >
                 {draft.distanceKm} {lang === "ru" ? "км" : "km"}
               </span>
@@ -282,7 +288,7 @@ function FilterSheet({
               value={draft.distanceKm}
               onChange={(e) => setDraft((d) => ({ ...d, distanceKm: Number(e.target.value) }))}
               className="w-full"
-              style={{ accentColor: "oklch(0.65 0.26 12)" }}
+              style={{ accentColor: "var(--primary)" }}
               aria-label={lang === "ru" ? "Расстояние" : "Distance"}
             />
           </div>
@@ -313,19 +319,19 @@ function FilterSheet({
         {/* Footer actions */}
         <div
           className="flex items-center gap-3 px-6 py-5 flex-shrink-0 mt-auto"
-          style={{ borderTop: "1px solid oklch(0.16 0.010 15 / 0.60)" }}
+          style={{ borderTop: "1px solid var(--border)" }}
         >
           <button
             onClick={reset}
             className="flex-1 rounded-full py-3 font-sans transition-all"
             style={{
               fontSize: "12.5px",
-              color: "oklch(0.42 0.008 15)",
-              background: "oklch(0.13 0.010 15 / 0.70)",
-              border: "1px solid oklch(0.22 0.010 15 / 0.60)",
+              color: "var(--foreground)",
+              background: "var(--muted)",
+              border: "1px solid var(--border)",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.60 0.006 60)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.42 0.008 15)")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--muted-foreground)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--foreground)")}
           >
             {lang === "ru" ? "Сбросить" : "Reset"}
           </button>
@@ -334,16 +340,17 @@ function FilterSheet({
             className="flex-1 rounded-full py-3 font-sans font-medium transition-all hover:brightness-110"
             style={{
               fontSize: "12.5px",
-              color: "white",
-              background: "oklch(0.65 0.26 12)",
-              boxShadow: "0 0 22px oklch(0.65 0.26 12 / 0.28)",
+              color: "var(--primary-foreground)",
+              background: "var(--primary)",
+              boxShadow: "var(--elevation-sm)",
             }}
           >
             {lang === "ru" ? "Применить" : "Apply"}
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
 
