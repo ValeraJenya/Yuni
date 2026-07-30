@@ -5,7 +5,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { MatchStatus, Prisma, ReportReasonCode, UserStatus } from '@prisma/client';
+import {
+  ConversationStatus,
+  MatchStatus,
+  Prisma,
+  ReportReasonCode,
+  UserStatus,
+} from '@prisma/client';
 import {
   buildCursorPage,
   CursorPaginationQueryDto,
@@ -286,23 +292,36 @@ export class ModerationService {
       return;
     }
 
-    await client.match.updateMany({
-      where: {
-        status: MatchStatus.active,
-        expiresAt: {
-          gt: now,
-        },
-        OR: [
-          {
-            userAId: leftUserId,
-            userBId: rightUserId,
-          },
-          {
-            userAId: rightUserId,
-            userBId: leftUserId,
-          },
-        ],
+    const activeMatchWhere = {
+      status: MatchStatus.active,
+      expiresAt: {
+        gt: now,
       },
+      OR: [
+        {
+          userAId: leftUserId,
+          userBId: rightUserId,
+        },
+        {
+          userAId: rightUserId,
+          userBId: leftUserId,
+        },
+      ],
+    } satisfies Prisma.MatchWhereInput;
+
+    await client.conversation.updateMany({
+      where: {
+        status: ConversationStatus.active,
+        match: activeMatchWhere,
+      },
+      data: {
+        status: ConversationStatus.closed,
+        updatedAt: now,
+      },
+    });
+
+    await client.match.updateMany({
+      where: activeMatchWhere,
       data: {
         status: MatchStatus.blocked,
         endedAt: now,
