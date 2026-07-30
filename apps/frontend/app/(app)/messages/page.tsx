@@ -15,6 +15,7 @@ import { ApiError } from "@/lib/auth-api"
 import { chatApi, type ChatMessage, type ConversationSummary } from "@/lib/chat-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
+import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 
 const copy = {
   ru: {
@@ -76,7 +77,10 @@ function getProfileName(conversation: ConversationSummary) {
 }
 
 function getProfilePhoto(conversation: ConversationSummary) {
-  return conversation.otherParticipant.primaryPhotoUrl || fallbackPhotoUrl
+  return (
+    resolveProfilePhotoUrl(conversation.otherParticipant.primaryPhotoUrl) ||
+    fallbackPhotoUrl
+  )
 }
 
 function MessagesInner() {
@@ -462,8 +466,10 @@ function MessagesInner() {
         }}
       />
 
+      {/* z-20 keeps the sticky header above the message list (z-10), which is a
+          later sibling and would otherwise paint over it. */}
       <header
-        className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-10"
+        className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-20"
         style={{
           borderBottom: "1px solid oklch(0.15 0.012 15 / 0.80)",
           background: "oklch(0.09 0.010 15 / 0.92)",

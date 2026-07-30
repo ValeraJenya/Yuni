@@ -6,6 +6,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import {
+  ConversationStatus,
   MatchStatus,
   Prisma,
   ReportReasonCode,
@@ -35,6 +36,9 @@ interface PrismaMock {
     deleteMany: jest.Mock;
   };
   match: {
+    updateMany: jest.Mock;
+  };
+  conversation: {
     updateMany: jest.Mock;
   };
   report: {
@@ -118,6 +122,26 @@ describe('ModerationService', () => {
         endedAt: FIXED_NOW,
       },
     });
+    expect(prisma.conversation.updateMany).toHaveBeenCalledWith({
+      where: {
+        status: ConversationStatus.active,
+        match: {
+          OR: [
+            {
+              userAId: CURRENT_USER.id,
+              userBId: TARGET_USER_ID,
+            },
+            {
+              userAId: TARGET_USER_ID,
+              userBId: CURRENT_USER.id,
+            },
+          ],
+        },
+      },
+      data: {
+        status: ConversationStatus.closed,
+      },
+    });
     expect(result).toEqual({
       block: {
         blockedUserId: TARGET_USER_ID,
@@ -179,8 +203,29 @@ describe('ModerationService', () => {
         endedAt: FIXED_NOW,
       },
     });
+    expect(tx.conversation.updateMany).toHaveBeenCalledWith({
+      where: {
+        status: ConversationStatus.active,
+        match: {
+          OR: [
+            {
+              userAId: CURRENT_USER.id,
+              userBId: TARGET_USER_ID,
+            },
+            {
+              userAId: TARGET_USER_ID,
+              userBId: CURRENT_USER.id,
+            },
+          ],
+        },
+      },
+      data: {
+        status: ConversationStatus.closed,
+      },
+    });
     expect(prisma.block.create).not.toHaveBeenCalled();
     expect(prisma.match.updateMany).not.toHaveBeenCalled();
+    expect(prisma.conversation.updateMany).not.toHaveBeenCalled();
     expect(result).toEqual({
       block: {
         blockedUserId: TARGET_USER_ID,
@@ -231,7 +276,32 @@ describe('ModerationService', () => {
 
     expect(tx.block.create).toHaveBeenCalledTimes(1);
     expect(tx.match.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.conversation.updateMany).not.toHaveBeenCalled();
     expect(committedBlocks).toEqual([]);
+    expect(prisma.block.create).not.toHaveBeenCalled();
+  });
+
+  it('rolls back block creation when closing conversations fails', async () => {
+    const { service, prisma } = createService();
+    const tx = createPrismaMock();
+    prisma.user.findUnique
+      .mockResolvedValueOnce(activeUser())
+      .mockResolvedValueOnce(activeUser());
+    prisma.block.findUnique.mockResolvedValue(null);
+    tx.conversation.updateMany.mockRejectedValue(
+      new Error('conversation update failed'),
+    );
+    prisma.$transaction.mockImplementation(
+      async (callback: (tx: PrismaMock) => Promise<unknown>) => callback(tx),
+    );
+
+    await expect(
+      service.blockUser(CURRENT_USER, TARGET_USER_ID),
+    ).rejects.toThrow('conversation update failed');
+
+    expect(tx.block.create).toHaveBeenCalledTimes(1);
+    expect(tx.match.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.conversation.updateMany).toHaveBeenCalledTimes(1);
     expect(prisma.block.create).not.toHaveBeenCalled();
   });
 
@@ -257,6 +327,7 @@ describe('ModerationService', () => {
 
     expect(prisma.block.create).not.toHaveBeenCalled();
     expect(prisma.match.updateMany).toHaveBeenCalledTimes(1);
+    expect(prisma.conversation.updateMany).toHaveBeenCalledTimes(1);
   });
 
   it('maps duplicate block constraint races to idempotent success', async () => {
@@ -287,6 +358,7 @@ describe('ModerationService', () => {
       },
     });
     expect(prisma.match.updateMany).toHaveBeenCalledTimes(1);
+    expect(prisma.conversation.updateMany).toHaveBeenCalledTimes(1);
   });
 
   it('unblocks only the current user pair and stays idempotent', async () => {
@@ -510,6 +582,9 @@ function createPrismaMock(): PrismaMock {
       deleteMany: jest.fn(),
     },
     match: {
+      updateMany: jest.fn(),
+    },
+    conversation: {
       updateMany: jest.fn(),
     },
     report: {

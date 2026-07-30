@@ -10,6 +10,7 @@ import { blocksApi } from "@/lib/blocks-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 import { matchesApi, type MatchSummary } from "@/lib/matches-api"
+import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 import { reportsApi } from "@/lib/reports-api"
 
 const copy = {
@@ -373,7 +374,9 @@ export default function MatchesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {activeMatches.map((match) => {
               const profileName = match.matchedProfile.displayName ?? match.matchedProfile.handle
-              const primaryPhotoUrl = match.matchedProfile.primaryPhotoUrl
+              const primaryPhotoUrl = resolveProfilePhotoUrl(
+                match.matchedProfile.primaryPhotoUrl,
+              )
               const expiry = timeUntilExpiry(match.expiresAt, nowMs, t)
               const isModerationPending =
                 pendingModerationUserId === match.matchedProfile.userId
