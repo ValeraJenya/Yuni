@@ -186,7 +186,9 @@ function FilterSheet({
           border: "1px solid var(--border)",
           borderRadius: "24px 24px 0 0",
           maxHeight: "88dvh",
-          overflowY: "auto",
+          // The sheet itself never scrolls — only the filter list inside it does,
+          // so the header and the action footer stay put on short viewports.
+          overflow: "hidden",
           boxShadow: "0 -24px 80px oklch(0.03 0.005 15 / 0.80)",
           // Desktop: side panel
           width: "100%",
@@ -224,8 +226,9 @@ function FilterSheet({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex flex-col gap-6 px-6 py-6">
+        {/* Body — the only scrollable zone; min-h-0 lets it shrink below its
+            content height so the footer is never pushed out of the viewport */}
+        <div className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain px-6 py-6">
 
           {/* Age range */}
           <div>
@@ -316,9 +319,9 @@ function FilterSheet({
           </div>
         </div>
 
-        {/* Footer actions */}
+        {/* Footer actions — outside the scroll zone, always reachable */}
         <div
-          className="flex items-center gap-3 px-6 py-5 flex-shrink-0 mt-auto"
+          className="flex items-center gap-3 px-6 py-5 flex-shrink-0"
           style={{ borderTop: "1px solid var(--border)" }}
         >
           <button
