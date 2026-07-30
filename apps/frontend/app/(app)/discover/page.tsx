@@ -363,11 +363,13 @@ function SideBlock({
   unlocked,
   onUnlock,
   lockHint,
+  className = "",
   children,
 }: {
   unlocked: boolean
   onUnlock: (() => void) | null
   lockHint: string
+  className?: string
   children: React.ReactNode
 }) {
   return (
@@ -377,7 +379,7 @@ function SideBlock({
       aria-label={!unlocked ? lockHint : undefined}
       onClick={() => { if (onUnlock && !unlocked) onUnlock() }}
       onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && onUnlock && !unlocked) onUnlock() }}
-      className="relative overflow-hidden rounded-2xl transition-all"
+      className={`relative overflow-hidden rounded-2xl transition-all ${className}`}
       style={{
         background: "oklch(0.10 0.012 15 / 0.85)",
         border: unlocked
@@ -455,6 +457,13 @@ export default function DiscoverPage() {
   const currentLocation = current
     ? [current.city, current.country].filter(Boolean).join(", ")
     : ""
+  const hasDetails = Boolean(
+    current &&
+      (current.occupation ||
+        current.education ||
+        (current.languages && current.languages.length > 0) ||
+        current.height),
+  )
 
   // Derived filter state
   const activeFilterCount = [
@@ -848,11 +857,18 @@ export default function DiscoverPage() {
               )}
             </div>
 
-            {/* ── Desktop sidebar panel ── */}
-            <aside className="yuni-discover-aside hidden md:flex flex-col gap-3 pt-2" style={{ flexShrink: 0 }}>
+            {/* ── Profile detail panel ──
+                Desktop: a side rail next to the card.
+                Mobile: the same blocks stacked under the swipe actions, so the
+                card and the like/skip buttons stay above the fold and the
+                story/interests/details are reachable by scrolling. */}
+            <aside className="yuni-discover-aside flex flex-col gap-3 mt-8 pt-2 md:mt-0" style={{ flexShrink: 0 }}>
 
-              {/* Identity block — revealed by tapping the photo */}
+              {/* Identity block — revealed by tapping the photo.
+                  Desktop only: on mobile the card itself already shows
+                  name, age and city once the photo is unveiled. */}
               <SideBlock
+                className="hidden md:block"
                 unlocked={reveal.state.unlockedZones.has("identity")}
                 onUnlock={null}
                 lockHint={lang === "ru" ? "Нажмите на фото, чтобы открыть" : "Tap the photo to unveil"}
@@ -950,8 +966,13 @@ export default function DiscoverPage() {
                 </SideBlock>
               )}
 
-              {/* Details block — click to unlock */}
+              {/* Details block — click to unlock.
+                  Desktop keeps the block unconditionally, as it was before the
+                  mobile panel existed. On mobile it is hidden when none of
+                  occupation/education/languages/height are set, so a tap never
+                  unlocks an empty box on a narrow screen. */}
               <SideBlock
+                className={hasDetails ? "" : "hidden md:block"}
                 unlocked={reveal.state.unlockedZones.has("details")}
                 onUnlock={() => reveal.unlockZone("details")}
                 lockHint={lang === "ru" ? "Нажмите, чтобы узнать детали" : "Tap to see details"}
