@@ -25,6 +25,7 @@ import {
 import { ApiError } from "@/lib/auth-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
+import { matchesApi } from "@/lib/matches-api"
 import {
   profileApi,
   resolveProfilePhotoUrl,
@@ -151,6 +152,10 @@ const copy = {
 
 const FALLBACK_PROFILE_PHOTO = "/hero-portrait.jpg"
 
+/** Shown by a stat tile that has no data source yet — an em dash rather than
+ *  a "0", which would be a claim about the user's actual counts. */
+const NO_DATA = "—"
+
 type ProfileFormState = Required<
   Pick<UpdateProfileRequest, "displayName" | "isDiscoverable">
 > &
@@ -272,6 +277,9 @@ export default function ProfilePage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  // null until /matches/me answers, and on failure — so the tile shows the
+  // no-data dash instead of claiming zero matches.
+  const [matchesCount, setMatchesCount] = useState<number | null>(null)
 
   const applyProfile = useCallback((nextProfile: SelfProfile) => {
     setProfileRecord(nextProfile)
@@ -314,6 +322,45 @@ export default function ProfilePage() {
       active = false
     }
   }, [applyProfile, authLoading, authenticatedRequest, t.loadErrorLabel])
+
+  // Match count is its own request: /profiles/me carries no counters, and a
+  // failure here must not block the profile itself from rendering.
+  useEffect(() => {
+    let active = true
+
+    if (authLoading) {
+      return () => {
+        active = false
+      }
+    }
+
+    matchesApi
+      .getMyMatches(authenticatedRequest)
+      .then((response) => {
+        if (!active) {
+          return
+        }
+
+        // Same predicate as the /matches screen, so both show one number.
+        const now = Date.now()
+        setMatchesCount(
+          response.matches.filter(
+            (match) =>
+              match.status === "active" &&
+              new Date(match.expiresAt).getTime() > now,
+          ).length,
+        )
+      })
+      .catch(() => {
+        if (active) {
+          setMatchesCount(null)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [authLoading, authenticatedRequest])
 
   const profile = useMemo(() => {
     if (!profileRecord) {
@@ -462,10 +509,19 @@ export default function ProfilePage() {
     [applyProfile, authenticatedRequest, t.photoActionErrorLabel],
   )
 
+  // Only the match count has a backing endpoint today (GET /matches/me).
+  // Likes received exist in the DB (Like model, User.likesReceived) but no API
+  // exposes a count, and profile views are not tracked anywhere — no model,
+  // no field, no endpoint. Those two show NO_DATA instead of a literal "0",
+  // which would assert the user has none.
   const stats = [
-    { icon: Heart, value: "0", label: t.likesReceived },
-    { icon: Star, value: "0", label: t.matchesCount },
-    { icon: TrendingUp, value: "0", label: t.profileViews },
+    { icon: Heart, value: NO_DATA, label: t.likesReceived },
+    {
+      icon: Star,
+      value: matchesCount === null ? NO_DATA : String(matchesCount),
+      label: t.matchesCount,
+    },
+    { icon: TrendingUp, value: NO_DATA, label: t.profileViews },
   ]
 
   if (authLoading || isProfileLoading) {
