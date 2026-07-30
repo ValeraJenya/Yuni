@@ -5,8 +5,9 @@
 
 ## Git workflow
 
-- Никогда не коммитить и не пушить напрямую в `main`. Всегда работать в отдельной ветке и вливать изменения через PR.
-- Полные Git-правила (rebase, destructive-команды, `git add .`, проверка staged files) — в разделе «Git workflow» файла `AGENTS.md`.
+- Никогда не коммитить и не пушить напрямую в `main`. Всегда работать в отдельной ветке.
+- Push в origin и открытие Pull Request выполняет владелец репозитория вручную; агент останавливается на коммите в ветку.
+- Полные Git-правила (push/PR, rebase, destructive-команды, `git add .`, проверка staged files) — в разделе «Git workflow» файла `AGENTS.md`.
 
 ## Design tokens
 
