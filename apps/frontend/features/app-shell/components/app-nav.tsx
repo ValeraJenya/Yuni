@@ -82,26 +82,6 @@ export function AppNav() {
 
   return (
     <>
-      {/* ── Mobile sign out ────────────────────────────── */}
-      <div className="fixed bottom-[64px] right-3 z-50 md:hidden">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 font-sans font-medium"
-          style={{
-            fontSize: "9px",
-            letterSpacing: "0.10em",
-            color: "oklch(0.65 0.26 12 / 0.70)",
-            background: "oklch(0.09 0.008 15 / 0.88)",
-            border: "1px solid oklch(0.65 0.26 12 / 0.18)",
-            backdropFilter: "blur(12px)",
-          }}
-          aria-label={lang === "ru" ? "Выйти" : "Sign out"}
-        >
-          <LogOut size={9} />
-          {lang === "ru" ? "Выйти" : "Sign out"}
-        </button>
-      </div>
-
       {/* ── Mobile bottom bar ────────────────────────────── */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
