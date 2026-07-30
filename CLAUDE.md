@@ -1,5 +1,13 @@
 # Yuni design rules
 
+Этот файл — источник истины по design tokens, anti-AI-slop checklist и visual QA.
+Общий workflow, scope rules, security и Git-правила описаны в `AGENTS.md`; здесь они не дублируются.
+
+## Git workflow
+
+- Никогда не коммитить и не пушить напрямую в `main`. Всегда работать в отдельной ветке и вливать изменения через PR.
+- Полные Git-правила (rebase, destructive-команды, `git add .`, проверка staged files) — в разделе «Git workflow» файла `AGENTS.md`.
+
 ## Design tokens
 
 Новые и изменяемые экраны должны использовать семантические CSS-переменные из `apps/frontend/app/globals.css`, а не разрозненные literal-значения.

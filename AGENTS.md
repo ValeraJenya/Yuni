@@ -25,7 +25,7 @@ Yuni - dating app monorepo: React frontend, NestJS backend, PostgreSQL/Prisma, D
 ## Порядок чтения
 
 1. `AGENTS.md`.
-2. `CLAUDE.md` для frontend design tokens и обязательного visual QA в задачах с изменением вёрстки.
+2. `CLAUDE.md` — единственный источник истины по frontend design tokens, anti-AI-slop checklist и обязательному visual QA в задачах с изменением вёрстки. Здесь эти правила не дублируются.
 3. `docs/PROJECT_STATE.md`.
 4. `docs/ROADMAP.md`.
 5. Актуальная task spec из `docs/tasks/`.
@@ -60,8 +60,12 @@ Yuni - dating app monorepo: React frontend, NestJS backend, PostgreSQL/Prisma, D
 
 ## Git workflow
 
-- Не пушить напрямую в `main`.
-- Работать через ветки.
+Источник истины по Git-правилам — этот раздел. `CLAUDE.md` дублирует только само правило ветки и ссылается сюда.
+
+- Никогда не коммитить напрямую в `main`.
+- Никогда не пушить напрямую в `main`.
+- Всегда работать в отдельной ветке и вливать изменения через PR.
+- Если работа начата на `main`, сначала создать ветку и только потом коммитить.
 - Не использовать rebase без отдельного согласования.
 - Не использовать destructive Git-команды без согласования.
 - Не использовать `git add .` и `git add -A`.
