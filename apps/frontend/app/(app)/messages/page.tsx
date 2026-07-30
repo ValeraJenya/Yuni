@@ -266,11 +266,12 @@ function MessagesInner() {
   }
 
   const ConversationList = (
+    // The 300px cap is a desktop side-column width. On mobile this column is
+    // the whole screen (the thread replaces it via `hidden md:flex`), so the
+    // cap only left a dead strip on the right and truncated previews early.
     <aside
-      className={`flex flex-col flex-shrink-0 h-full overflow-hidden ${activeId ? "hidden md:flex" : "flex"}`}
+      className={`w-full flex-col flex-shrink-0 h-full overflow-hidden md:max-w-[300px] ${activeId ? "hidden md:flex" : "flex"}`}
       style={{
-        width: "100%",
-        maxWidth: "300px",
         borderRight: "1px solid oklch(0.15 0.012 15 / 0.80)",
         background: "oklch(0.085 0.010 15 / 0.80)",
       }}
