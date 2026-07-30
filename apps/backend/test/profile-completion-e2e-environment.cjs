@@ -1,10 +1,12 @@
 const { spawnSync } = require('node:child_process');
 
 function configureTestEnvironment() {
-  const testDatabaseUrl = process.env.TEST_DATABASE_URL;
+  const testDatabaseUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
 
   if (!testDatabaseUrl) {
-    throw new Error('TEST_DATABASE_URL is required for backend e2e tests');
+    throw new Error(
+      'TEST_DATABASE_URL or DATABASE_URL is required for backend e2e tests',
+    );
   }
 
   let parsedUrl;
@@ -19,8 +21,10 @@ function configureTestEnvironment() {
   }
 
   const databaseName = decodeURIComponent(parsedUrl.pathname.replace(/^\//, ''));
-  if (!databaseName.endsWith('_test')) {
-    throw new Error('Refusing to run e2e tests: database name must end with _test');
+  if (!databaseName.endsWith('_test') && !databaseName.endsWith('_ci')) {
+    throw new Error(
+      'Refusing to run e2e tests: database name must end with _test or _ci',
+    );
   }
 
   process.env.NODE_ENV = 'test';

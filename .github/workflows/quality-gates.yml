@@ -10,8 +10,23 @@ jobs:
   quality-gates:
     name: Build, lint, and typecheck
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: yuni_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d yuni_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=public
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yuni_ci?schema=public
 
     steps:
       - name: Checkout
@@ -37,11 +52,20 @@ jobs:
       - name: Test backend
         run: corepack pnpm --filter backend test
 
+      - name: Migrate e2e database
+        run: corepack pnpm --dir apps/backend prisma:migrate:deploy
+
+      - name: Test backend e2e
+        run: corepack pnpm --filter backend test:e2e
+
       - name: Build backend
         run: corepack pnpm --filter backend build
 
       - name: Lint backend
         run: corepack pnpm --filter backend lint
+
+      - name: Typecheck backend
+        run: corepack pnpm --filter backend typecheck
 
       - name: Lint frontend
         run: corepack pnpm --filter frontend lint
