@@ -8,23 +8,23 @@ interface HeroProps {
 
 const copy = {
   ru: {
-    eyebrow: "Только по приглашению",
-    line1: "Знакомства,",
-    line2: "которые",
-    line3: "ощущаются.",
-    tagline: "Не листать. А чувствовать.\nТе, с кем хочется говорить до утра.",
-    sub: "Yuni — для тех, кто устал от случайных знакомств. Здесь всё немного медленнее. И намного честнее.",
-    cta: "Начать",
+    eyebrow: "Знакомства без спешки",
+    line1: "Замечать.",
+    line2: "Слышать.",
+    line3: "Сближаться.",
+    tagline: "Не листать людей.\nЗамечать человека.",
+    sub: "Yuni — спокойное пространство для честных знакомств и разговоров, которые хочется продолжить.",
+    cta: "Познакомиться",
     ctaSub: "Войти",
   },
   en: {
-    eyebrow: "Invite only",
-    line1: "Connections",
-    line2: "you can",
-    line3: "feel.",
-    tagline: "Not swipes. Not chance.\nPeople you actually want to stay with.",
-    sub: "Yuni is a space for those seeking genuine closeness. Intelligent matching. Deliberate design.",
-    cta: "Get started",
+    eyebrow: "Dating without the rush",
+    line1: "Notice.",
+    line2: "Listen.",
+    line3: "Connect.",
+    tagline: "People are not profiles.\nMake room for a real person.",
+    sub: "Yuni is a calm space for honest introductions and conversations worth continuing.",
+    cta: "Meet someone",
     ctaSub: "Sign in",
   },
 }
@@ -33,23 +33,10 @@ export function Hero({ lang }: HeroProps) {
   const t = copy[lang]
 
   return (
-    <section className="relative min-h-screen overflow-hidden">
+    <section className="relative min-h-screen min-h-[100svh] overflow-hidden bg-background">
 
       {/* ── Background ─────────────────────────────────────── */}
-      <div className="absolute inset-0 bg-obsidian" />
-
-      {/* Left atmospheric glow */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: "15%",
-          left: "-10%",
-          width: "55vw",
-          height: "70vh",
-          background: "radial-gradient(ellipse at center, oklch(0.65 0.26 12 / 0.09) 0%, transparent 65%)",
-          filter: "blur(40px)",
-        }}
-      />
+      <div className="absolute inset-0 bg-background" />
 
       {/* Grain */}
       <div
@@ -73,95 +60,58 @@ export function Hero({ lang }: HeroProps) {
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        {/* Gradient masks — blends into obsidian on left and bottom */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              linear-gradient(to right, oklch(0.09 0.008 15) 0%, transparent 30%),
-              linear-gradient(to top, oklch(0.09 0.008 15) 0%, transparent 35%)
-            `,
-          }}
-        />
-        {/* Subtle rose cast on portrait */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: "radial-gradient(ellipse at 60% 40%, oklch(0.65 0.26 12 / 0.06) 0%, transparent 60%)",
-          }}
-        />
+        <div className="absolute inset-0 bg-background/35" />
       </div>
 
       {/* ── Text content ───────────────────────────────────── */}
-      <div className="relative z-10 mx-auto max-w-7xl px-6 md:px-10 flex flex-col justify-center min-h-screen pt-28 pb-20">
+      <div className="relative z-10 mx-auto flex min-h-screen min-h-[100svh] max-w-7xl flex-col justify-center px-6 pb-14 pt-28 md:px-10 md:pb-20">
 
         {/* Eyebrow */}
-        <div className="flex items-center gap-3 mb-14">
-          <span
-            className="h-px w-6 flex-shrink-0"
-            style={{ background: "oklch(0.65 0.26 12 / 0.7)" }}
-          />
-          <span className="text-[10px] font-sans font-medium tracking-[0.28em] uppercase"
-            style={{ color: "oklch(0.65 0.26 12)" }}
-          >
+        <div className="mb-8 flex items-center gap-3 md:mb-14">
+          <span className="h-px w-6 flex-shrink-0 bg-primary" />
+          <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-primary">
             {t.eyebrow}
           </span>
         </div>
 
         {/* Headline — asymmetric, left-anchored, runs wide */}
-        <div className="flex flex-col" style={{ gap: "0.04em" }}>
+        <div className="flex flex-col">
           <h1
-            className="font-display font-light leading-[0.96] tracking-[-0.01em]"
-            style={{ fontSize: "clamp(4.5rem, 11vw, 10.5rem)" }}
+            className="font-display text-[clamp(3.25rem,16vw,10.5rem)] font-light leading-[0.9] tracking-[-0.015em]"
           >
             <span className="block text-foreground">{t.line1}</span>
-            <span className="block" style={{ color: "oklch(0.96 0.005 60 / 0.32)", fontStyle: "italic" }}>
+            <span className="block italic text-muted-foreground">
               {t.line2}
             </span>
-            <span
-              className="block"
-              style={{ color: "oklch(0.65 0.26 12)" }}
-            >
+            <span className="block text-primary">
               {t.line3}
             </span>
           </h1>
         </div>
 
         {/* Bottom strip: tagline + sub + CTA */}
-        <div className="mt-16 flex flex-col gap-8 max-w-sm">
+        <div className="mt-10 flex max-w-sm flex-col gap-5 md:mt-16 md:gap-8">
 
           {/* Emotional tagline — warm, direct */}
-          <p
-            className="font-display font-light italic leading-[1.3] whitespace-pre-line text-pretty"
-            style={{ fontSize: "clamp(1rem, 1.8vw, 1.25rem)", color: "oklch(0.75 0.012 20)" }}
-          >
+          <p className="whitespace-pre-line text-pretty font-display text-[clamp(1rem,1.8vw,1.25rem)] font-light italic leading-[1.3] text-secondary-foreground">
             {t.tagline}
           </p>
 
-          <p className="font-sans leading-relaxed text-pretty"
-            style={{ fontSize: "13px", color: "oklch(0.48 0.010 15)" }}
-          >
+          <p className="text-pretty font-sans text-[13px] leading-relaxed text-muted-foreground">
             {t.sub}
           </p>
 
           <div className="flex items-center gap-6">
             <a
               href="/join"
-              className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 text-[13px] font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110"
-              style={{
-                background: "oklch(0.65 0.26 12)",
-                boxShadow: "0 0 28px oklch(0.65 0.26 12 / 0.30), 0 0 60px oklch(0.65 0.26 12 / 0.10)",
-              }}
+              className="group inline-flex items-center gap-2.5 rounded-md bg-primary px-7 py-3.5 font-sans text-[13px] font-semibold tracking-wide text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
             >
               {t.cta}
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
             </a>
             <a
               href="/signin"
-              className="font-sans text-[13px] font-medium transition-colors"
-              style={{ color: "oklch(0.45 0.010 15)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.75 0.005 60)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.45 0.010 15)")}
+              className="font-sans text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {t.ctaSub}
             </a>
@@ -170,13 +120,11 @@ export function Hero({ lang }: HeroProps) {
 
         {/* Scroll indicator — bottom center */}
         <div
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+          className="absolute bottom-10 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex"
           style={{ opacity: 0.35 }}
         >
-          <div className="h-10 w-px" style={{ background: "linear-gradient(to bottom, oklch(0.55 0.010 15), transparent)" }} />
-          <span className="text-[9px] font-sans tracking-[0.28em] uppercase"
-            style={{ color: "oklch(0.45 0.010 15)" }}
-          >
+          <div className="h-10 w-px bg-muted-foreground" />
+          <span className="font-sans text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
             {lang === "ru" ? "Далее" : "Scroll"}
           </span>
         </div>

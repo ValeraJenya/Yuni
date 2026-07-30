@@ -6,13 +6,13 @@ import './globals.css'
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
-  variable: "--font-inter",
+  variable: "--font-body",
   display: "swap",
 })
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin", "cyrillic"],
-  variable: "--font-cormorant",
+  variable: "--font-heading",
   weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
   display: "swap",
