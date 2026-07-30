@@ -25,12 +25,13 @@ Yuni - dating app monorepo: React frontend, NestJS backend, PostgreSQL/Prisma, D
 ## Порядок чтения
 
 1. `AGENTS.md`.
-2. `docs/PROJECT_STATE.md`.
-3. `docs/ROADMAP.md`.
-4. Актуальная task spec из `docs/tasks/`.
-5. Связанные architecture/security/API/onboarding документы.
-6. Связанные ADR и audit findings.
-7. Code, tests and current diff.
+2. `CLAUDE.md` для frontend design tokens и обязательного visual QA в задачах с изменением вёрстки.
+3. `docs/PROJECT_STATE.md`.
+4. `docs/ROADMAP.md`.
+5. Актуальная task spec из `docs/tasks/`.
+6. Связанные architecture/security/API/onboarding документы.
+7. Связанные ADR и audit findings.
+8. Code, tests and current diff.
 
 ## Источники истины
 

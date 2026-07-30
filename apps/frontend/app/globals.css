@@ -50,7 +50,12 @@
   --chart-4: oklch(0.70 0.12 60);
   --chart-5: oklch(0.40 0.10 10);
 
-  --radius: 0.75rem;
+  /* Product shape and depth */
+  --shape-radius-sm: 0.5rem;
+  --shape-radius-md: 0.75rem;
+  --shape-radius-lg: 1.25rem;
+  --elevation-sm: 0 1px 2px oklch(0 0 0 / 0.18);
+  --elevation-md: 0 16px 40px oklch(0 0 0 / 0.28);
 
   /* Sidebar (unused on landing but required by shadcn) */
   --sidebar: oklch(0.10 0.008 15);
@@ -73,9 +78,9 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), 'Inter', sans-serif;
-  --font-serif: var(--font-cormorant), 'Cormorant Garamond', serif;
-  --font-display: var(--font-cormorant), 'Cormorant Garamond', serif;
+  --font-sans: var(--font-body), 'Inter', sans-serif;
+  --font-serif: var(--font-heading), 'Cormorant Garamond', serif;
+  --font-display: var(--font-heading), 'Cormorant Garamond', serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -101,10 +106,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: var(--shape-radius-sm);
+  --radius-md: var(--shape-radius-md);
+  --radius-lg: var(--shape-radius-lg);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -160,7 +166,7 @@
 
   /* Typography utilities */
   .font-display {
-    font-family: var(--font-serif), 'Cormorant Garamond', serif;
+    font-family: var(--font-heading), 'Cormorant Garamond', serif;
   }
 
   /* Subtle noise texture via pseudo-element (applied to elements that add it) */
