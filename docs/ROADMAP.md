@@ -72,7 +72,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 062 | Report не привязан к контенту | idea | P3 | — | Только к пользователю целиком, хотя схема поддерживает контент |
 | 063 | Юридические страницы /terms /privacy /help | idea | P0 | — | Страницы 404, но регистрация требует согласия с ними |
 | 064 | Невидимый текст в модалке фильтров Discovery | idea | P1 | — | CSS-баг, весь текст невидим |
-| 065 | Нет CD-пайплайна для приложения | idea | P2 | — | Только docs-site деплоится, backend/frontend — нет |
+| 065 | Нет CD-пайплайна для приложения | review | P2 | — | Добавлен GHCR build/publish workflow для backend/frontend images без environment deploy |
 
 ## Выполнено
 
