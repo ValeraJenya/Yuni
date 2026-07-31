@@ -28,7 +28,6 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | ID | Название | Статус | Комментарий |
 |---|---|---|---|
 | 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; остаются concurrency, voice-limit, starters и contract gaps |
-| 053 | Critical real-DB/HTTP coverage | review | Real DB/HTTP e2e для Match → Block → Chat стабилизируются на CI; block-vs-match сценарий skip до Task 042 |
 
 ## Запланировано
 
@@ -80,6 +79,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 058 | CI не может запустить e2e | done | P2 | PR #47; Postgres service + backend test:e2e в quality-gates, реально прогнан на CI. |
 | 059 | Backend lint — это tsc --noEmit | done | P2 | PR #47; backend ESLint отдельным шагом от typecheck. |
 | 065 | Нет CD-пайплайна для приложения | done | P2 | PR #48; GHCR build/publish workflow для backend/frontend images (без environment deploy — это Task 025). |
+| 053 | Critical real-DB/HTTP coverage | done | P2 | PR #49→#53; real-Postgres e2e для journey/game-race/voice-limit зелёные на CI. Block-vs-match — skipped до Task 042. |
 
 ## Отложено
 
