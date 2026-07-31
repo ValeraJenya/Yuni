@@ -30,6 +30,7 @@ describe('ChatGame concurrent-answer race condition (PostgreSQL e2e)', () => {
   beforeAll(async () => {
     app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: false,
+      abortOnError: false,
     });
     app.useGlobalPipes(
       new ValidationPipe({
