@@ -18,8 +18,8 @@ weight: 20
 
 | ID | Название | Статус | Комментарий |
 |---|---|---|---|
-| 024 | Atomic block and match lifecycle | review | Conversation теперь закрывается атомарно вместе с Match; ждёт прогона тестов и мержа |
 | 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; остаются concurrency, voice-limit, starters и contract gaps |
+| 053 | Critical real-DB/HTTP coverage | review | Real DB/HTTP e2e для Match → Block → Chat стабилизируются на CI; block-vs-match сценарий skip до Task 042 |
 
 ## Запланировано
 
@@ -27,7 +27,6 @@ weight: 20
 |---|---|---|---|---|---|
 | 022 | Frontend media URL resolution | research | P1 | Task 000 | Только profile page resolves relative uploads; Discovery, matches и messages используют URL как есть. |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |
-| 024 | Atomic block and match lifecycle | review | P1 | Task 000 | Матчевая часть — PR #31. Conversation теперь закрывается атомарно в той же транзакции — код готов, ждёт прогона тестов и мержа. |
 | 025 | Production deployment readiness | idea | P1 | Task 000 | Deployment architecture, secrets, HTTPS, reverse proxy. |
 | 026 | PostgreSQL integration checks in CI | idea | P2 | Task 000 | Общий integration gate; текущий workflow не поднимает Postgres (Task 058), journey coverage — Task 053. |
 | 027 | Этапный чат — схема и бэкенд | in_progress | P1 | Task 018 | Базовый backend реализован; открытые gaps вынесены в Task 043/044/045/048. |
@@ -41,8 +40,7 @@ weight: 20
 | 038 | Мёртвый demo-mode код | idea | P2 | — | DemoSessionProvider/DemoGate существуют но нигде не подключены |
 | 039 | Политика integration/e2e покрытия | idea | P3 | — | Обязательное покрытие критических сценариев |
 | 040 | OAuth-кнопки декоративны | idea | P1 | — | Google/Apple без onClick, помечены Social placeholders |
-| 042 | Race condition блокировка vs match | idea | P1 | — | matches.service.ts проверяет блок вне транзакции до создания match |
-| 043 | Race condition game-answer | review | P1 | — | SELECT FOR UPDATE сериализует завершение; доказано race-тестом на реальном Postgres |
+| 042 | Race condition блокировка vs match | idea | P1 | — | matches.service.ts проверяет блок вне транзакции до создания match; real-Postgres тест уже есть (skipped) в match-block-chat.e2e-spec.ts |
 | 044 | Voice-limit bypass | idea | P1 | — | Лимит 90 сек обходится параллельными запросами |
 | 045 | Starters seed | idea | P1 | — | conversation_starters таблица всегда пустая на чистой БД |
 | 046 | Неатомарные write-пути | idea | P1 | — | register/like/match/message не атомарны с побочными эффектами |
@@ -51,19 +49,15 @@ weight: 20
 | 049 | Fake healthcheck | idea | P2 | — | /health хардкод status ok без обращения к Postgres |
 | 050 | Дополнительные мёртвые кнопки | idea | P2 | — | messages и profile — Like/More/Improve/Premium/Add interests |
 | 052 | Переключатель языка неполон | idea | P2 | — | Не персистится, не обновляет html lang, разные instance провайдера |
-| 053 | Critical real-DB/HTTP coverage | review | P2 | — | Добавлены real DB/HTTP e2e для Match → Block → Chat и concurrency сценариев |
 | 054 | Дрейф документации | idea | P3 | — | Verified-baseline расходится с git-историей — процессный пункт |
 | 055 | Database-доки отстали от миграций | idea | P3 | — | staged-chat и Task 021 не отражены |
 | 056 | CI/DevOps проблемы | idea | P2 | — | Root-контейнеры, дефолтные креды, JWT плейсхолдеры, Hugo без PR-гейта |
 | 057 | Privacy/Notification settings API | idea | P0 | — | PrivacySettings/NotificationSettings создаются в БД но API для их изменения нет |
-| 058 | CI не может запустить e2e | review | P2 | — | Добавлен Postgres service и явный backend e2e шаг в quality gates |
-| 059 | Backend lint — это tsc --noEmit | review | P2 | — | Backend ESLint добавлен отдельно от typecheck |
 | 060 | ParseUUIDPipe непоследователен | idea | P2 | — | Используется не во всех контроллерах |
 | 061 | Два флага видимости профиля | idea | P2 | — | isDiscoverable и PrivacySettings.discoverable рассинхронизированы |
 | 062 | Report не привязан к контенту | idea | P3 | — | Только к пользователю целиком, хотя схема поддерживает контент |
 | 063 | Юридические страницы /terms /privacy /help | idea | P0 | — | Страницы 404, но регистрация требует согласия с ними |
 | 064 | Невидимый текст в модалке фильтров Discovery | idea | P1 | — | CSS-баг, весь текст невидим |
-| 065 | Нет CD-пайплайна для приложения | review | P2 | — | Добавлен GHCR build/publish workflow для backend/frontend images без environment deploy |
 
 ## Выполнено
 
@@ -72,6 +66,11 @@ weight: 20
 | 000 | Project documentation foundation | done | P0 | PR #24 / 6d3d399 |
 | Step 20.2 | Profile photo storage boundary | done | P0 | PR #23 / ca50baf |
 | 021 | Profile completion lifecycle | done | P0 | Branch commits `3abd405`–`852c67f`; checks and independent blind review passed. |
+| 024 | Atomic block and match lifecycle | done | P1 | PR #38 / merge `f027b0f`; юнит-тесты зелёные на CI. Read-path gap закрыт при верификации Task 053. |
+| 043 | Race condition game-answer | done | P1 | PR #39 / merge `157fc46`; game-race.e2e-spec.ts стабильно зелёный на реальном Postgres. |
+| 058 | CI не может запустить e2e | done | P2 | PR #47; Postgres service + backend test:e2e в quality-gates, реально прогнан на CI. |
+| 059 | Backend lint — это tsc --noEmit | done | P2 | PR #47; backend ESLint отдельным шагом от typecheck. |
+| 065 | Нет CD-пайплайна для приложения | done | P2 | PR #48; GHCR build/publish workflow для backend/frontend images (без environment deploy — это Task 025). |
 
 ## Отложено
 

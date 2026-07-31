@@ -1179,6 +1179,13 @@ export class ChatService {
     return this.prisma.conversation.findFirst({
       where: {
         id: conversationId,
+        // Matches the status check already used by getConversations(): a
+        // conversation closed by a block stays closed permanently (Task 024),
+        // even after unblockUser() deletes the Block row. unblockedConversationWhere
+        // alone only reflects a *currently live* Block, so without this it would
+        // silently look "restored" for reads (though still unwritable) once
+        // unblocked — exactly what Task 024 set out to prevent.
+        status: ConversationStatus.active,
         AND: [
           this.activeParticipantWhere(currentUserId),
           this.unblockedConversationWhere(currentUserId),
