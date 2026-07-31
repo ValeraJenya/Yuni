@@ -7,6 +7,7 @@ import type { AddressInfo } from 'node:net';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { PrismaService } from '../src/common/prisma/prisma.service';
+import { RateLimitService } from '../src/common/rate-limit';
 
 interface AuthResponse {
   accessToken: string;
@@ -78,6 +79,7 @@ interface GameResponse {
 describe('match block chat lifecycle (PostgreSQL e2e)', () => {
   let app: NestExpressApplication;
   let prisma: PrismaService;
+  let rateLimitService: RateLimitService;
   let baseUrl: string;
   const createdUserIds: string[] = [];
 
@@ -98,6 +100,15 @@ describe('match block chat lifecycle (PostgreSQL e2e)', () => {
     const address = app.getHttpServer().address() as AddressInfo;
     baseUrl = `http://127.0.0.1:${address.port}`;
     prisma = app.get(PrismaService);
+    rateLimitService = app.get(RateLimitService);
+  });
+
+  beforeEach(() => {
+    // Each test case registers 1-2 users against the same in-process
+    // RateLimitService instance (auth.register.ip allows only 3/hour).
+    // Without resetting between test cases, the 3rd+ registration in this
+    // file would be rejected with 429 regardless of correctness.
+    rateLimitService.reset();
   });
 
   afterAll(async () => {
@@ -252,9 +263,12 @@ describe('match block chat lifecycle (PostgreSQL e2e)', () => {
     userA: AuthResponse;
     userB: AuthResponse;
   }> {
-    const suffix = `${label}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const userA = await register(`t053_${suffix}_a`, `t053-${suffix}-a@example.test`);
-    const userB = await register(`t053_${suffix}_b`, `t053-${suffix}-b@example.test`);
+    // Handles must be <=30 chars (see RegisterDto), so the unique suffix stays
+    // short and label-free here — the descriptive label only goes into the
+    // email, which has no such length limit.
+    const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const userA = await register(`t053_${suffix}a`, `t053-${label}-${suffix}-a@example.test`);
+    const userB = await register(`t053_${suffix}b`, `t053-${label}-${suffix}-b@example.test`);
     createdUserIds.push(userA.user.id, userB.user.id);
     return { userA, userB };
   }
