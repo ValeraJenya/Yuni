@@ -87,12 +87,6 @@ const copy = {
     settingsLabel: "Настройки",
     logoutLabel: "Выйти",
     lookingFor: "Ищу",
-    lookingForValues: {
-      relationship: "Серьёзные отношения",
-      casual: "Неформальное общение",
-      friendship: "Дружба",
-      unsure: "Пока не знаю",
-    },
     cm: "см",
     likesReceived: "Лайков",
     matchesCount: "Матчей",
@@ -152,12 +146,6 @@ const copy = {
     settingsLabel: "Settings",
     logoutLabel: "Sign out",
     lookingFor: "Looking for",
-    lookingForValues: {
-      relationship: "Serious relationship",
-      casual: "Casual",
-      friendship: "Friendship",
-      unsure: "Not sure yet",
-    },
     cm: "cm",
     likesReceived: "Likes",
     matchesCount: "Matches",
@@ -618,11 +606,31 @@ export default function ProfilePage() {
   const missingFields = profileRecord.completion.missingFields
   const improveTarget =
     COMPLETION_JUMP_ORDER.find((field) => missingFields.includes(field)) ?? null
-  const lookingForLabel = profile.lookingFor
-    ? t.lookingForValues[
-        profile.lookingFor as keyof typeof t.lookingForValues
-      ] ?? profile.lookingFor
-    : null
+  // "Looking for" is not listed here: it has an editable row in the profile
+  // fields card above, and repeating it made the same value show up twice under
+  // the same label. Details only carries read-only fields with no editor yet.
+  const detailRows = ([
+    profile.height && {
+      icon: User,
+      label: t.height,
+      value: `${profile.height} ${t.cm}`,
+    },
+    profile.occupation && {
+      icon: Briefcase,
+      label: t.occupation,
+      value: profile.occupation,
+    },
+    profile.education && {
+      icon: GraduationCap,
+      label: t.education,
+      value: profile.education,
+    },
+    profile.languages?.length && {
+      icon: Languages,
+      label: t.languages,
+      value: profile.languages.join(", "),
+    },
+  ] as Array<ProfileInfoRow | undefined | null | false>).filter(isProfileInfoRow)
 
   return (
     <div className="min-h-screen md:pl-[220px] pb-28 md:pb-12">
@@ -1277,49 +1285,20 @@ export default function ProfilePage() {
           </div>
 
           {/* ── Details ── */}
-          <div>
-            <div className="flex items-center justify-between mb-3.5">
-              <SectionLabel>{t.detailsLabel}</SectionLabel>
-            </div>
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{
-                border: "1px solid oklch(0.20 0.012 15 / 0.60)",
-                background: "oklch(0.11 0.012 15 / 0.80)",
-                boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
-              }}
-            >
-              {([
-                profile.height && {
-                  icon: User,
-                  label: t.height,
-                  value: `${profile.height} ${t.cm}`,
-                },
-                profile.occupation && {
-                  icon: Briefcase,
-                  label: t.occupation,
-                  value: profile.occupation,
-                },
-                profile.education && {
-                  icon: GraduationCap,
-                  label: t.education,
-                  value: profile.education,
-                },
-                profile.languages?.length && {
-                  icon: Languages,
-                  label: t.languages,
-                  value: profile.languages.join(", "),
-                },
-                lookingForLabel && {
-                  icon: Heart,
-                  label: t.lookingFor,
-                  value: lookingForLabel,
-                },
-              ] as Array<
-                ProfileInfoRow | undefined | null | false
-              >)
-                .filter(isProfileInfoRow)
-                .map((row, i, arr) => (
+          {detailRows.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3.5">
+                <SectionLabel>{t.detailsLabel}</SectionLabel>
+              </div>
+              <div
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  border: "1px solid oklch(0.20 0.012 15 / 0.60)",
+                  background: "oklch(0.11 0.012 15 / 0.80)",
+                  boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
+                }}
+              >
+                {detailRows.map((row, i, arr) => (
                   <div
                     key={row.label}
                     className="flex items-center gap-4 px-5 py-3.5"
@@ -1353,8 +1332,9 @@ export default function ProfilePage() {
                     </span>
                   </div>
                 ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ── Account settings ── */}
           <div>
