@@ -99,7 +99,7 @@ export function CtaSection({ lang }: CtaSectionProps) {
 
           <a
             href="/join"
-            className="group inline-flex items-center gap-2.5 rounded-full px-8 py-4 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 w-fit"
+            className="motion-cta group inline-flex items-center gap-2.5 rounded-full px-8 py-4 font-sans font-semibold tracking-wide text-white hover:brightness-110 w-fit"
             style={{
               fontSize: "14px",
               background: "oklch(0.65 0.26 12)",

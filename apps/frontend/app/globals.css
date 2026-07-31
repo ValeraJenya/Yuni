@@ -271,9 +271,14 @@
   }
 
   /*
-    Primary landing CTA. A single 1px arc of light rose travels the border —
-    same hue as --primary, lifted in lightness so it reads against the rose fill.
-    Paired with a springy press; the secondary link stays plain by design.
+    Primary landing CTAs (hero and closing section). A single 1px arc of light
+    rose travels the border — same hue as --primary, lifted in lightness so it
+    reads against the rose fill. Paired with a springy press; the secondary
+    links next to them stay plain by design.
+
+    `filter` is in the transition list for the closing CTA's hover brightness;
+    the hero CTA shifts background-color instead. Neither sets `transition-all`,
+    so the press stays on the spring curve rather than being flattened to ease.
   */
   .motion-cta {
     position: relative;
@@ -281,6 +286,7 @@
     transition:
       transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
       background-color 200ms ease,
+      filter 200ms ease,
       box-shadow 300ms ease;
   }
   .motion-cta:active {
