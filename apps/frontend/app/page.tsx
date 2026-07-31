@@ -20,6 +20,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/*
+        Scroll reveals start hidden in CSS and are un-hidden by IntersectionObserver.
+        Without JS that never fires, so pin them to their resting state.
+      */}
+      <noscript>
+        <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+      </noscript>
       <Navbar lang={lang} onLangToggle={toggleLang} />
       <main>
         <Hero lang={lang} />

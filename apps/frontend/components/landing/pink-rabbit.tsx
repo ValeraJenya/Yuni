@@ -1,5 +1,7 @@
 "use client"
 
+import { InView } from "./motion/in-view"
+
 interface PinkRabbitProps {
   lang: "ru" | "en"
 }
@@ -42,7 +44,7 @@ export function PinkRabbit({ lang }: PinkRabbitProps) {
       <div className="mx-auto max-w-7xl px-6 md:px-10 py-16 md:py-20">
 
         {/* Single horizontal strip */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10 md:gap-0">
+        <InView className="flex flex-col md:flex-row md:items-center md:justify-between gap-10 md:gap-0">
 
           {/* Left: brand statement */}
           <div className="flex flex-col gap-3 max-w-xs">
@@ -134,7 +136,7 @@ export function PinkRabbit({ lang }: PinkRabbitProps) {
               </div>
             ))}
           </div>
-        </div>
+        </InView>
       </div>
     </section>
   )

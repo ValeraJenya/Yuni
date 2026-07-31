@@ -1,6 +1,9 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import { ArrowRight } from "lucide-react"
+import { RevealText } from "./motion/reveal-text"
+import { useParallax } from "./motion/use-parallax"
 
 interface HeroProps {
   lang: "ru" | "en"
@@ -31,6 +34,7 @@ const copy = {
 
 export function Hero({ lang }: HeroProps) {
   const t = copy[lang]
+  const portraitRef = useParallax<HTMLImageElement>({ strength: 28 })
 
   return (
     <section className="relative min-h-screen min-h-[100svh] overflow-hidden bg-background">
@@ -53,12 +57,15 @@ export function Hero({ lang }: HeroProps) {
         className="absolute top-0 bottom-0 right-0 hidden lg:block"
         style={{ width: "44vw" }}
       >
-        {/* Portrait */}
+        {/* Portrait — overscaled vertically so the parallax drift never bares an edge */}
         <img
+          ref={portraitRef}
+          data-parallax=""
           src="/hero-portrait.jpg"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="absolute left-0 w-full object-cover object-center"
+          style={{ top: "-7%", height: "114%" }}
         />
         <div className="absolute inset-0 bg-background/35" />
       </div>
@@ -67,25 +74,21 @@ export function Hero({ lang }: HeroProps) {
       <div className="relative z-10 mx-auto flex min-h-screen min-h-[100svh] max-w-7xl flex-col justify-center px-6 pb-14 pt-28 md:px-10 md:pb-20">
 
         {/* Eyebrow */}
-        <div className="mb-8 flex items-center gap-3 md:mb-14">
+        <div className="motion-fade-up mb-8 flex items-center gap-3 md:mb-14">
           <span className="h-px w-6 flex-shrink-0 bg-primary" />
           <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-primary">
             {t.eyebrow}
           </span>
         </div>
 
-        {/* Headline — asymmetric, left-anchored, runs wide */}
+        {/* Headline — asymmetric, left-anchored, runs wide. Words lift in line by line. */}
         <div className="flex flex-col">
           <h1
             className="font-display text-[clamp(3.25rem,16vw,10.5rem)] font-light leading-[0.9] tracking-[-0.015em]"
           >
-            <span className="block text-foreground">{t.line1}</span>
-            <span className="block italic text-muted-foreground">
-              {t.line2}
-            </span>
-            <span className="block text-primary">
-              {t.line3}
-            </span>
+            <RevealText text={t.line1} delay={0.08} className="block text-foreground" />
+            <RevealText text={t.line2} delay={0.22} className="block italic text-muted-foreground" />
+            <RevealText text={t.line3} delay={0.36} className="block text-primary" />
           </h1>
         </div>
 
@@ -93,18 +96,24 @@ export function Hero({ lang }: HeroProps) {
         <div className="mt-10 flex max-w-sm flex-col gap-5 md:mt-16 md:gap-8">
 
           {/* Emotional tagline — warm, direct */}
-          <p className="whitespace-pre-line text-pretty font-display text-[clamp(1rem,1.8vw,1.25rem)] font-light italic leading-[1.3] text-secondary-foreground">
+          <p
+            className="motion-fade-up whitespace-pre-line text-pretty font-display text-[clamp(1rem,1.8vw,1.25rem)] font-light italic leading-[1.3] text-secondary-foreground"
+            style={{ animationDelay: "0.52s" }}
+          >
             {t.tagline}
           </p>
 
-          <p className="text-pretty font-sans text-[13px] leading-relaxed text-muted-foreground">
+          <p
+            className="motion-fade-up text-pretty font-sans text-[13px] leading-relaxed text-muted-foreground"
+            style={{ animationDelay: "0.6s" }}
+          >
             {t.sub}
           </p>
 
-          <div className="flex items-center gap-6">
+          <div className="motion-fade-up flex items-center gap-6" style={{ animationDelay: "0.68s" }}>
             <a
               href="/join"
-              className="group inline-flex items-center gap-2.5 rounded-md bg-primary px-7 py-3.5 font-sans text-[13px] font-semibold tracking-wide text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+              className="motion-cta group inline-flex items-center gap-2.5 rounded-md bg-primary px-7 py-3.5 font-sans text-[13px] font-semibold tracking-wide text-primary-foreground shadow-sm hover:bg-primary/90"
             >
               {t.cta}
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
@@ -120,8 +129,8 @@ export function Hero({ lang }: HeroProps) {
 
         {/* Scroll indicator — bottom center */}
         <div
-          className="absolute bottom-10 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex"
-          style={{ opacity: 0.35 }}
+          className="motion-fade-up absolute bottom-10 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex"
+          style={{ "--fade-to": 0.35, animationDelay: "0.9s" } as CSSProperties}
         >
           <div className="h-10 w-px bg-muted-foreground" />
           <span className="font-sans text-[9px] uppercase tracking-[0.28em] text-muted-foreground">
