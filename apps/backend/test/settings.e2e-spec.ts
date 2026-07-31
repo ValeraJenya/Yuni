@@ -7,6 +7,7 @@ import type { AddressInfo } from 'node:net';
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { PrismaService } from '../src/common/prisma/prisma.service';
+import { RateLimitService } from '../src/common/rate-limit';
 import {
   PROFILE_PHOTO_STORAGE,
   type ProfilePhotoStorage,
@@ -62,6 +63,7 @@ interface PhotoMutationResponse {
 describe('settings API (PostgreSQL e2e)', () => {
   let app: NestExpressApplication;
   let prisma: PrismaService;
+  let rateLimitService: RateLimitService;
   let profilePhotoStorage: ProfilePhotoStorage;
   let baseUrl: string;
   const createdUserIds: string[] = [];
@@ -84,7 +86,14 @@ describe('settings API (PostgreSQL e2e)', () => {
     const address = app.getHttpServer().address() as AddressInfo;
     baseUrl = `http://127.0.0.1:${address.port}`;
     prisma = app.get(PrismaService);
+    rateLimitService = app.get(RateLimitService);
     profilePhotoStorage = app.get(PROFILE_PHOTO_STORAGE);
+  });
+
+  beforeEach(() => {
+    // Each test registers two users against the same in-process
+    // RateLimitService instance (auth.register.ip allows only 3/hour).
+    rateLimitService.reset();
   });
 
   afterAll(async () => {
@@ -227,15 +236,16 @@ describe('settings API (PostgreSQL e2e)', () => {
   });
 
   async function register(label: string): Promise<AuthResponse> {
-    const suffix = `${label}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    const handle = `t057_${suffix}`;
     const auth = await requestJson<AuthResponse>('/auth/register', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        email: `${suffix}@example.test`,
+        email: `${label}-${suffix}@example.test`,
         password: 'Synthetic-password-057',
-        handle: suffix,
-        displayName: suffix,
+        handle,
+        displayName: handle,
         birthDate: '1995-05-15',
       }),
     });
