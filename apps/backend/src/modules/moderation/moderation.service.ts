@@ -309,6 +309,14 @@ export class ModerationService {
       ],
     } satisfies Prisma.MatchWhereInput;
 
+    // Closing the match alone leaves the underlying Conversation reachable:
+    // findWritableConversationOrThrow only rejects non-active conversations,
+    // and unblockUser only ever deletes the Block row, so without this the
+    // old conversation would keep accepting messages, and would look fully
+    // "restored" (with no explicit reopening) as soon as the block is lifted.
+    // Closing it here, in the same transaction as the match, makes both
+    // effects of a block atomic and — matching Match, which never reverts
+    // from `blocked` on unblock — permanent.
     await client.conversation.updateMany({
       where: {
         status: ConversationStatus.active,

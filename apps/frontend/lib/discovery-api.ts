@@ -1,4 +1,5 @@
 import type { ApiRequestMethod } from "@/lib/auth-api"
+import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 import type { Gender, LookingFor, UserProfile } from "@/types/app"
 
 export interface DiscoveryPhoto {
@@ -60,7 +61,9 @@ export function toUserProfile(card: DiscoveryCard): UserProfile {
   const photoUrls = [
     card.primaryPhotoUrl,
     ...card.photos.map((photo) => photo.publicUrl),
-  ].filter((url): url is string => Boolean(url))
+  ]
+    .map((url) => resolveProfilePhotoUrl(url))
+    .filter((url): url is string => Boolean(url))
   const uniquePhotoUrls = Array.from(new Set(photoUrls))
 
   return {

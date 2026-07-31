@@ -227,14 +227,6 @@ const chatGameSelect = {
   postponeCount: true,
 } satisfies Prisma.ChatGameSelect;
 
-const chatGameWithAnswersSelect = {
-  ...chatGameSelect,
-  answers: {
-    select: {
-      userId: true,
-    },
-  },
-} satisfies Prisma.ChatGameSelect;
 
 type ConversationSummaryRecord = Prisma.ConversationGetPayload<{
   select: typeof conversationSummarySelect;
@@ -542,27 +534,39 @@ export class ChatService {
     }
 
     const now = new Date();
-    const game = await this.prisma.chatGame.findFirst({
-      where: {
-        id: gameId,
-        conversationId,
-        completedAt: null,
-      },
-      select: chatGameWithAnswersSelect,
-    });
-
-    if (
-      !game ||
-      (game.postponedUntil !== null && game.postponedUntil > now)
-    ) {
-      throw new NotFoundException(GAME_NOT_AVAILABLE_MESSAGE);
-    }
-
-    if (game.answers.some((gameAnswer) => gameAnswer.userId === currentUser.id)) {
-      throw new ConflictException(DUPLICATE_GAME_ANSWER_MESSAGE);
-    }
 
     const updatedGame = await this.prisma.$transaction(async (tx) => {
+      const [lockedGame] = await tx.$queryRaw<
+        Array<{
+          id: string;
+          stage: number;
+          completed_at: Date | null;
+          postponed_until: Date | null;
+        }>
+      >`
+        SELECT id, stage, completed_at, postponed_until
+        FROM chat_games
+        WHERE id = ${gameId}::uuid AND conversation_id = ${conversationId}::uuid
+        FOR UPDATE
+      `;
+
+      if (
+        !lockedGame ||
+        lockedGame.completed_at !== null ||
+        (lockedGame.postponed_until !== null && lockedGame.postponed_until > now)
+      ) {
+        throw new NotFoundException(GAME_NOT_AVAILABLE_MESSAGE);
+      }
+
+      const existingAnswers = await tx.gameAnswer.findMany({
+        where: { gameId },
+        select: { userId: true },
+      });
+
+      if (existingAnswers.some((a) => a.userId === currentUser.id)) {
+        throw new ConflictException(DUPLICATE_GAME_ANSWER_MESSAGE);
+      }
+
       await tx.gameAnswer.create({
         data: {
           gameId,
@@ -570,42 +574,21 @@ export class ChatService {
           answer: trimmedAnswer,
           answeredAt: now,
         },
-        select: {
-          id: true,
-        },
+        select: { id: true },
       });
 
-      const answerCount = await tx.gameAnswer.count({
-        where: {
-          gameId,
-        },
-      });
-
-      if (answerCount >= 2) {
+      if (existingAnswers.length + 1 >= 2) {
         await tx.chatGame.update({
-          where: {
-            id: gameId,
-          },
-          data: {
-            completedAt: now,
-          },
-          select: {
-            id: true,
-          },
+          where: { id: gameId },
+          data: { completedAt: now },
+          select: { id: true },
         });
 
-        await this.advanceStageIfReady(
-          tx,
-          conversation,
-          game.stage,
-          now,
-        );
+        await this.advanceStageIfReady(tx, conversation, lockedGame.stage, now);
       }
 
       return tx.chatGame.findUniqueOrThrow({
-        where: {
-          id: gameId,
-        },
+        where: { id: gameId },
         select: chatGameSelect,
       });
     });

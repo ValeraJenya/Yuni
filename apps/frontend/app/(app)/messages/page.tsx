@@ -15,6 +15,7 @@ import { ApiError } from "@/lib/auth-api"
 import { chatApi, type ChatMessage, type ConversationSummary } from "@/lib/chat-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
+import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 
 const copy = {
   ru: {
@@ -76,7 +77,10 @@ function getProfileName(conversation: ConversationSummary) {
 }
 
 function getProfilePhoto(conversation: ConversationSummary) {
-  return conversation.otherParticipant.primaryPhotoUrl || fallbackPhotoUrl
+  return (
+    resolveProfilePhotoUrl(conversation.otherParticipant.primaryPhotoUrl) ||
+    fallbackPhotoUrl
+  )
 }
 
 function MessagesInner() {
@@ -262,13 +266,13 @@ function MessagesInner() {
   }
 
   const ConversationList = (
+    // The 300px cap is a desktop side-column width. On mobile this column is
+    // the whole screen (the thread replaces it via `hidden md:flex`), so the
+    // cap only left a dead strip on the right and truncated previews early.
     <aside
-      className={`flex flex-col flex-shrink-0 ${activeId ? "hidden md:flex" : "flex"}`}
+      className={`w-full flex-col flex-shrink-0 h-full overflow-hidden md:max-w-[300px] ${activeId ? "hidden md:flex" : "flex"}`}
       style={{
-        width: "100%",
-        maxWidth: "300px",
         borderRight: "1px solid oklch(0.15 0.012 15 / 0.80)",
-        minHeight: "100dvh",
         background: "oklch(0.085 0.010 15 / 0.80)",
       }}
     >
@@ -320,7 +324,9 @@ function MessagesInner() {
         </div>
       </header>
 
-      <div className="flex flex-col gap-0.5 px-2 py-2 pb-8 overflow-y-auto flex-1">
+      {/* The only scrollable zone of the list column; min-h-0 lets it shrink
+          below its content height so the header above never scrolls away */}
+      <div className="flex flex-1 min-h-0 flex-col gap-0.5 overflow-y-auto overscroll-contain px-2 py-2 pb-8">
         {isConversationsLoading ? (
           <p
             className="font-sans px-3 py-8 text-center"
@@ -452,7 +458,7 @@ function MessagesInner() {
   )
 
   const ChatThread = activeConversation ? (
-    <div className="flex flex-col flex-1 relative" style={{ minHeight: "100dvh" }}>
+    <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden relative">
       <div
         className="absolute top-0 left-0 right-0 pointer-events-none z-0"
         style={{
@@ -462,15 +468,16 @@ function MessagesInner() {
         }}
       />
 
+      {/* Fixed zone: sits outside the scroll container, so it needs no sticky.
+          z-20 keeps it above the message list (z-10), which is a later sibling
+          and would otherwise paint over it. */}
       <header
-        className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-10"
+        className="flex items-center gap-3 px-4 py-3 flex-shrink-0 relative z-20"
         style={{
           borderBottom: "1px solid oklch(0.15 0.012 15 / 0.80)",
           background: "oklch(0.09 0.010 15 / 0.92)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          position: "sticky",
-          top: 0,
         }}
       >
         <button
@@ -541,10 +548,11 @@ function MessagesInner() {
         </div>
       </header>
 
-      <div
-        className="flex-1 flex flex-col gap-2.5 px-5 py-6 overflow-y-auto relative z-10"
-        style={{ paddingBottom: "100px" }}
-      >
+      {/* The only scrollable zone of the thread. min-h-0 lets it shrink below
+          its content height so the header and composer keep their place.
+          The old 100px bottom padding cleared the previously-overlapping
+          sticky composer and is no longer needed. */}
+      <div className="flex flex-1 min-h-0 flex-col gap-2.5 overflow-y-auto overscroll-contain px-5 py-6 relative z-10">
         <div className="flex flex-col items-center gap-3 mb-4">
           <div
             className="overflow-hidden rounded-full"
@@ -698,8 +706,9 @@ function MessagesInner() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Fixed zone: outside the scroll container, so it needs no sticky */}
       <div
-        className="sticky bottom-0 px-4 py-3 z-20"
+        className="flex-shrink-0 px-4 py-3 z-20"
         style={{
           background: "oklch(0.085 0.010 15 / 0.97)",
           borderTop: "1px solid oklch(0.15 0.012 15 / 0.70)",
@@ -811,7 +820,11 @@ function MessagesInner() {
   )
 
   return (
-    <div className="flex min-h-screen md:pl-[220px]">
+    // Bounded height + overflow-hidden: the page itself must never scroll, so
+    // the list column and the message thread each own their scroll. The 5rem
+    // subtracted on mobile matches the `pb-20` the app shell reserves for the
+    // fixed bottom nav (features/app-shell/components/app-content.tsx).
+    <div className="flex h-[calc(100dvh-5rem)] overflow-hidden md:h-[100dvh] md:pl-[220px]">
       {ConversationList}
       {ChatThread}
     </div>

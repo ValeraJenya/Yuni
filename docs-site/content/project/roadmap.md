@@ -18,7 +18,7 @@ weight: 20
 
 | ID | Название | Статус | Комментарий |
 |---|---|---|---|
-| 024 | Atomic block and match lifecycle | in_progress | Матчевая часть реализована; закрытие Conversation остаётся |
+| 024 | Atomic block and match lifecycle | review | Conversation теперь закрывается атомарно вместе с Match; ждёт прогона тестов и мержа |
 | 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; остаются concurrency, voice-limit, starters и contract gaps |
 
 ## Запланировано
@@ -27,7 +27,7 @@ weight: 20
 |---|---|---|---|---|---|
 | 022 | Frontend media URL resolution | research | P1 | Task 000 | Только profile page resolves relative uploads; Discovery, matches и messages используют URL как есть. |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |
-| 024 | Atomic block and match lifecycle | in_progress | P1 | Task 000 | Матчевая часть реализована (PR #31). Conversation при блокировке не закрывается — остаётся scope задачи. |
+| 024 | Atomic block and match lifecycle | review | P1 | Task 000 | Матчевая часть — PR #31. Conversation теперь закрывается атомарно в той же транзакции — код готов, ждёт прогона тестов и мержа. |
 | 025 | Production deployment readiness | idea | P1 | Task 000 | Deployment architecture, secrets, HTTPS, reverse proxy. |
 | 026 | PostgreSQL integration checks in CI | idea | P2 | Task 000 | Общий integration gate; текущий workflow не поднимает Postgres (Task 058), journey coverage — Task 053. |
 | 027 | Этапный чат — схема и бэкенд | in_progress | P1 | Task 018 | Базовый backend реализован; открытые gaps вынесены в Task 043/044/045/048. |
@@ -42,7 +42,7 @@ weight: 20
 | 039 | Политика integration/e2e покрытия | idea | P3 | — | Обязательное покрытие критических сценариев |
 | 040 | OAuth-кнопки декоративны | idea | P1 | — | Google/Apple без onClick, помечены Social placeholders |
 | 042 | Race condition блокировка vs match | idea | P1 | — | matches.service.ts проверяет блок вне транзакции до создания match |
-| 043 | Race condition game-answer | idea | P1 | — | Одновременные первые ответы могут не выставить completedAt |
+| 043 | Race condition game-answer | review | P1 | — | SELECT FOR UPDATE сериализует завершение; доказано race-тестом на реальном Postgres |
 | 044 | Voice-limit bypass | idea | P1 | — | Лимит 90 сек обходится параллельными запросами |
 | 045 | Starters seed | idea | P1 | — | conversation_starters таблица всегда пустая на чистой БД |
 | 046 | Неатомарные write-пути | idea | P1 | — | register/like/match/message не атомарны с побочными эффектами |
@@ -63,7 +63,7 @@ weight: 20
 | 062 | Report не привязан к контенту | idea | P3 | — | Только к пользователю целиком, хотя схема поддерживает контент |
 | 063 | Юридические страницы /terms /privacy /help | idea | P0 | — | Страницы 404, но регистрация требует согласия с ними |
 | 064 | Невидимый текст в модалке фильтров Discovery | idea | P1 | — | CSS-баг, весь текст невидим |
-| 065 | Нет CD-пайплайна для приложения | idea | P2 | — | Только docs-site деплоится, backend/frontend — нет |
+| 065 | Нет CD-пайплайна для приложения | review | P2 | — | Добавлен GHCR build/publish workflow для backend/frontend images без environment deploy |
 
 ## Выполнено
 

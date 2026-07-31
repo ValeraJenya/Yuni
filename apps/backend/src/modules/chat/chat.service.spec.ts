@@ -64,7 +64,7 @@ interface PrismaMock {
   };
   gameAnswer: {
     create: jest.Mock;
-    count: jest.Mock;
+    findMany: jest.Mock;
   };
   conversationStarter: {
     findMany: jest.Mock;
@@ -73,6 +73,7 @@ interface PrismaMock {
     findUnique: jest.Mock;
   };
   $transaction: jest.Mock;
+  $queryRaw: jest.Mock;
 }
 
 interface ModerationServiceMock {
@@ -686,13 +687,10 @@ describe('ChatService', () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.conversation.findFirst.mockResolvedValue(makeConversation({ stage: 1 }));
-    prisma.chatGame.findFirst.mockResolvedValue(
-      makeGame({
-        stage: 1,
-        answers: [{ userId: OTHER_USER_ID }],
-      }),
-    );
-    prisma.gameAnswer.count.mockResolvedValue(2);
+    prisma.$queryRaw.mockResolvedValue([
+      { id: GAME_ID, stage: 1, completed_at: null, postponed_until: null },
+    ]);
+    prisma.gameAnswer.findMany.mockResolvedValue([{ userId: OTHER_USER_ID }]);
     prisma.chatGame.count.mockResolvedValue(2);
     prisma.chatGame.findUniqueOrThrow.mockResolvedValue(
       makeGame({
@@ -739,13 +737,10 @@ describe('ChatService', () => {
         stage2StartedAt: new Date('2026-06-09T11:00:00.000Z'),
       }),
     );
-    prisma.chatGame.findFirst.mockResolvedValue(
-      makeGame({
-        stage: 2,
-        answers: [{ userId: OTHER_USER_ID }],
-      }),
-    );
-    prisma.gameAnswer.count.mockResolvedValue(2);
+    prisma.$queryRaw.mockResolvedValue([
+      { id: GAME_ID, stage: 2, completed_at: null, postponed_until: null },
+    ]);
+    prisma.gameAnswer.findMany.mockResolvedValue([{ userId: OTHER_USER_ID }]);
     prisma.chatGame.count.mockResolvedValue(3);
     prisma.chatGame.findUniqueOrThrow.mockResolvedValue(
       makeGame({
@@ -960,7 +955,7 @@ function createService() {
     },
     gameAnswer: {
       create: jest.fn(),
-      count: jest.fn(),
+      findMany: jest.fn(),
     },
     conversationStarter: {
       findMany: jest.fn(),
@@ -969,6 +964,7 @@ function createService() {
       findUnique: jest.fn(),
     },
     $transaction: jest.fn(),
+    $queryRaw: jest.fn(),
   };
   prisma.$transaction.mockImplementation(async (callback) => callback(prisma));
   prisma.message.aggregate.mockResolvedValue({ _sum: { messageWeight: 0 } });
