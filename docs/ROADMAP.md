@@ -65,8 +65,8 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 055 | Database-доки отстали от миграций | idea | P3 | — | staged-chat и Task 021 не отражены |
 | 056 | CI/DevOps проблемы | idea | P2 | — | Root-контейнеры, дефолтные креды, JWT плейсхолдеры, Hugo без PR-гейта |
 | 057 | Privacy/Notification settings API | idea | P0 | — | PrivacySettings/NotificationSettings создаются в БД но API для их изменения нет |
-| 058 | CI не может запустить e2e | idea | P2 | — | В workflow нет services блока с Postgres |
-| 059 | Backend lint — это tsc --noEmit | idea | P2 | — | Реального линтера нет |
+| 058 | CI не может запустить e2e | review | P2 | — | Добавлен Postgres service и явный backend e2e шаг в quality gates |
+| 059 | Backend lint — это tsc --noEmit | review | P2 | — | Backend ESLint добавлен отдельно от typecheck |
 | 060 | ParseUUIDPipe непоследователен | idea | P2 | — | Используется не во всех контроллерах |
 | 061 | Два флага видимости профиля | idea | P2 | — | isDiscoverable и PrivacySettings.discoverable рассинхронизированы |
 | 062 | Report не привязан к контенту | idea | P3 | — | Только к пользователю целиком, хотя схема поддерживает контент |
