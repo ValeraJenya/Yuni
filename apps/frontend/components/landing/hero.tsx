@@ -70,8 +70,14 @@ export function Hero({ lang }: HeroProps) {
         <div className="absolute inset-0 bg-background/35" />
       </div>
 
-      {/* ── Text content ───────────────────────────────────── */}
-      <div className="relative z-10 mx-auto flex min-h-screen min-h-[100svh] max-w-7xl flex-col justify-center px-6 pb-14 pt-28 md:px-10 md:pb-20">
+      {/*
+        ── Text content ─────────────────────────────────────
+        Anchored to the top, not centred: on tall windows centring opened a
+        large gap under the fixed 60px navbar. The wrapper keeps its full-height
+        min-height so the background, portrait and bottom scroll cue still span
+        the viewport — only the text block moves up.
+      */}
+      <div className="relative z-10 mx-auto flex min-h-screen min-h-[100svh] max-w-7xl flex-col justify-start px-6 pb-14 pt-28 md:px-10 md:pb-20">
 
         {/* Eyebrow */}
         <div className="motion-fade-up mb-8 flex items-center gap-3 md:mb-14">
