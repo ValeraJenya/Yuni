@@ -17,6 +17,7 @@ import { MediaModule } from './modules/media/media.module';
 import { ModerationModule } from './modules/moderation/moderation.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -46,6 +47,7 @@ import { UsersModule } from './modules/users/users.module';
     ChatModule,
     ModerationModule,
     NotificationsModule,
+    SettingsModule,
   ],
   providers: [
     {

@@ -51,7 +51,7 @@ weight: 20
 | 054 | Дрейф документации | idea | P3 | — | Verified-baseline расходится с git-историей — процессный пункт |
 | 055 | Database-доки отстали от миграций | idea | P3 | — | staged-chat и Task 021 не отражены |
 | 056 | CI/DevOps проблемы | idea | P2 | — | Root-контейнеры, дефолтные креды, JWT плейсхолдеры, Hugo без PR-гейта |
-| 057 | Privacy/Notification settings API | idea | P0 | — | PrivacySettings/NotificationSettings создаются в БД но API для их изменения нет |
+| 057 | Privacy/Notification settings API | review | P0 | — | Добавлен backend Settings API для privacy/notification settings; anonymousAvatarKey требует отдельного security decision |
 | 060 | ParseUUIDPipe непоследователен | idea | P2 | — | Используется не во всех контроллерах |
 | 061 | Два флага видимости профиля | idea | P2 | — | isDiscoverable и PrivacySettings.discoverable рассинхронизированы |
 | 062 | Report не привязан к контенту | idea | P3 | — | Только к пользователю целиком, хотя схема поддерживает контент |
