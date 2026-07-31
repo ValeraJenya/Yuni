@@ -637,14 +637,31 @@ export class ChatService {
 
     const now = new Date();
     const messageType = dto.messageType ?? 'text';
-    const voiceDurationSec = this.resolveVoiceDurationSec(
+    const initialVoiceDurationSec = this.resolveVoiceDurationSec(
       conversation,
       currentUser.id,
       messageType,
       dto.voiceDurationSec,
     );
-    const messageWeight = this.getMessageWeight(messageType, voiceDurationSec);
     const message = await this.prisma.$transaction(async (tx) => {
+      const lockedConversation =
+        messageType === 'voice' && conversation.stage === 2
+          ? await this.lockAndReloadConversation(
+              tx,
+              currentUser.id,
+              conversationId,
+            )
+          : conversation;
+      const voiceDurationSec =
+        lockedConversation === conversation
+          ? initialVoiceDurationSec
+          : this.resolveVoiceDurationSec(
+              lockedConversation,
+              currentUser.id,
+              messageType,
+              dto.voiceDurationSec,
+            );
+      const messageWeight = this.getMessageWeight(messageType, voiceDurationSec);
       const createdMessage = await tx.message.create({
         data: {
           conversationId,
@@ -660,7 +677,7 @@ export class ChatService {
       });
 
       const voiceTotalUpdate = this.getVoiceTotalUpdate(
-        conversation,
+        lockedConversation,
         currentUser.id,
         voiceDurationSec,
       );
@@ -678,7 +695,7 @@ export class ChatService {
         },
       });
 
-      await this.createGameIfNeeded(tx, conversation, now);
+      await this.createGameIfNeeded(tx, lockedConversation, now);
 
       return createdMessage;
     });
@@ -694,6 +711,37 @@ export class ChatService {
     return {
       message: this.toMessageView(message),
     };
+  }
+
+  private async lockAndReloadConversation(
+    tx: Prisma.TransactionClient,
+    currentUserId: string,
+    conversationId: string,
+  ): Promise<ConversationSummaryRecord> {
+    await tx.$queryRaw`
+      SELECT id
+      FROM conversations
+      WHERE id = ${conversationId}::uuid
+      FOR UPDATE
+    `;
+
+    const conversation = await tx.conversation.findFirst({
+      where: {
+        id: conversationId,
+        AND: [this.activeParticipantWhere(currentUserId)],
+      },
+      select: conversationSummarySelect,
+    });
+
+    if (!conversation) {
+      throw new NotFoundException(RESOURCE_NOT_FOUND_MESSAGE);
+    }
+
+    if (conversation.status !== ConversationStatus.active) {
+      throw new ForbiddenException('Forbidden');
+    }
+
+    return conversation;
   }
 
   async startConversationFromMatch(

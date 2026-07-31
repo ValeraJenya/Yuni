@@ -60,7 +60,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 049 | Fake healthcheck | idea | P2 | — | /health хардкод status ok без обращения к Postgres |
 | 050 | Дополнительные мёртвые кнопки | idea | P2 | — | messages и profile — Like/More/Improve/Premium/Add interests |
 | 052 | Переключатель языка неполон | idea | P2 | — | Не персистится, не обновляет html lang, разные instance провайдера |
-| 053 | Critical real-DB/HTTP coverage | idea | P2 | — | Реальное покрытие заканчивается на Discovery; Like→Match→Chat→Block не имеет end-to-end journey tests |
+| 053 | Critical real-DB/HTTP coverage | review | P2 | — | Добавлены real DB/HTTP e2e для Match → Block → Chat и concurrency сценариев |
 | 054 | Дрейф документации | idea | P3 | — | Verified-baseline расходится с git-историей — процессный пункт |
 | 055 | Database-доки отстали от миграций | idea | P3 | — | staged-chat и Task 021 не отражены |
 | 056 | CI/DevOps проблемы | idea | P2 | — | Root-контейнеры, дефолтные креды, JWT плейсхолдеры, Hugo без PR-гейта |

@@ -292,28 +292,22 @@ export class ModerationService {
       return;
     }
 
-    await client.match.updateMany({
-      where: {
-        status: MatchStatus.active,
-        expiresAt: {
-          gt: now,
+    const activeMatchWhere = {
+      status: MatchStatus.active,
+      expiresAt: {
+        gt: now,
+      },
+      OR: [
+        {
+          userAId: leftUserId,
+          userBId: rightUserId,
         },
-        OR: [
-          {
-            userAId: leftUserId,
-            userBId: rightUserId,
-          },
-          {
-            userAId: rightUserId,
-            userBId: leftUserId,
-          },
-        ],
-      },
-      data: {
-        status: MatchStatus.blocked,
-        endedAt: now,
-      },
-    });
+        {
+          userAId: rightUserId,
+          userBId: leftUserId,
+        },
+      ],
+    } satisfies Prisma.MatchWhereInput;
 
     // Closing the match alone leaves the underlying Conversation reachable:
     // findWritableConversationOrThrow only rejects non-active conversations,
@@ -326,21 +320,19 @@ export class ModerationService {
     await client.conversation.updateMany({
       where: {
         status: ConversationStatus.active,
-        match: {
-          OR: [
-            {
-              userAId: leftUserId,
-              userBId: rightUserId,
-            },
-            {
-              userAId: rightUserId,
-              userBId: leftUserId,
-            },
-          ],
-        },
+        match: activeMatchWhere,
       },
       data: {
         status: ConversationStatus.closed,
+        updatedAt: now,
+      },
+    });
+
+    await client.match.updateMany({
+      where: activeMatchWhere,
+      data: {
+        status: MatchStatus.blocked,
+        endedAt: now,
       },
     });
   }
