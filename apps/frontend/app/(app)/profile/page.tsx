@@ -29,6 +29,7 @@ import { matchesApi } from "@/lib/matches-api"
 import {
   profileApi,
   resolveProfilePhotoUrl,
+  type ProfileCompletionField,
   type SelfProfile,
   type UpdateProfileRequest,
 } from "@/lib/profile-api"
@@ -46,6 +47,17 @@ const copy = {
     premium: "Premium",
     completion: "Заполнен на",
     completionCta: "Улучшить",
+    completionMissing: "Не хватает",
+    completionFields: {
+      displayName: "имя",
+      birthDate: "дата рождения",
+      bio: "рассказ о себе",
+      gender: "гендер",
+      lookingFor: "кого ищете",
+      city: "город",
+      country: "страна",
+      photo: "фото",
+    },
     bioLabel: "О себе",
     profileFieldsLabel: "Профиль",
     displayNameLabel: "Имя",
@@ -94,6 +106,17 @@ const copy = {
     premium: "Premium",
     completion: "Profile",
     completionCta: "Improve",
+    completionMissing: "Missing",
+    completionFields: {
+      displayName: "name",
+      birthDate: "date of birth",
+      bio: "about me",
+      gender: "gender",
+      lookingFor: "looking for",
+      city: "city",
+      country: "country",
+      photo: "photo",
+    },
     bioLabel: "About me",
     profileFieldsLabel: "Profile",
     displayNameLabel: "Name",
@@ -143,6 +166,19 @@ const FALLBACK_PROFILE_PHOTO = "/hero-portrait.jpg"
 /** Shown by a stat tile that has no data source yet — an em dash rather than
  *  a "0", which would be a claim about the user's actual counts. */
 const NO_DATA = "—"
+
+/** Missing fields the completion CTA can jump to, in the order they appear on
+ *  this screen. birthDate is absent on purpose: it is required at registration
+ *  and has no editor here, so there would be nothing to jump to. */
+const COMPLETION_JUMP_ORDER: ProfileCompletionField[] = [
+  "photo",
+  "bio",
+  "displayName",
+  "city",
+  "country",
+  "gender",
+  "lookingFor",
+]
 
 type ProfileFormState = Required<
   Pick<UpdateProfileRequest, "displayName" | "isDiscoverable">
@@ -254,6 +290,11 @@ export default function ProfilePage() {
   const t = copy[lang]
   const { authenticatedRequest, isLoading: authLoading, logout } = useAuth()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  // Sections and inputs the completion CTA scrolls to, keyed by the field name
+  // the API reports as missing.
+  const completionTargetsRef = useRef<
+    Partial<Record<ProfileCompletionField, HTMLElement | null>>
+  >({})
   const [profileRecord, setProfileRecord] = useState<SelfProfile | null>(null)
   const [profileForm, setProfileForm] = useState<ProfileFormState | null>(null)
   const [editingBio, setEditingBio] = useState(false)
@@ -377,6 +418,23 @@ export default function ProfilePage() {
       languages: [] as string[],
     }
   }, [profileRecord, t.emptyBio, t.emptyValue])
+
+  // The CTA does not open a separate flow: every field the completion check
+  // counts is edited on this screen, so it just takes the user to the first
+  // missing one.
+  const jumpToProfileGap = useCallback((field: ProfileCompletionField) => {
+    if (field === "bio") {
+      setEditingBio(true)
+    }
+
+    const target = completionTargetsRef.current[field]
+
+    target?.scrollIntoView({ behavior: "smooth", block: "center" })
+
+    if (target instanceof HTMLInputElement) {
+      target.focus({ preventScroll: true })
+    }
+  }, [])
 
   const updateForm = useCallback(
     <K extends keyof ProfileFormState>(key: K, value: ProfileFormState[K]) => {
@@ -543,6 +601,11 @@ export default function ProfilePage() {
     allPhotos.find((photo) => photo.isPrimary)?.resolvedUrl ??
     allPhotos[0]?.resolvedUrl ??
     FALLBACK_PROFILE_PHOTO
+  // Completion is computed by the API over eight equally weighted fields, so at
+  // 100% there is nothing left to improve here and the CTA is not rendered.
+  const missingFields = profileRecord.completion.missingFields
+  const improveTarget =
+    COMPLETION_JUMP_ORDER.find((field) => missingFields.includes(field)) ?? null
   // "Looking for" is not listed here: it has an editable row in the profile
   // fields card above, and repeating it made the same value show up twice under
   // the same label. Details only carries read-only fields with no editor yet.
@@ -752,14 +815,18 @@ export default function ProfilePage() {
               >
                 {t.completion} {profile.completionPct}%
               </span>
-              <button
-                className="font-sans font-medium transition-colors"
-                style={{ fontSize: "11px", color: "oklch(0.65 0.26 12)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.78 0.22 12)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
-              >
-                {t.completionCta}
-              </button>
+              {improveTarget && (
+                <button
+                  type="button"
+                  onClick={() => jumpToProfileGap(improveTarget)}
+                  className="font-sans font-medium transition-colors"
+                  style={{ fontSize: "11px", color: "oklch(0.65 0.26 12)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.78 0.22 12)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
+                >
+                  {t.completionCta}
+                </button>
+              )}
             </div>
             <div
               className="h-1 rounded-full overflow-hidden"
@@ -774,10 +841,25 @@ export default function ProfilePage() {
                 }}
               />
             </div>
+            {missingFields.length > 0 && (
+              <p
+                className="font-sans mt-3"
+                style={{ fontSize: "11px", color: "oklch(0.36 0.008 15)" }}
+              >
+                {t.completionMissing}:{" "}
+                {missingFields.map((field) => t.completionFields[field]).join(", ")}
+              </p>
+            )}
           </div>
 
           {/* ── Photos grid ── */}
-          <div className="px-5 py-5" style={{ borderBottom: "1px solid oklch(0.15 0.010 15 / 0.60)" }}>
+          <div
+            ref={(element) => {
+              completionTargetsRef.current.photo = element
+            }}
+            className="px-5 py-5"
+            style={{ borderBottom: "1px solid oklch(0.15 0.010 15 / 0.60)" }}
+          >
             <div className="flex items-center justify-between mb-3.5">
               <SectionLabel>{t.photosLabel}</SectionLabel>
               <button
@@ -966,7 +1048,11 @@ export default function ProfilePage() {
           )}
 
           {/* ── Bio ── */}
-          <div>
+          <div
+            ref={(element) => {
+              completionTargetsRef.current.bio = element
+            }}
+          >
             <div className="flex items-center justify-between mb-3.5">
               <SectionLabel>{t.bioLabel}</SectionLabel>
               <button
@@ -1054,31 +1140,37 @@ export default function ProfilePage() {
             >
               {([
                 {
+                  completionField: "displayName",
                   label: t.displayNameLabel,
                   value: profileForm.displayName,
                   onChange: (value: string) => updateForm("displayName", value),
                 },
                 {
+                  completionField: "city",
                   label: t.cityLabel,
                   value: profileForm.city ?? "",
                   onChange: (value: string) => updateForm("city", value),
                 },
                 {
+                  completionField: "country",
                   label: t.countryLabel,
                   value: profileForm.country ?? "",
                   onChange: (value: string) => updateForm("country", value),
                 },
                 {
+                  completionField: "gender",
                   label: t.genderLabel,
                   value: profileForm.gender ?? "",
                   onChange: (value: string) => updateForm("gender", value),
                 },
                 {
+                  completionField: "lookingFor",
                   label: t.lookingFor,
                   value: profileForm.lookingFor ?? "",
                   onChange: (value: string) => updateForm("lookingFor", value),
                 },
               ] as Array<{
+                completionField: ProfileCompletionField
                 label: string
                 value: string
                 onChange: (value: string) => void
@@ -1104,6 +1196,9 @@ export default function ProfilePage() {
                     {field.label}
                   </span>
                   <input
+                    ref={(element) => {
+                      completionTargetsRef.current[field.completionField] = element
+                    }}
                     value={field.value}
                     onChange={(event) => field.onChange(event.target.value)}
                     className="min-w-0 flex-1 bg-transparent text-right font-sans outline-none"
