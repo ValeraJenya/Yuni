@@ -40,6 +40,8 @@ interface PrismaMock {
     create: jest.Mock;
     findMany: jest.Mock;
   };
+  $transaction: jest.Mock;
+  $executeRaw: jest.Mock;
 }
 
 interface ModerationServiceMock {
@@ -173,14 +175,52 @@ describe('MatchesService', () => {
       }),
     ).resolves.toBeNull();
 
+    // Третий аргумент — транзакционный клиент: проверка блока обязана
+    // выполняться внутри той же транзакции, что и создание match (Task 042).
     expect(moderationService.hasBlockBetween).toHaveBeenCalledWith(
       ACTOR_USER_ID,
       TARGET_USER_ID,
+      prisma,
     );
     expect(prisma.like.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.findFirst).not.toHaveBeenCalled();
     expect(prisma.match.create).not.toHaveBeenCalled();
     expect(notificationsService.createMatchNotifications).not.toHaveBeenCalled();
+  });
+
+  it('serializes match creation with a pair advisory lock (Task 042)', async () => {
+    const { service, prisma, moderationService } = createService();
+    prisma.like.findFirst.mockResolvedValue({ id: 'like-id' });
+    prisma.match.findFirst.mockResolvedValue(null);
+    prisma.match.create.mockImplementation(async (args: MatchCreateArgs) =>
+      makeMatchRecord({
+        userAId: args.data.userAId,
+        userBId: args.data.userBId,
+      }),
+    );
+
+    await service.tryCreateMatchFromLike({
+      actorUserId: ACTOR_USER_ID,
+      targetUserId: TARGET_USER_ID,
+      now: FIXED_NOW,
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+
+    // Лок должен быть взят до чтения блокировок, лайка и match — иначе
+    // конкурирующий blockUser успевает вклиниться между проверкой и записью.
+    const lockOrder = prisma.$executeRaw.mock.invocationCallOrder[0];
+
+    expect(
+      moderationService.hasBlockBetween.mock.invocationCallOrder[0],
+    ).toBeGreaterThan(lockOrder);
+    expect(prisma.like.findFirst.mock.invocationCallOrder[0]).toBeGreaterThan(
+      lockOrder,
+    );
+    expect(prisma.match.create.mock.invocationCallOrder[0]).toBeGreaterThan(
+      lockOrder,
+    );
   });
 
   it('does not create a match for SKIP/PASS interactions', async () => {
@@ -491,7 +531,13 @@ function createService() {
       create: jest.fn(),
       findMany: jest.fn(),
     },
+    $transaction: jest.fn(),
+    $executeRaw: jest.fn().mockResolvedValue(1),
   };
+
+  prisma.$transaction.mockImplementation(
+    async (callback: (tx: PrismaMock) => Promise<unknown>) => callback(prisma),
+  );
   const moderationService: ModerationServiceMock = {
     hasBlockBetween: jest.fn().mockResolvedValue(false),
     getBlockedUserIdsFor: jest.fn().mockResolvedValue(new Set()),

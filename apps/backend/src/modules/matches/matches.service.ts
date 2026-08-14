@@ -16,9 +16,12 @@ import {
   type CompactProfileView,
 } from '../../common/serializers/user-profile.serializer';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { lockUserPair } from '../../common/prisma/user-pair-lock';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { ModerationService } from '../moderation/moderation.service';
 import { NotificationsService } from '../notifications/notifications.service';
+
+type MatchesTransactionClient = Prisma.TransactionClient | PrismaService;
 
 const MATCH_DURATION_DAYS = 7;
 const ACTIVE_MATCH_CONFLICT_MESSAGE = 'Active match already exists';
@@ -181,54 +184,80 @@ export class MatchesService {
   }: TryCreateMatchFromLikeInput): Promise<MatchResponse | null> {
     const pair = this.normalizePair(actorUserId, targetUserId);
 
-    if (await this.moderationService.hasBlockBetween(actorUserId, targetUserId)) {
-      return null;
-    }
-
-    const reciprocalLike = await this.prisma.like.findFirst({
-      where: {
-        likerUserId: targetUserId,
-        likedUserId: actorUserId,
-        kind: LikeKind.like,
-        expiresAt: {
-          gt: now,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!reciprocalLike) {
-      return null;
-    }
-
-    const activeMatch = await this.findActiveMatchByPair(pair, now);
-
-    if (activeMatch) {
-      return this.toMatchResponse(activeMatch, actorUserId);
-    }
-
     try {
-      const match = await this.prisma.match.create({
-        data: {
-          userAId: pair.userAId,
-          userBId: pair.userBId,
-          status: MatchStatus.active,
-          matchedAt: now,
-          expiresAt: this.getExpiryDate(now),
-        },
-        select: matchResponseSelect,
+      // Task 042: проверка блокировки и создание match должны быть одной
+      // операцией. Раньше между ними мог вклиниться blockUser: его
+      // endActiveMatchesBetween не видел ещё не созданный match, а этот код
+      // уже прошёл проверку блока — и между заблокированными пользователями
+      // оставался активный match.
+      const outcome = await this.prisma.$transaction(async (tx) => {
+        await lockUserPair(tx, actorUserId, targetUserId);
+
+        if (
+          await this.moderationService.hasBlockBetween(
+            actorUserId,
+            targetUserId,
+            tx,
+          )
+        ) {
+          return null;
+        }
+
+        const reciprocalLike = await tx.like.findFirst({
+          where: {
+            likerUserId: targetUserId,
+            likedUserId: actorUserId,
+            kind: LikeKind.like,
+            expiresAt: {
+              gt: now,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (!reciprocalLike) {
+          return null;
+        }
+
+        const activeMatch = await this.findActiveMatchByPair(pair, now, tx);
+
+        if (activeMatch) {
+          return { match: activeMatch, created: false };
+        }
+
+        const createdMatch = await tx.match.create({
+          data: {
+            userAId: pair.userAId,
+            userBId: pair.userBId,
+            status: MatchStatus.active,
+            matchedAt: now,
+            expiresAt: this.getExpiryDate(now),
+          },
+          select: matchResponseSelect,
+        });
+
+        return { match: createdMatch, created: true };
       });
 
-      await this.notificationsService.createMatchNotifications({
-        matchId: match.id,
-        userAId: match.userAId,
-        userBId: match.userBId,
-        now,
-      });
+      if (!outcome) {
+        return null;
+      }
 
-      return this.toMatchResponse(match, actorUserId);
+      // Уведомления остаются за пределами транзакции: их сбой не должен
+      // откатывать уже подтверждённый match. Неатомарность этой связки —
+      // отдельная задача (Task 046).
+      if (outcome.created) {
+        await this.notificationsService.createMatchNotifications({
+          matchId: outcome.match.id,
+          userAId: outcome.match.userAId,
+          userBId: outcome.match.userBId,
+          now,
+        });
+      }
+
+      return this.toMatchResponse(outcome.match, actorUserId);
     } catch (error) {
       if (!this.isActiveMatchConstraintError(error)) {
         throw error;
@@ -277,8 +306,9 @@ export class MatchesService {
       userBId: string;
     },
     now: Date,
+    client: MatchesTransactionClient = this.prisma,
   ): Promise<MatchRecord | null> {
-    return this.prisma.match.findFirst({
+    return client.match.findFirst({
       where: {
         userAId: pair.userAId,
         userBId: pair.userBId,

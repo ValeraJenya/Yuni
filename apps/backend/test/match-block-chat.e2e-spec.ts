@@ -181,12 +181,11 @@ describe('match block chat lifecycle (PostgreSQL e2e)', () => {
     );
   });
 
-  // Skipped: matches.service.ts checks hasBlockBetween() once, outside a
-  // transaction, before creating the match (see Task 042 — race condition
-  // блокировка vs match, still `idea` in the roadmap). This test correctly
-  // captures the required behaviour and fails against current code because
-  // the fix genuinely doesn't exist yet — un-skip it once Task 042 lands.
-  it.skip('does not leave an active match when reciprocal like races with block', async () => {
+  // Task 042 landed: blockUser and tryCreateMatchFromLike both take a
+  // pg_advisory_xact_lock on the normalized user pair, so whichever commits
+  // first is visible to the other. Either the block wins and no match is
+  // created, or the match wins and endActiveMatchesBetween closes it.
+  it('does not leave an active match when reciprocal like races with block', async () => {
     const { userA, userB } = await createPair('block_race');
     await requestJson(`/likes/${userB.user.id}`, {
       method: 'POST',
