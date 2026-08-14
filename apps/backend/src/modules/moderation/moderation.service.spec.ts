@@ -45,6 +45,7 @@ interface PrismaMock {
     create: jest.Mock;
   };
   $transaction: jest.Mock;
+  $executeRaw: jest.Mock;
 }
 
 interface BlockCreateArgs {
@@ -233,6 +234,37 @@ describe('ModerationService', () => {
         status: 'blocked',
       },
     });
+  });
+
+  it('serializes blocking with a pair advisory lock (Task 042)', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique
+      .mockResolvedValueOnce(activeUser())
+      .mockResolvedValueOnce(activeUser());
+    prisma.block.findUnique.mockResolvedValue(null);
+    prisma.block.create.mockImplementation(async (args: BlockCreateArgs) => ({
+      blockedUserId: args.data.blockedUserId,
+      createdAt: args.data.createdAt,
+    }));
+
+    await service.blockUser(CURRENT_USER, TARGET_USER_ID);
+
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+
+    // Лок берётся до чтения существующего блока и до записи: иначе
+    // конкурирующее создание match проскакивает между проверкой и
+    // endActiveMatchesBetween.
+    const lockOrder = prisma.$executeRaw.mock.invocationCallOrder[0];
+
+    expect(prisma.block.findUnique.mock.invocationCallOrder[0]).toBeGreaterThan(
+      lockOrder,
+    );
+    expect(prisma.block.create.mock.invocationCallOrder[0]).toBeGreaterThan(
+      lockOrder,
+    );
+    expect(prisma.match.updateMany.mock.invocationCallOrder[0]).toBeGreaterThan(
+      lockOrder,
+    );
   });
 
   it('rolls back block creation when ending active matches fails', async () => {
@@ -591,6 +623,7 @@ function createPrismaMock(): PrismaMock {
       create: jest.fn(),
     },
     $transaction: jest.fn(),
+    $executeRaw: jest.fn().mockResolvedValue(1),
   };
 }
 

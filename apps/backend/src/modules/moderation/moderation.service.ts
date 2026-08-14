@@ -18,6 +18,7 @@ import {
   normalizeCursorPagination,
 } from '../../common/pagination';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { lockUserPair } from '../../common/prisma/user-pair-lock';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import { CreateReportDto } from './dto/create-report.dto';
 
@@ -71,15 +72,31 @@ export class ModerationService {
     await this.assertActiveUser(currentUser.id);
     await this.assertActiveTargetUser(targetUserId);
 
-    const existingBlock = await this.findBlock(currentUser.id, targetUserId);
-
-    if (existingBlock) {
-      await this.endActiveMatchesBetween(currentUser.id, targetUserId, now);
-      return this.toBlockResponse(existingBlock);
-    }
-
     try {
       const block = await this.prisma.$transaction(async (tx) => {
+        // Task 042: лок берётся первым действием транзакции, до любого чтения,
+        // чтобы конкурирующее создание match не проскочило между проверкой и
+        // записью. Проверка существующего блока тоже должна быть под локом —
+        // иначе idempotent-ветка снова читает устаревший снимок.
+        await lockUserPair(tx, currentUser.id, targetUserId);
+
+        const existingBlock = await this.findBlock(
+          currentUser.id,
+          targetUserId,
+          tx,
+        );
+
+        if (existingBlock) {
+          await this.endActiveMatchesBetween(
+            currentUser.id,
+            targetUserId,
+            now,
+            tx,
+          );
+
+          return existingBlock;
+        }
+
         const createdBlock = await tx.block.create({
           data: {
             blockerUserId: currentUser.id,
@@ -218,12 +235,16 @@ export class ModerationService {
     };
   }
 
-  async hasBlockBetween(leftUserId: string, rightUserId: string): Promise<boolean> {
+  async hasBlockBetween(
+    leftUserId: string,
+    rightUserId: string,
+    client: ModerationTransactionClient = this.prisma,
+  ): Promise<boolean> {
     if (leftUserId === rightUserId) {
       return false;
     }
 
-    const block = await this.prisma.block.findFirst({
+    const block = await client.block.findFirst({
       where: this.blockBetweenWhere(leftUserId, rightUserId),
       select: {
         id: true,
@@ -373,8 +394,12 @@ export class ModerationService {
     }
   }
 
-  private findBlock(blockerUserId: string, blockedUserId: string) {
-    return this.prisma.block.findUnique({
+  private findBlock(
+    blockerUserId: string,
+    blockedUserId: string,
+    client: ModerationTransactionClient = this.prisma,
+  ) {
+    return client.block.findUnique({
       where: {
         blockerUserId_blockedUserId: {
           blockerUserId,
