@@ -72,6 +72,37 @@ describe('LocalProfilePhotoStorageService', () => {
     );
   });
 
+  it('treats a missing file as a successful delete (Task 047)', async () => {
+    const service = createService();
+    const storageKey = `${PROFILE_PHOTO_STORAGE_PREFIX}11111111-1111-4111-8111-111111111111.jpg`;
+    const missingFileError: NodeJS.ErrnoException = new Error(
+      'ENOENT: no such file or directory',
+    );
+    missingFileError.code = 'ENOENT';
+    jest.mocked(unlink).mockRejectedValueOnce(missingFileError);
+
+    // Удаление должно быть идемпотентным: вызывающий код удаляет файл до
+    // записи в БД и повторяет запрос при сбое, поэтому уже отсутствующий
+    // файл — это достигнутый результат, а не ошибка.
+    await expect(service.deleteProfilePhoto(storageKey)).resolves.toBeUndefined();
+  });
+
+  it('propagates real storage failures (Task 047)', async () => {
+    const service = createService();
+    const storageKey = `${PROFILE_PHOTO_STORAGE_PREFIX}11111111-1111-4111-8111-111111111111.jpg`;
+    const permissionError: NodeJS.ErrnoException = new Error(
+      'EACCES: permission denied',
+    );
+    permissionError.code = 'EACCES';
+    jest.mocked(unlink).mockRejectedValueOnce(permissionError);
+
+    // Всё остальное обязано долетать до вызывающего кода: пока файл на
+    // диске, запись из БД удалять нельзя.
+    await expect(service.deleteProfilePhoto(storageKey)).rejects.toThrow(
+      'EACCES: permission denied',
+    );
+  });
+
   it.each([
     'other-prefix/11111111-1111-4111-8111-111111111111.jpg',
     `${PROFILE_PHOTO_STORAGE_PREFIX}../other-file.jpg`,

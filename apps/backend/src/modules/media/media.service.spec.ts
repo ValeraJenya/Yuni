@@ -513,13 +513,18 @@ describe('MediaService', () => {
     expect(storage.deleteProfilePhoto).toHaveBeenCalledWith(
       DEFAULT_STORAGE_RESULT.storageKey,
     );
+    // Task 047: файл должен исчезнуть раньше записи, иначе при сбое удаления
+    // файла остаётся публично доступная фотография без строки в БД.
+    expect(storage.deleteProfilePhoto.mock.invocationCallOrder[0]).toBeLessThan(
+      prisma.profilePhoto.delete.mock.invocationCallOrder[0],
+    );
     expect(result).toMatchObject({
       success: true,
       photos: [{ id: 'photo-next', isPrimary: true }],
     });
   });
 
-  it('does not fail delete when storage cleanup fails', async () => {
+  it('keeps the photo row when storage delete fails (Task 047)', async () => {
     const { service, prisma, storage } = createService();
     const deletedPhoto = makePhoto({
       id: 'photo-delete',
@@ -529,25 +534,17 @@ describe('MediaService', () => {
     prisma.user.findUnique.mockResolvedValue(activeUser());
     prisma.profilePhoto.findUnique.mockResolvedValue(deletedPhoto);
     storage.deleteProfilePhoto.mockRejectedValueOnce(new Error('file missing'));
-    prisma.profile.findUnique.mockResolvedValue(makeProfile({ photos: [] }));
-    prisma.profilePhoto.findMany.mockResolvedValue([]);
 
-    const result = await service.deleteProfilePhoto(CURRENT_USER, 'photo-delete');
+    await expect(
+      service.deleteProfilePhoto(CURRENT_USER, 'photo-delete'),
+    ).rejects.toThrow('file missing');
 
-    expect(result).toMatchObject({
-      success: true,
-      photos: [],
-      profile: {
-        completion: {
-          isComplete: false,
-          missingFields: ['photo'],
-          percentage: 88,
-        },
-      },
-    });
-    expect(prisma.profilePhoto.delete).toHaveBeenCalledWith({
-      where: { id: 'photo-delete' },
-    });
+    // Запись обязана пережить сбой: файл всё ещё лежит на диске и
+    // отдаётся статикой, поэтому удалять строку из БД нельзя — иначе
+    // фотография останется доступной по прямой ссылке, а пользователь
+    // будет считать её удалённой. Пользователь получает ошибку и может
+    // повторить запрос.
+    expect(prisma.profilePhoto.delete).not.toHaveBeenCalled();
     expect(storage.deleteProfilePhoto).toHaveBeenCalledWith(
       DEFAULT_STORAGE_RESULT.storageKey,
     );
