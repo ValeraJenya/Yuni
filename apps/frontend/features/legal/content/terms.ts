@@ -118,8 +118,8 @@ export const termsContent: LegalContent = {
             text: "Мы вправе удалить контент, нарушающий эти правила, без предварительного предупреждения — и сообщим вам, что и почему было удалено.",
           },
           {
-            kind: "todo",
-            text: "TODO (продукт): при удалении фотографии запись удаляется из базы, но ошибка удаления самого файла молча проглатывается, и файл может остаться доступным по прямой ссылке (Task 047). До исправления сервис не может обещать, что удаление фотографии необратимо.",
+            kind: "p",
+            text: "Удаление фотографии необратимо: сначала стирается сам файл и только потом запись о нём. Если файл по какой-то причине удалить не удалось, запрос завершается ошибкой и фотография остаётся на месте — так вы не окажетесь в ситуации, когда интерфейс сообщил об удалении, а снимок продолжает открываться по прямой ссылке.",
           },
         ],
       },
@@ -396,8 +396,8 @@ export const termsContent: LegalContent = {
             text: "We may remove content that breaches these rules without prior warning, and will tell you what was removed and why.",
           },
           {
-            kind: "todo",
-            text: "TODO (product): deleting a photo removes the database record, but a failure to delete the underlying file is silently swallowed and the file may remain reachable by direct link (Task 047). Until that is fixed, the service cannot promise that photo deletion is irreversible.",
+            kind: "p",
+            text: "Deleting a photo is irreversible: the file itself is removed first, and only then the record of it. If the file cannot be removed for any reason, the request fails and the photo stays in place — so you never end up being told a photo was deleted while it is still reachable by direct link.",
           },
         ],
       },

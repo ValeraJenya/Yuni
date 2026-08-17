@@ -43,7 +43,19 @@ export class LocalProfilePhotoStorageService implements ProfilePhotoStorage {
       return;
     }
 
-    await unlink(filePath);
+    try {
+      await unlink(filePath);
+    } catch (error) {
+      // Отсутствующий файл — это уже достигнутый результат, а не сбой.
+      // Идемпотентность здесь важна: вызывающий код (Task 047) удаляет файл
+      // до записи в БД и повторяет операцию при ошибке, поэтому повторный
+      // вызов на уже удалённом файле не должен выглядеть как отказ.
+      if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+        return;
+      }
+
+      throw error;
+    }
   }
 
   private getExtensionForMimeType(mimeType: string): string {

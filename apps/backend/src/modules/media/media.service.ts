@@ -182,6 +182,23 @@ export class MediaService {
     assertFound(photo);
     assertOwner(photo.userId, currentUser.id);
 
+    // Task 047: файл удаляется ДО записи в БД, и сбой удаления файла
+    // намеренно проваливает весь запрос.
+    //
+    // Раньше порядок был обратным, а ошибка удаления файла молча
+    // проглатывалась. Папка загрузок отдаётся статикой напрямую с диска
+    // (main.ts, useStaticAssets), без сверки с БД — поэтому при любом сбое
+    // удаления файла API отвечал success, запись из БД исчезала, а
+    // фотография продолжала открываться по прямой ссылке. Для пользователя
+    // это выглядит как удаление, которого не произошло, то есть уже не
+    // best-effort cleanup, а нарушенное обещание приватности.
+    //
+    // Новый порядок меняет один режим отказа на другой, менее вредный:
+    // если после удаления файла упадёт транзакция, останется запись без
+    // файла — битая картинка вместо утёкшей. Удаление файла идемпотентно
+    // (ENOENT считается успехом), поэтому повторный запрос пройдёт.
+    await this.profilePhotoStorage.deleteProfilePhoto(photo.storageKey);
+
     await this.prisma.$transaction(async (tx) => {
       await tx.profilePhoto.delete({
         where: { id: photoId },
@@ -203,12 +220,6 @@ export class MediaService {
         });
       }
     });
-
-    try {
-      await this.profilePhotoStorage.deleteProfilePhoto(photo.storageKey);
-    } catch {
-      // Storage cleanup should not turn a successful DB delete into 500.
-    }
 
     const [profile, photos] = await Promise.all([
       this.getSelfProfileView(currentUser.id),
