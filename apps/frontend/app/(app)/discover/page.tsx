@@ -11,6 +11,7 @@ import type { SwipeAction, UserProfile } from "@/types/app"
 import { ApiError } from "@/lib/auth-api"
 import { discoveryApi, toUserProfile } from "@/lib/discovery-api"
 import { likesApi } from "@/lib/likes-api"
+import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 
@@ -558,7 +559,14 @@ export default function DiscoverPage() {
           const profile = response.match.matchedProfile
           setMatchProfile({
             name: profile.displayName ?? profile.handle,
-            photoUrl: profile.primaryPhotoUrl ?? current.photos[0] ?? "/hero-portrait.jpg",
+            // Task 022: бэкенд отдаёт относительный `/uploads/...`, который
+            // без резолва уходит в origin фронтенда, а не бэкенда. Карточки
+            // ленты уже резолвятся в toUserProfile, но ответ likesApi
+            // приходит напрямую и этот шаг пропускал.
+            photoUrl:
+              resolveProfilePhotoUrl(profile.primaryPhotoUrl) ??
+              current.photos[0] ??
+              "/hero-portrait.jpg",
           })
         }
       } else {
