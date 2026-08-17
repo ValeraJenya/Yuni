@@ -207,6 +207,29 @@ describe('AuthService', () => {
       expectNoCredentialKeys(result);
     });
 
+    it('creates the account and the first session in one transaction (Task 046)', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findFirst.mockResolvedValue(null);
+      prisma.profile.findFirst.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue(makeUser());
+      prisma.refreshToken.create.mockResolvedValue({ id: 'refresh-token-1' });
+
+      await service.register(makeRegisterDto(), TEST_META);
+
+      // Иначе сбой выдачи сессии оставляет созданный аккаунт при ответе 500,
+      // и повторная регистрация тем же email упирается в конфликт.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+
+      const transactionOrder = prisma.$transaction.mock.invocationCallOrder[0];
+
+      expect(prisma.user.create.mock.invocationCallOrder[0]).toBeGreaterThan(
+        transactionOrder,
+      );
+      expect(
+        prisma.refreshToken.create.mock.invocationCallOrder[0],
+      ).toBeGreaterThan(transactionOrder);
+    });
+
     it('rejects registration when the user is younger than 18', async () => {
       const { service, prisma } = createService();
 

@@ -19,6 +19,8 @@ import { RegisterDto } from './dto/register.dto';
 import type { AuthenticatedUser } from './types/authenticated-user';
 import type { JwtPayload } from './types/jwt-payload';
 
+type AuthTransactionClient = Prisma.TransactionClient | PrismaService;
+
 interface ClientSessionMeta {
   ipAddress?: string;
   userAgent?: string;
@@ -77,30 +79,45 @@ export class AuthService {
     const passwordHash = await argon2.hash(dto.password);
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          email,
-          passwordHash,
-          profile: {
-            create: {
-              handle,
-              displayName,
-              birthDate: birthDate.date,
+      // Task 046: аккаунт и первая сессия создаются одной транзакцией.
+      // Раньше сессия выдавалась отдельным запросом после создания
+      // пользователя, и её сбой оставлял созданный аккаунт при ответе 500:
+      // клиент считал регистрацию неудавшейся, а повторная попытка с тем же
+      // email упиралась в конфликт уникальности — восстановиться без
+      // ручного вмешательства было нельзя.
+      const { user, tokens } = await this.prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            email,
+            passwordHash,
+            profile: {
+              create: {
+                handle,
+                displayName,
+                birthDate: birthDate.date,
+              },
+            },
+            privacySettings: {
+              create: {},
+            },
+            notificationSettings: {
+              create: {},
             },
           },
-          privacySettings: {
-            create: {},
+          include: {
+            profile: true,
           },
-          notificationSettings: {
-            create: {},
-          },
-        },
-        include: {
-          profile: true,
-        },
-      });
+        });
 
-      const tokens = await this.issueTokenPair(user.id, user.email, meta);
+        const issuedTokens = await this.issueTokenPair(
+          createdUser.id,
+          createdUser.email,
+          meta,
+          tx,
+        );
+
+        return { user: createdUser, tokens: issuedTokens };
+      });
 
       return {
         user: toSafeAuthUser(user),
@@ -322,9 +339,14 @@ export class AuthService {
     userId: string,
     email: string,
     meta: ClientSessionMeta,
+    client: AuthTransactionClient = this.prisma,
   ): Promise<AuthTokens> {
     const accessToken = await this.signAccessToken(userId, email);
-    const refreshSession = await this.createRefreshTokenSession(userId, meta);
+    const refreshSession = await this.createRefreshTokenSession(
+      userId,
+      meta,
+      client,
+    );
 
     return {
       accessToken,
@@ -335,9 +357,10 @@ export class AuthService {
   private async createRefreshTokenSession(
     userId: string,
     meta: ClientSessionMeta,
+    client: AuthTransactionClient = this.prisma,
   ): Promise<RefreshSessionTokens> {
     const preparedSession = await this.prepareRefreshTokenSession();
-    const refreshTokenRow = await this.prisma.refreshToken.create({
+    const refreshTokenRow = await client.refreshToken.create({
       data: {
         userId,
         tokenHash: preparedSession.tokenHash,
