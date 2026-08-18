@@ -210,7 +210,7 @@
 | Backend test inventory | 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts) | `apps/backend/src/`, `apps/backend/test/` |
 | Frontend tests | отсутствуют | — |
 | Production deployment | **не реализован** | `docs/PROJECT_STATE.md` |
-| Demo mode | `DemoSessionProvider` (sessionStorage); `DemoGate` UI | `apps/frontend/lib/demo-session.tsx`, `apps/frontend/features/app-shell/components/demo-gate.tsx` |
+| Demo mode | удалён (Task 038): `DemoSessionProvider` и `DemoGate` нигде не подключались | — |
 
 ---
 
