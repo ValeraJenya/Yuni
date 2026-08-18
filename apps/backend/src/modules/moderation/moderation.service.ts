@@ -257,8 +257,9 @@ export class ModerationService {
   async assertNoBlockBetween(
     leftUserId: string,
     rightUserId: string,
+    client: ModerationTransactionClient = this.prisma,
   ): Promise<void> {
-    if (await this.hasBlockBetween(leftUserId, rightUserId)) {
+    if (await this.hasBlockBetween(leftUserId, rightUserId, client)) {
       throw new ForbiddenException(BLOCKED_INTERACTION_MESSAGE);
     }
   }

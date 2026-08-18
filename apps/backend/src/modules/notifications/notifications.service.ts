@@ -98,6 +98,8 @@ type NotificationRecord = Prisma.NotificationGetPayload<{
   select: typeof notificationSelect;
 }>;
 
+type NotificationsTransactionClient = Prisma.TransactionClient | PrismaService;
+
 @Injectable()
 export class NotificationsService {
   constructor(
@@ -110,29 +112,31 @@ export class NotificationsService {
     userAId: string;
     userBId: string;
     now?: Date;
+    client?: NotificationsTransactionClient;
   }): Promise<void> {
     const now = input.now ?? new Date();
+    const client = input.client ?? this.prisma;
 
-    await Promise.all([
-      this.createNotificationForRecipient({
-        recipientUserId: input.userAId,
-        actorUserId: input.userBId,
-        type: NotificationType.match_created,
-        messageKey: NOTIFICATION_MESSAGE_KEYS.matchCreated,
-        matchId: input.matchId,
-        settingsField: 'matchesEnabled',
-        now,
-      }),
-      this.createNotificationForRecipient({
-        recipientUserId: input.userBId,
-        actorUserId: input.userAId,
-        type: NotificationType.match_created,
-        messageKey: NOTIFICATION_MESSAGE_KEYS.matchCreated,
-        matchId: input.matchId,
-        settingsField: 'matchesEnabled',
-        now,
-      }),
-    ]);
+    await this.createNotificationForRecipient({
+      recipientUserId: input.userAId,
+      actorUserId: input.userBId,
+      type: NotificationType.match_created,
+      messageKey: NOTIFICATION_MESSAGE_KEYS.matchCreated,
+      matchId: input.matchId,
+      settingsField: 'matchesEnabled',
+      now,
+      client,
+    });
+    await this.createNotificationForRecipient({
+      recipientUserId: input.userBId,
+      actorUserId: input.userAId,
+      type: NotificationType.match_created,
+      messageKey: NOTIFICATION_MESSAGE_KEYS.matchCreated,
+      matchId: input.matchId,
+      settingsField: 'matchesEnabled',
+      now,
+      client,
+    });
   }
 
   async createMessageNotification(input: {
@@ -141,6 +145,7 @@ export class NotificationsService {
     conversationId: string;
     messageId: string;
     now?: Date;
+    client?: NotificationsTransactionClient;
   }): Promise<void> {
     await this.createNotificationForRecipient({
       recipientUserId: input.recipientUserId,
@@ -151,6 +156,7 @@ export class NotificationsService {
       messageId: input.messageId,
       settingsField: 'messagesEnabled',
       now: input.now ?? new Date(),
+      client: input.client ?? this.prisma,
     });
   }
 
@@ -281,6 +287,7 @@ export class NotificationsService {
     messageId?: string;
     settingsField: 'matchesEnabled' | 'messagesEnabled';
     now: Date;
+    client: NotificationsTransactionClient;
   }): Promise<void> {
     if (input.recipientUserId === input.actorUserId) {
       return;
@@ -290,12 +297,13 @@ export class NotificationsService {
       await this.moderationService.hasBlockBetween(
         input.recipientUserId,
         input.actorUserId,
+        input.client,
       )
     ) {
       return;
     }
 
-    const recipient = await this.prisma.user.findUnique({
+    const recipient = await input.client.user.findUnique({
       where: {
         id: input.recipientUserId,
       },
@@ -320,7 +328,7 @@ export class NotificationsService {
       return;
     }
 
-    await this.prisma.notification.create({
+    await input.client.notification.create({
       data: {
         recipientUserId: input.recipientUserId,
         actorUserId: input.actorUserId,

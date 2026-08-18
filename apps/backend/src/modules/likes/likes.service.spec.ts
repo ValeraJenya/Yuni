@@ -35,6 +35,8 @@ interface PrismaMock {
     findFirst: jest.Mock;
     create: jest.Mock;
   };
+  $transaction: jest.Mock;
+  $executeRaw: jest.Mock;
 }
 
 interface MatchesServiceMock {
@@ -119,11 +121,22 @@ describe('LikesService', () => {
         expiresAt: addDays(FIXED_NOW, 3),
       },
     });
-    expect(matchesService.tryCreateMatchFromLike).toHaveBeenCalledWith({
-      actorUserId: CURRENT_USER.id,
-      targetUserId: TARGET_PROFILE_USER_ID,
-      now: FIXED_NOW,
-    });
+    expect(matchesService.tryCreateMatchFromLike).toHaveBeenCalledWith(
+      {
+        actorUserId: CURRENT_USER.id,
+        targetUserId: TARGET_PROFILE_USER_ID,
+        now: FIXED_NOW,
+      },
+      prisma,
+    );
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.like.findFirst.mock.invocationCallOrder[0]).toBeGreaterThan(
+      prisma.$executeRaw.mock.invocationCallOrder[0],
+    );
+    expect(prisma.like.create.mock.invocationCallOrder[0]).toBeGreaterThan(
+      prisma.$executeRaw.mock.invocationCallOrder[0],
+    );
     expectNoRawLikeOrPrivateKeys(result);
   });
 
@@ -306,6 +319,7 @@ describe('LikesService', () => {
     expect(moderationService.assertNoBlockBetween).toHaveBeenCalledWith(
       CURRENT_USER.id,
       TARGET_PROFILE_USER_ID,
+      prisma,
     );
     expect(prisma.like.findFirst).not.toHaveBeenCalled();
     expect(prisma.like.create).not.toHaveBeenCalled();
@@ -379,7 +393,12 @@ function createService() {
       findFirst: jest.fn(),
       create: jest.fn(),
     },
+    $transaction: jest.fn(),
+    $executeRaw: jest.fn().mockResolvedValue(1),
   };
+  prisma.$transaction.mockImplementation(
+    async (callback: (tx: PrismaMock) => Promise<unknown>) => callback(prisma),
+  );
   const matchesService: MatchesServiceMock = {
     tryCreateMatchFromLike: jest.fn().mockResolvedValue(null),
   };

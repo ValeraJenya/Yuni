@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { LikeKind, Prisma, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { lockUserPair } from '../../common/prisma/user-pair-lock';
 import { assertCanAccessProfile } from '../../common/security/access-control';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user';
 import {
@@ -100,53 +101,63 @@ export class LikesService {
       targetProfileUserId,
       currentUser.id,
     );
-    await this.moderationService.assertNoBlockBetween(
-      currentUser.id,
-      targetProfile.userId,
-    );
-
-    const activeInteraction = await this.prisma.like.findFirst({
-      where: {
-        likerUserId: currentUser.id,
-        likedUserId: targetProfile.userId,
-        expiresAt: {
-          gt: now,
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (activeInteraction) {
-      throw this.activeInteractionConflict();
-    }
-
     const expiresAt = this.getExpiryDate(now, cooldownDays);
 
     try {
-      const interaction = await this.prisma.like.create({
-        data: {
-          likerUserId: currentUser.id,
-          likedUserId: targetProfile.userId,
-          kind,
-          createdAt: now,
-          expiresAt,
-        },
-        select: {
-          likedUserId: true,
-          kind: true,
-          expiresAt: true,
-        },
+      const { interaction, match } = await this.prisma.$transaction(async (tx) => {
+        await lockUserPair(tx, currentUser.id, targetProfile.userId);
+
+        await this.moderationService.assertNoBlockBetween(
+          currentUser.id,
+          targetProfile.userId,
+          tx,
+        );
+
+        const activeInteraction = await tx.like.findFirst({
+          where: {
+            likerUserId: currentUser.id,
+            likedUserId: targetProfile.userId,
+            expiresAt: {
+              gt: now,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (activeInteraction) {
+          throw this.activeInteractionConflict();
+        }
+
+        const interaction = await tx.like.create({
+          data: {
+            likerUserId: currentUser.id,
+            likedUserId: targetProfile.userId,
+            kind,
+            createdAt: now,
+            expiresAt,
+          },
+          select: {
+            likedUserId: true,
+            kind: true,
+            expiresAt: true,
+          },
+        });
+        const match =
+          kind === LikeKind.like
+            ? await this.matchesService.tryCreateMatchFromLike(
+                {
+                  actorUserId: currentUser.id,
+                  targetUserId: targetProfile.userId,
+                  now,
+                },
+                tx,
+              )
+            : null;
+
+        return { interaction, match };
       });
-      const match =
-        kind === LikeKind.like
-          ? await this.matchesService.tryCreateMatchFromLike({
-              actorUserId: currentUser.id,
-              targetUserId: targetProfile.userId,
-              now,
-            })
-          : null;
 
       return this.toInteractionResponse(interaction, match);
     } catch (error) {

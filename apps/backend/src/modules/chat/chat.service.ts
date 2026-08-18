@@ -697,15 +697,16 @@ export class ChatService {
 
       await this.createGameIfNeeded(tx, lockedConversation, now);
 
-      return createdMessage;
-    });
+      await this.notificationsService.createMessageNotification({
+        recipientUserId: otherParticipant.userId,
+        actorUserId: currentUser.id,
+        conversationId,
+        messageId: createdMessage.id,
+        now,
+        client: tx,
+      });
 
-    await this.notificationsService.createMessageNotification({
-      recipientUserId: otherParticipant.userId,
-      actorUserId: currentUser.id,
-      conversationId,
-      messageId: message.id,
-      now,
+      return createdMessage;
     });
 
     return {

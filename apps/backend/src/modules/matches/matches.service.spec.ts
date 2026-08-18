@@ -127,6 +127,7 @@ describe('MatchesService', () => {
       userAId: TARGET_USER_ID,
       userBId: ACTOR_USER_ID,
       now: FIXED_NOW,
+      client: prisma,
     });
     expect(result).toEqual({
       id: MATCH_ID,
@@ -221,6 +222,53 @@ describe('MatchesService', () => {
     expect(prisma.match.create.mock.invocationCallOrder[0]).toBeGreaterThan(
       lockOrder,
     );
+  });
+
+  it('uses a provided transaction client without opening or locking another transaction', async () => {
+    const { service, prisma, moderationService, notificationsService } =
+      createService();
+    const tx: PrismaMock = {
+      ...prisma,
+      like: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'reciprocal-like-id' }),
+      },
+      match: {
+        ...prisma.match,
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockImplementation(async (args: MatchCreateArgs) =>
+          makeMatchRecord({
+            ...args.data,
+            id: MATCH_ID,
+          }),
+        ),
+      },
+      $executeRaw: jest.fn(),
+    };
+
+    await service.tryCreateMatchFromLike(
+      {
+        actorUserId: ACTOR_USER_ID,
+        targetUserId: TARGET_USER_ID,
+        now: FIXED_NOW,
+      },
+      tx as unknown as PrismaService,
+    );
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+    expect(moderationService.hasBlockBetween).toHaveBeenCalledWith(
+      ACTOR_USER_ID,
+      TARGET_USER_ID,
+      tx,
+    );
+    expect(tx.match.create).toHaveBeenCalledTimes(1);
+    expect(notificationsService.createMatchNotifications).toHaveBeenCalledWith({
+      matchId: MATCH_ID,
+      userAId: TARGET_USER_ID,
+      userBId: ACTOR_USER_ID,
+      now: FIXED_NOW,
+      client: tx,
+    });
   });
 
   it('does not create a match for SKIP/PASS interactions', async () => {
