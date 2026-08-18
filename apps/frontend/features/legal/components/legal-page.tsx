@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
-import type { LegalBlock, LegalContent, Lang } from "../types"
+import { useLang } from "@/lib/lang-context"
+import type { LegalBlock, LegalContent } from "../types"
 
 interface LegalPageProps {
   content: LegalContent
@@ -104,7 +104,8 @@ function Block({ block }: { block: LegalBlock }) {
 }
 
 export function LegalPage({ content, current }: LegalPageProps) {
-  const [lang, setLang] = useState<Lang>("ru")
+  // Task 052: язык общий для всего приложения, а не локальный для страницы.
+  const { lang, toggle } = useLang()
   const doc = content[lang]
 
   return (
@@ -121,7 +122,7 @@ export function LegalPage({ content, current }: LegalPageProps) {
 
           <button
             type="button"
-            onClick={() => setLang((prev) => (prev === "ru" ? "en" : "ru"))}
+            onClick={toggle}
             className="flex items-center gap-1 font-sans text-[11px] font-medium tracking-widest select-none"
             aria-label="Switch language"
           >

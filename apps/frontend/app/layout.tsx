@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Cormorant_Garamond } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/auth-context'
+import { LangProvider } from '@/lib/lang-context'
 import './globals.css'
 
 const inter = Inter({
@@ -56,7 +57,11 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark bg-background">
       <body className={`${inter.variable} ${cormorant.variable} font-sans antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
+        {/* Task 052: единственный LangProvider на всё приложение — раньше
+            их было два, в (auth) и в (app), и язык сбрасывался после логина. */}
+        <LangProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </LangProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
