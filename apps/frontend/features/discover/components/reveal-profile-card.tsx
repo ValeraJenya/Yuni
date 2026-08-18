@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { MapPin, ShieldCheck, Star } from "lucide-react"
+import { MapPin, ShieldCheck } from "lucide-react"
 import { VeilOverlay } from "@/features/discover/components/veil-overlay"
 import { useProfileReveal } from "@/features/discover/hooks/use-profile-reveal"
 import type { RevealZoneId } from "@/features/discover/types/reveal"
@@ -281,22 +281,6 @@ export function RevealProfileCard({
                 }}
               >
                 <ShieldCheck size={10} />
-              </span>
-            )}
-            {profile.isPremium && (
-              <span
-                className="flex items-center gap-1 rounded-full px-2.5 py-1 font-sans font-medium"
-                style={{
-                  fontSize: "9px",
-                  letterSpacing: "0.10em",
-                  color: "oklch(0.84 0.12 72)",
-                  background: "oklch(0.08 0.012 15 / 0.72)",
-                  border: "1px solid oklch(0.82 0.12 72 / 0.22)",
-                  backdropFilter: "blur(12px)",
-                }}
-              >
-                <Star size={9} strokeWidth={1.5} />
-                PREMIUM
               </span>
             )}
           </div>

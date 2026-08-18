@@ -17,7 +17,6 @@ export interface UserProfile {
   isOnline: boolean
   lastSeen?: string          // ISO date string
   isVerified: boolean
-  isPremium: boolean
   completionPct: number      // 0–100
   height?: number            // cm
   occupation?: string

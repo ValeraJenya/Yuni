@@ -82,7 +82,6 @@ export function toUserProfile(card: DiscoveryCard): UserProfile {
     lookingFor: toLookingFor(card.lookingFor),
     isOnline: false,
     isVerified: false,
-    isPremium: false,
     completionPct: 100,
   }
 }

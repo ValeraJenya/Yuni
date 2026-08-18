@@ -3,11 +3,13 @@
 import { useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { useLang } from "@/lib/lang-context"
 import { AppNav } from "./app-nav"
 
 export function AppContent({ children }: { children: ReactNode }) {
   const router = useRouter()
   const { isLoading, isAuthenticated } = useAuth()
+  const { lang } = useLang()
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -39,7 +41,7 @@ export function AppContent({ children }: { children: ReactNode }) {
             className="font-sans tracking-[0.18em] uppercase"
             style={{ fontSize: "10px", color: "oklch(0.42 0.008 15)" }}
           >
-            Loading
+            {lang === "ru" ? "Загрузка" : "Loading"}
           </span>
         </div>
       </div>
