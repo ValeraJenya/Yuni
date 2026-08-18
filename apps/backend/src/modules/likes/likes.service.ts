@@ -101,17 +101,30 @@ export class LikesService {
       targetProfileUserId,
       currentUser.id,
     );
+    // Проверка блокировки намеренно выполняется ДО транзакции и вне лока.
+    //
+    // Task 046 требовал атомарности связки «лайк + матч», а не переноса этой
+    // предусловной проверки. Инвариант Task 042 — не оставить активный match
+    // между заблокированными — обеспечивает hasBlockBetween внутри
+    // tryCreateMatchFromLike, который уже идёт под тем же локом.
+    //
+    // Если же перенести проверку под лок, конкурирующий blockUser почти
+    // всегда забирает лок первым (до транзакции он делает два дешёвых
+    // запроса, а лайк — поиск профиля с проверками доступа), и лайк начинает
+    // детерминированно отвечать 403 там, где раньше проходил. Это меняет
+    // наблюдаемое поведение API вне рамок задачи и обесценивает
+    // real-Postgres тест гонки block-vs-match: ветка «матч создан
+    // одновременно с блокировкой» перестаёт исполняться вовсе.
+    await this.moderationService.assertNoBlockBetween(
+      currentUser.id,
+      targetProfile.userId,
+    );
+
     const expiresAt = this.getExpiryDate(now, cooldownDays);
 
     try {
       const { interaction, match } = await this.prisma.$transaction(async (tx) => {
         await lockUserPair(tx, currentUser.id, targetProfile.userId);
-
-        await this.moderationService.assertNoBlockBetween(
-          currentUser.id,
-          targetProfile.userId,
-          tx,
-        );
 
         const activeInteraction = await tx.like.findFirst({
           where: {

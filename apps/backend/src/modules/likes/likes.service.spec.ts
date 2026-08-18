@@ -316,10 +316,11 @@ describe('LikesService', () => {
       service.skipProfile(CURRENT_USER, TARGET_PROFILE_USER_ID),
     ).rejects.toBeInstanceOf(ForbiddenException);
 
+    // Двумя аргументами: проверка блокировки идёт до транзакции и вне лока,
+    // транзакционный клиент ей не передаётся.
     expect(moderationService.assertNoBlockBetween).toHaveBeenCalledWith(
       CURRENT_USER.id,
       TARGET_PROFILE_USER_ID,
-      prisma,
     );
     expect(prisma.like.findFirst).not.toHaveBeenCalled();
     expect(prisma.like.create).not.toHaveBeenCalled();
