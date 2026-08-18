@@ -486,6 +486,7 @@ describe('ChatService', () => {
       conversationId: CONVERSATION_ID,
       messageId: MESSAGE_ID,
       now: FIXED_NOW,
+      client: prisma,
     });
     expect(result).toEqual({
       message: {

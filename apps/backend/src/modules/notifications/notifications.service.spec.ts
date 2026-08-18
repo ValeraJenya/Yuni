@@ -2,6 +2,7 @@ import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import {
   NotificationType,
   PhotoModerationStatus,
+  Prisma,
   ProfileVisibilityMode,
   UserStatus,
 } from '@prisma/client';
@@ -158,7 +159,41 @@ describe('NotificationsService', () => {
     expect(moderationService.hasBlockBetween).toHaveBeenCalledWith(
       ACTOR_USER_ID,
       CURRENT_USER_ID,
+      prisma,
     );
+    expect(prisma.notification.create).not.toHaveBeenCalled();
+  });
+
+  it('uses the provided transaction client for notification writes and visibility checks', async () => {
+    const { service, prisma, moderationService } = createService();
+    const tx = {
+      ...prisma,
+      user: {
+        findUnique: jest.fn().mockResolvedValue(activeUser()),
+      },
+      notification: {
+        ...prisma.notification,
+        create: jest.fn().mockResolvedValue({ id: NOTIFICATION_ID }),
+      },
+    };
+
+    await service.createMessageNotification({
+      recipientUserId: ACTOR_USER_ID,
+      actorUserId: CURRENT_USER_ID,
+      conversationId: CONVERSATION_ID,
+      messageId: MESSAGE_ID,
+      now: FIXED_NOW,
+      client: tx as unknown as Prisma.TransactionClient,
+    });
+
+    expect(moderationService.hasBlockBetween).toHaveBeenCalledWith(
+      ACTOR_USER_ID,
+      CURRENT_USER_ID,
+      tx,
+    );
+    expect(tx.user.findUnique).toHaveBeenCalledTimes(1);
+    expect(tx.notification.create).toHaveBeenCalledTimes(1);
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
     expect(prisma.notification.create).not.toHaveBeenCalled();
   });
 

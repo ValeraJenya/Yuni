@@ -177,14 +177,42 @@ export class MatchesService {
     };
   }
 
-  async tryCreateMatchFromLike({
-    actorUserId,
-    targetUserId,
-    now = new Date(),
-  }: TryCreateMatchFromLikeInput): Promise<MatchResponse | null> {
+  async tryCreateMatchFromLike(
+    {
+      actorUserId,
+      targetUserId,
+      now = new Date(),
+    }: TryCreateMatchFromLikeInput,
+    client: MatchesTransactionClient = this.prisma,
+  ): Promise<MatchResponse | null> {
     const pair = this.normalizePair(actorUserId, targetUserId);
 
     try {
+      if (client !== this.prisma) {
+        const outcome = await this.createMatchFromLikeInTransaction(
+          actorUserId,
+          targetUserId,
+          now,
+          pair,
+          client,
+        );
+
+        if (!outcome) {
+          return null;
+        }
+
+        if (outcome.created) {
+          await this.notificationsService.createMatchNotifications({
+            matchId: outcome.match.id,
+            userAId: outcome.match.userAId,
+            userBId: outcome.match.userBId,
+            now,
+            client,
+          });
+        }
+
+        return this.toMatchResponse(outcome.match, actorUserId);
+      }
       // Task 042: проверка блокировки и создание match должны быть одной
       // операцией. Раньше между ними мог вклиниться blockUser: его
       // endActiveMatchesBetween не видел ещё не созданный match, а этот код
@@ -238,23 +266,19 @@ export class MatchesService {
           select: matchResponseSelect,
         });
 
+        await this.notificationsService.createMatchNotifications({
+          matchId: createdMatch.id,
+          userAId: createdMatch.userAId,
+          userBId: createdMatch.userBId,
+          now,
+          client: tx,
+        });
+
         return { match: createdMatch, created: true };
       });
 
       if (!outcome) {
         return null;
-      }
-
-      // Уведомления остаются за пределами транзакции: их сбой не должен
-      // откатывать уже подтверждённый match. Неатомарность этой связки —
-      // отдельная задача (Task 046).
-      if (outcome.created) {
-        await this.notificationsService.createMatchNotifications({
-          matchId: outcome.match.id,
-          userAId: outcome.match.userAId,
-          userBId: outcome.match.userBId,
-          now,
-        });
       }
 
       return this.toMatchResponse(outcome.match, actorUserId);
@@ -271,6 +295,64 @@ export class MatchesService {
 
       throw new ConflictException(ACTIVE_MATCH_CONFLICT_MESSAGE);
     }
+  }
+
+  private async createMatchFromLikeInTransaction(
+    actorUserId: string,
+    targetUserId: string,
+    now: Date,
+    pair: {
+      userAId: string;
+      userBId: string;
+    },
+    client: MatchesTransactionClient,
+  ): Promise<{ match: MatchRecord; created: boolean } | null> {
+    if (
+      await this.moderationService.hasBlockBetween(
+        actorUserId,
+        targetUserId,
+        client,
+      )
+    ) {
+      return null;
+    }
+
+    const reciprocalLike = await client.like.findFirst({
+      where: {
+        likerUserId: targetUserId,
+        likedUserId: actorUserId,
+        kind: LikeKind.like,
+        expiresAt: {
+          gt: now,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!reciprocalLike) {
+      return null;
+    }
+
+    const activeMatch = await this.findActiveMatchByPair(pair, now, client);
+
+    if (activeMatch) {
+      return { match: activeMatch, created: false };
+    }
+
+    const createdMatch = await client.match.create({
+      data: {
+        userAId: pair.userAId,
+        userBId: pair.userBId,
+        status: MatchStatus.active,
+        matchedAt: now,
+        expiresAt: this.getExpiryDate(now),
+      },
+      select: matchResponseSelect,
+    });
+
+    return { match: createdMatch, created: true };
   }
 
   normalizePair(leftUserId: string, rightUserId: string): {
