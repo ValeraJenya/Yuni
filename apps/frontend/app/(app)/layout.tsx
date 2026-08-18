@@ -1,11 +1,8 @@
 import type { ReactNode } from "react"
-import { LangProvider } from "@/lib/lang-context"
 import { AppContent } from "@/features/app-shell/components/app-content"
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  return (
-    <LangProvider>
-      <AppContent>{children}</AppContent>
-    </LangProvider>
-  )
+  // LangProvider живёт в корневом layout (Task 052): отдельный инстанс здесь
+  // означал бы, что язык, выбранный до логина, снова теряется.
+  return <AppContent>{children}</AppContent>
 }

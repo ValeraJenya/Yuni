@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useLang } from "@/lib/lang-context"
 import { Navbar } from "@/components/landing/navbar"
 import { Hero } from "@/components/landing/hero"
 import { Manifesto } from "@/components/landing/manifesto"
@@ -12,11 +12,9 @@ import { PinkRabbit } from "@/components/landing/pink-rabbit"
 import { Footer } from "@/components/landing/footer"
 
 export default function HomePage() {
-  const [lang, setLang] = useState<"ru" | "en">("ru")
-
-  function toggleLang() {
-    setLang((prev) => (prev === "ru" ? "en" : "ru"))
-  }
+  // Task 052: лендинг больше не держит собственное состояние языка — иначе
+  // выбор EN здесь терялся при переходе на регистрацию.
+  const { lang, toggle: toggleLang } = useLang()
 
   return (
     <div className="min-h-screen bg-background text-foreground">
