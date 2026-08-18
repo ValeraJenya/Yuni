@@ -200,7 +200,7 @@
 
 | Аспект | Состояние | Источник |
 |---|---|---|
-| Health endpoint | `GET /health` — real check | `apps/backend/src/modules/health/health.controller.ts` |
+| Health endpoint | `GET /health` — проверяет доступность Postgres (`SELECT 1`); 200 + `status: ok` либо 503 + `status: degraded` и `dependencies.database: down` | `apps/backend/src/modules/health/health.controller.ts` |
 | Rate limiting | global fallback (300 req/10min/IP) + per-endpoint in-memory limiter | `docs/api/README.md`, `apps/backend/src/common/rate-limit/` |
 | Cursor pagination | реализована для всех list endpoints (default 20, max 50) | `apps/backend/src/common/pagination/` |
 | Safe serializers | запрет raw Prisma rows; storageKey/paths не отдаются клиенту | `apps/backend/src/common/serializers/`, `docs/security/data-exposure-rules.md` |
