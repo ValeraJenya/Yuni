@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/auth-api"
 import { chatApi, type ChatMessage, type ConversationSummary } from "@/lib/chat-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
+import { defaultAvatarUrl } from "@/lib/default-avatar"
 import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 
 const copy = {
@@ -61,7 +62,10 @@ const copy = {
   },
 }
 
-const fallbackPhotoUrl = "/hero-portrait.jpg"
+// Task 071: chat API не отдаёт пол собеседника (`ChatParticipantSummary`),
+// поэтому здесь нейтральный силуэт, а не гендерная заглушка. Показать
+// портрет можно будет, когда поле появится в сериализаторе — см. Task 073.
+const fallbackPhotoUrl = defaultAvatarUrl(null, "square")
 
 function formatMsgTime(iso: string) {
   const d = new Date(iso)
