@@ -21,7 +21,24 @@ import {
   Trash2,
   Heart,
   TrendingUp,
+  AlertTriangle,
+  X,
 } from "lucide-react"
+import {
+  ProfileFormFields,
+  type ProfileFieldFocusRequest,
+} from "@/features/profile/components/profile-form-fields"
+import { profileFormCopy } from "@/features/profile/copy"
+import {
+  createProfileForm,
+  isProfileFormDirty,
+  missingRequiredFields,
+  PROFILE_FORM_FIELDS,
+  toUpdateProfileRequest,
+  type ProfileFormFieldKey,
+  type ProfileFormState,
+} from "@/features/profile/form-state"
+import { useUnsavedChangesGuard } from "@/features/profile/use-unsaved-changes-guard"
 import { ApiError } from "@/lib/auth-api"
 import { defaultAvatarUrl } from "@/lib/default-avatar"
 import { useAuth } from "@/lib/auth-context"
@@ -32,7 +49,6 @@ import {
   resolveProfilePhotoUrl,
   type ProfileCompletionField,
   type SelfProfile,
-  type UpdateProfileRequest,
 } from "@/lib/profile-api"
 
 type ProfileInfoRow = { icon: ElementType; label: string; value: string }
@@ -60,14 +76,22 @@ const copy = {
     },
     bioLabel: "О себе",
     profileFieldsLabel: "Профиль",
-    displayNameLabel: "Имя",
-    cityLabel: "Город",
-    countryLabel: "Страна",
-    genderLabel: "Гендер",
+    editPanelTitle: "Редактирование анкеты",
+    editPanelHint:
+      "Изменения попадут в профиль только после нажатия «Сохранить».",
     discoverableLabel: "Показывать в поиске",
+    discoverableOn: "Да",
+    discoverableOff: "Нет",
     saveLabel: "Сохранить",
+    cancelLabel: "Отмена",
     savingLabel: "Сохраняем...",
     savedLabel: "Сохранено",
+    unsavedBadge: "Не сохранено",
+    unsavedTitle: "Изменения не сохранены",
+    unsavedBody: "Если уйти сейчас, введённое пропадёт.",
+    unsavedStay: "Остаться",
+    unsavedLeave: "Уйти без сохранения",
+    requiredWarning: "Пока эти поля пустые, анкета не участвует в поиске:",
     loadingLabel: "Загружаем профиль...",
     loadErrorLabel: "Не удалось загрузить профиль",
     saveErrorLabel: "Не удалось сохранить профиль",
@@ -114,14 +138,22 @@ const copy = {
     },
     bioLabel: "About me",
     profileFieldsLabel: "Profile",
-    displayNameLabel: "Name",
-    cityLabel: "City",
-    countryLabel: "Country",
-    genderLabel: "Gender",
+    editPanelTitle: "Edit profile",
+    editPanelHint: "Changes reach your profile only after you press Save.",
     discoverableLabel: "Show in discover",
+    discoverableOn: "Yes",
+    discoverableOff: "No",
     saveLabel: "Save",
+    cancelLabel: "Cancel",
     savingLabel: "Saving...",
     savedLabel: "Saved",
+    unsavedBadge: "Unsaved",
+    unsavedTitle: "You have unsaved changes",
+    unsavedBody: "Leaving now discards what you typed.",
+    unsavedStay: "Stay",
+    unsavedLeave: "Leave without saving",
+    requiredWarning:
+      "While these fields are empty your profile stays out of discover:",
     loadingLabel: "Loading profile...",
     loadErrorLabel: "Could not load profile",
     saveErrorLabel: "Could not save profile",
@@ -169,14 +201,6 @@ const COMPLETION_JUMP_ORDER: ProfileCompletionField[] = [
   "lookingFor",
 ]
 
-type ProfileFormState = Required<
-  Pick<UpdateProfileRequest, "displayName" | "isDiscoverable">
-> &
-  Pick<
-    UpdateProfileRequest,
-    "bio" | "gender" | "lookingFor" | "city" | "country"
-  >
-
 function calculateAge(birthDate?: string): number | null {
   const calendarDate = birthDate?.slice(0, 10)
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate ?? "")
@@ -206,18 +230,6 @@ function getProfilePhotos(profile: SelfProfile): string[] {
     .filter((photo) => photo.publicUrl)
     .sort((left, right) => left.position - right.position)
     .map((photo) => resolveProfilePhotoUrl(photo.publicUrl) as string)
-}
-
-function createProfileForm(profile: SelfProfile): ProfileFormState {
-  return {
-    displayName: profile.displayName,
-    bio: profile.bio,
-    gender: profile.gender,
-    lookingFor: profile.lookingFor,
-    city: profile.city,
-    country: profile.country,
-    isDiscoverable: profile.isDiscoverable ?? true,
-  }
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -313,14 +325,17 @@ export default function ProfilePage() {
   const t = copy[lang]
   const { authenticatedRequest, isLoading: authLoading, logout } = useAuth()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  // Sections and inputs the completion CTA scrolls to, keyed by the field name
-  // the API reports as missing.
-  const completionTargetsRef = useRef<
-    Partial<Record<ProfileCompletionField, HTMLElement | null>>
-  >({})
+  // Фотографии живут в левой колонке и сохраняются сразу, поэтому у них своя
+  // цель для прокрутки — вне формы-черновика.
+  const photosSectionRef = useRef<HTMLDivElement | null>(null)
   const [profileRecord, setProfileRecord] = useState<SelfProfile | null>(null)
   const [profileForm, setProfileForm] = useState<ProfileFormState | null>(null)
-  const [editingBio, setEditingBio] = useState(false)
+  // Task 069: экран открывается в режиме просмотра. Поля становятся
+  // редактируемыми только внутри панели, и только по явному действию.
+  const [isEditing, setIsEditing] = useState(false)
+  const [focusRequest, setFocusRequest] = useState<ProfileFieldFocusRequest | null>(
+    null,
+  )
   const [isProfileLoading, setIsProfileLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
@@ -441,21 +456,50 @@ export default function ProfilePage() {
     }
   }, [profileRecord, t.emptyBio, t.emptyValue])
 
-  // The CTA does not open a separate flow: every field the completion check
-  // counts is edited on this screen, so it just takes the user to the first
-  // missing one.
+  // Черновик формы против последнего ответа сервера. Пока они совпадают,
+  // «Сохранить» неактивна и уход со страницы ничем не грозит.
+  const savedForm = useMemo(
+    () => (profileRecord ? createProfileForm(profileRecord) : null),
+    [profileRecord],
+  )
+  const isDirty = Boolean(
+    profileForm && savedForm && isProfileFormDirty(profileForm, savedForm),
+  )
+  const navigationGuard = useUnsavedChangesGuard(isEditing && isDirty)
+
+  const startEditing = useCallback(() => {
+    setIsEditing(true)
+    setSavedMessage(null)
+    setSaveError(null)
+  }, [])
+
+  const cancelEditing = useCallback(() => {
+    // Возврат к значениям сервера, а не к тому, что было при открытии панели:
+    // если фото или другой запрос успел обновить профиль, честнее показать его.
+    setProfileForm(savedForm)
+    setIsEditing(false)
+    setSaveError(null)
+    setSavedMessage(null)
+  }, [savedForm])
+
+  // CTA «Улучшить» не открывает отдельный флоу: все поля, которые считает
+  // бэкенд, редактируются здесь же. Фото — исключение, оно вне черновика.
   const jumpToProfileGap = useCallback((field: ProfileCompletionField) => {
-    if (field === "bio") {
-      setEditingBio(true)
+    if (field === "photo") {
+      photosSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      })
+
+      return
     }
 
-    const target = completionTargetsRef.current[field]
-
-    target?.scrollIntoView({ behavior: "smooth", block: "center" })
-
-    if (target instanceof HTMLInputElement) {
-      target.focus({ preventScroll: true })
-    }
+    // birthDate в COMPLETION_JUMP_ORDER не входит — редактора для него нет.
+    setIsEditing(true)
+    setFocusRequest((current) => ({
+      field: field as ProfileFormFieldKey,
+      nonce: (current?.nonce ?? 0) + 1,
+    }))
   }, [])
 
   const updateForm = useCallback(
@@ -477,24 +521,17 @@ export default function ProfilePage() {
     setSavedMessage(null)
 
     try {
-      const payload: UpdateProfileRequest = {
-        displayName: profileForm.displayName,
-        bio: profileForm.bio,
-        gender: profileForm.gender,
-        lookingFor: profileForm.lookingFor,
-        city: profileForm.city,
-        country: profileForm.country,
-        isDiscoverable: profileForm.isDiscoverable,
-      }
       const { profile: updatedProfile } = await profileApi.updateMe(
         authenticatedRequest,
-        payload,
+        toUpdateProfileRequest(profileForm),
       )
 
       applyProfile(updatedProfile)
-      setEditingBio(false)
+      setIsEditing(false)
       setSavedMessage(t.savedLabel)
     } catch (error) {
+      // Панель остаётся открытой: черновик не потерян, ошибку видно рядом с
+      // кнопкой, и повторное «Сохранить» доступно сразу.
       setSaveError(error instanceof ApiError ? error.message : t.saveErrorLabel)
     } finally {
       setIsSaving(false)
@@ -656,6 +693,27 @@ export default function ProfilePage() {
     },
   ] as Array<ProfileInfoRow | undefined | null | false>).filter(isProfileInfoRow)
 
+  const fieldCopy = profileFormCopy[lang].fields
+  // Обязательные поля, пустые прямо сейчас в черновике: подсвечиваются в форме
+  // и перечисляются под ней. Считается по черновику, а не по ответу сервера,
+  // иначе предупреждение отставало бы на одно сохранение.
+  const draftMissingRequired = missingRequiredFields(profileForm)
+  // Режим просмотра читает сохранённый профиль, а не черновик: пока панель
+  // закрыта, на экране обязано быть ровно то, что лежит на сервере.
+  // `bio` в список не входит — у него своя карточка выше.
+  const profileViewRows = PROFILE_FORM_FIELDS.filter(
+    (field) => field.key !== "bio",
+  ).map((field) => {
+    const value = (profileRecord[field.key] ?? "").trim()
+
+    return {
+      key: field.key,
+      label: fieldCopy[field.key].label,
+      value: value || t.emptyValue,
+      isEmpty: value === "",
+    }
+  })
+
   return (
     <div className="min-h-screen md:pl-[220px] pb-28 md:pb-12">
 
@@ -696,8 +754,11 @@ export default function ProfilePage() {
               }}
             />
 
-            {/* Edit button */}
+            {/* Edit button — единственный вход в режим редактирования */}
+            {!isEditing && (
             <button
+              type="button"
+              onClick={startEditing}
               className="absolute top-5 right-5 flex items-center gap-1.5 rounded-full px-3.5 py-2 font-sans font-medium transition-all"
               style={{
                 fontSize: "11px",
@@ -719,6 +780,7 @@ export default function ProfilePage() {
               <Pencil size={11} strokeWidth={2} />
               {t.edit}
             </button>
+            )}
 
             {/* Name block */}
             <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
@@ -862,9 +924,7 @@ export default function ProfilePage() {
 
           {/* ── Photos grid ── */}
           <div
-            ref={(element) => {
-              completionTargetsRef.current.photo = element
-            }}
+            ref={photosSectionRef}
             className="px-5 py-5"
             style={{ borderBottom: "1px solid oklch(0.15 0.010 15 / 0.60)" }}
           >
@@ -999,199 +1059,273 @@ export default function ProfilePage() {
         {/* ── Right column: bio, interests, details, settings ── */}
         <div className="flex-1 px-5 md:px-8 flex flex-col gap-7 pt-5 md:pt-6">
 
-          {/* ── Bio ── */}
-          <div
-            ref={(element) => {
-              completionTargetsRef.current.bio = element
-            }}
-          >
-            <div className="flex items-center justify-between mb-3.5">
-              <SectionLabel>{t.bioLabel}</SectionLabel>
-              <button
-                onClick={() => setEditingBio(true)}
-                className="flex items-center gap-1 font-sans"
-                style={{ fontSize: "11px", color: "oklch(0.32 0.008 15)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.50 0.006 60)")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.32 0.008 15)")}
-              >
-                <Pencil size={10} strokeWidth={2} />
-                {t.edit}
-              </button>
-            </div>
-            {editingBio ? (
-              <textarea
-                value={profileForm.bio ?? ""}
-                onChange={(e) => updateForm("bio", e.target.value)}
-                autoFocus
-                rows={4}
-                className="w-full bg-transparent font-sans outline-none resize-none rounded-2xl px-5 py-4"
-                style={{
-                  fontSize: "13.5px",
-                  lineHeight: "1.65",
-                  color: "oklch(0.74 0.005 60)",
-                  border: "1px solid oklch(0.65 0.26 12 / 0.32)",
-                  caretColor: "oklch(0.65 0.26 12)",
-                  boxShadow: "0 0 20px oklch(0.65 0.26 12 / 0.06)",
-                }}
-              />
-            ) : (
-              <button
-                onClick={() => setEditingBio(true)}
-                className="text-left w-full rounded-2xl px-5 py-4 transition-all"
-                style={{
-                  background: "oklch(0.11 0.012 15 / 0.80)",
-                  border: "1px solid oklch(0.20 0.012 15 / 0.60)",
-                  boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.borderColor = "oklch(0.28 0.012 15)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.borderColor = "oklch(0.20 0.012 15 / 0.60)")
-                }
-              >
-                <p
-                  className="font-sans leading-relaxed"
-                  style={{
-                    fontSize: "13.5px",
-                    color: "oklch(0.54 0.006 15)",
-                    lineHeight: "1.65",
-                  }}
-                >
-                  {profileForm.bio || t.emptyBio}
-                </p>
-              </button>
-            )}
-          </div>
-
-          {/* ── Editable MVP fields ── */}
-          <div>
-            <div className="flex items-center justify-between mb-3.5">
-              <SectionLabel>{t.profileFieldsLabel}</SectionLabel>
-              <button
-                onClick={saveProfile}
-                disabled={isSaving}
-                className="rounded-full px-4 py-2 font-sans font-medium transition-all disabled:opacity-60"
-                style={{
-                  fontSize: "11.5px",
-                  color: "oklch(0.90 0.005 60)",
-                  background: "oklch(0.65 0.26 12 / 0.18)",
-                  border: "1px solid oklch(0.65 0.26 12 / 0.30)",
-                }}
-              >
-                {isSaving ? t.savingLabel : t.saveLabel}
-              </button>
-            </div>
-            <div
-              className="rounded-2xl overflow-hidden"
+          {isEditing ? (
+            /* ── Панель редактирования ────────────────────────
+               Task 069: пока она открыта, режим просмотра справа не
+               рендерится. Панель не всплывает поверх карточки, а занимает её
+               место — на 390px модалка поверх контента всё равно закрыла бы
+               его целиком, зато отняла бы прокрутку и фокус. */
+            <section
+              aria-labelledby="profile-edit-heading"
               style={{
-                border: "1px solid oklch(0.20 0.012 15 / 0.60)",
-                background: "oklch(0.11 0.012 15 / 0.80)",
-                boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
+                border: "1px solid var(--border)",
+                background: "var(--card)",
+                borderRadius: "var(--shape-radius-lg)",
+                boxShadow: "var(--elevation-md)",
               }}
             >
-              {([
-                {
-                  completionField: "displayName",
-                  label: t.displayNameLabel,
-                  value: profileForm.displayName,
-                  onChange: (value: string) => updateForm("displayName", value),
-                },
-                {
-                  completionField: "city",
-                  label: t.cityLabel,
-                  value: profileForm.city ?? "",
-                  onChange: (value: string) => updateForm("city", value),
-                },
-                {
-                  completionField: "country",
-                  label: t.countryLabel,
-                  value: profileForm.country ?? "",
-                  onChange: (value: string) => updateForm("country", value),
-                },
-                {
-                  completionField: "gender",
-                  label: t.genderLabel,
-                  value: profileForm.gender ?? "",
-                  onChange: (value: string) => updateForm("gender", value),
-                },
-                {
-                  completionField: "lookingFor",
-                  label: t.lookingFor,
-                  value: profileForm.lookingFor ?? "",
-                  onChange: (value: string) => updateForm("lookingFor", value),
-                },
-              ] as Array<{
-                completionField: ProfileCompletionField
-                label: string
-                value: string
-                onChange: (value: string) => void
-              }>).map((field, i, arr) => (
-                <label
-                  key={field.label}
-                  className="flex items-center gap-4 px-5 py-3.5"
-                  style={{
-                    borderBottom:
-                      i < arr.length - 1
-                        ? "1px solid oklch(0.15 0.010 15 / 0.60)"
-                        : "none",
-                  }}
-                >
-                  <span
-                    className="font-sans flex-shrink-0"
-                    style={{
-                      fontSize: "11.5px",
-                      color: "oklch(0.30 0.008 15)",
-                      minWidth: "92px",
-                    }}
-                  >
-                    {field.label}
-                  </span>
-                  <input
-                    ref={(element) => {
-                      completionTargetsRef.current[field.completionField] = element
-                    }}
-                    value={field.value}
-                    onChange={(event) => field.onChange(event.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-right font-sans outline-none"
-                    style={{
-                      fontSize: "13px",
-                      color: "oklch(0.68 0.006 60)",
-                      caretColor: "oklch(0.65 0.26 12)",
-                    }}
-                  />
-                </label>
-              ))}
-              <label className="flex items-center gap-4 px-5 py-3.5">
-                <span
-                  className="font-sans flex-1"
-                  style={{ fontSize: "12px", color: "oklch(0.52 0.006 60)" }}
-                >
-                  {t.discoverableLabel}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={profileForm.isDiscoverable}
-                  onChange={(event) => updateForm("isDiscoverable", event.target.checked)}
-                  className="h-4 w-4 accent-rose-500"
-                />
-              </label>
-            </div>
-            {(saveError || savedMessage) && (
-              <p
-                className="font-sans mt-3"
+              {/* Шапка липнет к верху: «Сохранить» и «Отмена» видны на любой
+                  прокрутке формы, а не только когда доскроллишь до низа. */}
+              <div
+                className="sticky top-0 z-20 flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5"
                 style={{
-                  fontSize: "12px",
-                  color: saveError
-                    ? "oklch(0.60 0.18 25 / 0.85)"
-                    : "oklch(0.62 0.15 145 / 0.85)",
+                  background: "var(--card)",
+                  borderBottom: "1px solid var(--border)",
+                  borderTopLeftRadius: "var(--shape-radius-lg)",
+                  borderTopRightRadius: "var(--shape-radius-lg)",
                 }}
               >
-                {saveError ?? savedMessage}
-              </p>
-            )}
-          </div>
+                <div className="flex min-w-0 flex-col gap-1.5 sm:flex-1">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h2
+                      id="profile-edit-heading"
+                      className="font-display font-light"
+                      style={{
+                        fontSize: "1.15rem",
+                        lineHeight: 1.1,
+                        color: "var(--foreground)",
+                      }}
+                    >
+                      {t.editPanelTitle}
+                    </h2>
+                    {isDirty && (
+                      <span
+                        className="font-sans font-medium whitespace-nowrap"
+                        style={{
+                          fontSize: "9.5px",
+                          letterSpacing: "0.10em",
+                          textTransform: "uppercase",
+                          color: "var(--primary)",
+                          border: "1px solid color-mix(in oklab, var(--primary) 40%, transparent)",
+                          borderRadius: "var(--shape-radius-sm)",
+                          padding: "2px 7px",
+                        }}
+                      >
+                        {t.unsavedBadge}
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className="font-sans"
+                    style={{ fontSize: "11px", color: "var(--muted-foreground)" }}
+                  >
+                    {t.editPanelHint}
+                  </p>
+                </div>
 
+                <div className="flex flex-shrink-0 items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={cancelEditing}
+                    disabled={isSaving}
+                    className="font-sans font-medium transition-colors disabled:opacity-50"
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--muted-foreground)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--shape-radius-sm)",
+                      padding: "8px 14px",
+                    }}
+                  >
+                    {t.cancelLabel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void saveProfile()}
+                    disabled={isSaving || !isDirty}
+                    className="font-sans font-medium transition-opacity disabled:opacity-45"
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--primary-foreground)",
+                      background: "var(--primary)",
+                      borderRadius: "var(--shape-radius-sm)",
+                      padding: "9px 16px",
+                    }}
+                  >
+                    {isSaving ? t.savingLabel : t.saveLabel}
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-5 py-5">
+                <ProfileFormFields
+                  lang={lang}
+                  value={profileForm}
+                  onChange={updateForm}
+                  disabled={isSaving}
+                  highlight={draftMissingRequired}
+                  focusRequest={focusRequest}
+                />
+
+                {draftMissingRequired.length > 0 && (
+                  <p
+                    className="font-sans mt-5 flex items-start gap-2"
+                    style={{
+                      fontSize: "11.5px",
+                      lineHeight: 1.5,
+                      color: "var(--muted-foreground)",
+                    }}
+                  >
+                    <AlertTriangle
+                      size={13}
+                      strokeWidth={1.6}
+                      style={{ color: "var(--primary)", flexShrink: 0, marginTop: "1px" }}
+                    />
+                    <span>
+                      {t.requiredWarning}{" "}
+                      {draftMissingRequired
+                        .map((key) => fieldCopy[key].label.toLowerCase())
+                        .join(", ")}
+                    </span>
+                  </p>
+                )}
+
+                {saveError && (
+                  <p
+                    className="font-sans mt-4"
+                    style={{ fontSize: "12px", color: "var(--destructive)" }}
+                  >
+                    {saveError}
+                  </p>
+                )}
+              </div>
+            </section>
+          ) : (
+            <>
+              {/* ── Bio (только чтение) ── */}
+              <div>
+                <div className="mb-3.5">
+                  <SectionLabel>{t.bioLabel}</SectionLabel>
+                </div>
+                <div
+                  className="rounded-2xl px-5 py-4"
+                  style={{
+                    background: "oklch(0.11 0.012 15 / 0.80)",
+                    border: "1px solid oklch(0.20 0.012 15 / 0.60)",
+                    boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
+                  }}
+                >
+                  <p
+                    className="font-sans whitespace-pre-line"
+                    style={{
+                      fontSize: "13.5px",
+                      lineHeight: "1.65",
+                      color: profileRecord.bio
+                        ? "oklch(0.66 0.006 60)"
+                        : "oklch(0.42 0.006 15)",
+                    }}
+                  >
+                    {profileRecord.bio || t.emptyBio}
+                  </p>
+                </div>
+              </div>
+
+              {/* ── Поля анкеты (только чтение) ── */}
+              <div>
+                <div className="flex items-center justify-between mb-3.5">
+                  <SectionLabel>{t.profileFieldsLabel}</SectionLabel>
+                  <button
+                    type="button"
+                    onClick={startEditing}
+                    className="flex items-center gap-1 font-sans font-medium transition-colors"
+                    style={{ fontSize: "11px", color: "oklch(0.65 0.26 12)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.78 0.22 12)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
+                  >
+                    <Pencil size={10} strokeWidth={2} />
+                    {t.edit}
+                  </button>
+                </div>
+                <div
+                  className="rounded-2xl overflow-hidden"
+                  style={{
+                    border: "1px solid oklch(0.20 0.012 15 / 0.60)",
+                    background: "oklch(0.11 0.012 15 / 0.80)",
+                    boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
+                  }}
+                >
+                  {profileViewRows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="flex items-center gap-4 px-5 py-3.5"
+                      style={{ borderBottom: "1px solid oklch(0.15 0.010 15 / 0.60)" }}
+                    >
+                      <span
+                        className="font-sans flex-shrink-0"
+                        style={{
+                          fontSize: "11.5px",
+                          color: "oklch(0.30 0.008 15)",
+                          minWidth: "92px",
+                        }}
+                      >
+                        {row.label}
+                      </span>
+                      <span
+                        className="min-w-0 flex-1 text-right font-sans"
+                        style={{
+                          fontSize: "13px",
+                          color: row.isEmpty
+                            ? "oklch(0.34 0.008 15)"
+                            : "oklch(0.68 0.006 60)",
+                        }}
+                      >
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-4 px-5 py-3.5">
+                    <span
+                      className="font-sans flex-1"
+                      style={{ fontSize: "12px", color: "oklch(0.52 0.006 60)" }}
+                    >
+                      {t.discoverableLabel}
+                    </span>
+                    <span
+                      className="font-sans"
+                      style={{ fontSize: "13px", color: "oklch(0.68 0.006 60)" }}
+                    >
+                      {(profileRecord.isDiscoverable ?? true)
+                        ? t.discoverableOn
+                        : t.discoverableOff}
+                    </span>
+                  </div>
+                </div>
+                {savedMessage && (
+                  <p
+                    className="font-sans mt-3"
+                    style={{ fontSize: "12px", color: "oklch(0.62 0.15 145 / 0.85)" }}
+                  >
+                    {savedMessage}
+                  </p>
+                )}
+                {saveError && (
+                  <p
+                    className="font-sans mt-3"
+                    style={{ fontSize: "12px", color: "var(--destructive)" }}
+                  >
+                    {saveError}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
+
+          {/* Пока открыта панель редактирования, остальные секции скрыты:
+              иначе рядом с формой оставались бы блоки, которые она не
+              редактирует, и было бы неясно, что именно сохранит кнопка. */}
+          {!isEditing && (
+            <>
           {/* ── Interests ── */}
           <div>
             <div className="flex items-center justify-between mb-3.5">
@@ -1316,8 +1450,99 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
+
+      {/* ── Подтверждение ухода с несохранённым черновиком ── */}
+      {navigationGuard.pendingHref && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center px-5 pb-24 md:items-center md:pb-5"
+          style={{
+            background: "oklch(0.05 0.008 15 / 0.72)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="profile-unsaved-title"
+            aria-describedby="profile-unsaved-body"
+            className="w-full max-w-sm px-5 py-5"
+            style={{
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--shape-radius-lg)",
+              boxShadow: "var(--elevation-md)",
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle
+                size={16}
+                strokeWidth={1.6}
+                style={{ color: "var(--primary)", flexShrink: 0, marginTop: "2px" }}
+              />
+              <div className="min-w-0 flex-1">
+                <h2
+                  id="profile-unsaved-title"
+                  className="font-display font-light"
+                  style={{ fontSize: "1.1rem", lineHeight: 1.2, color: "var(--foreground)" }}
+                >
+                  {t.unsavedTitle}
+                </h2>
+                <p
+                  id="profile-unsaved-body"
+                  className="font-sans mt-1.5"
+                  style={{ fontSize: "12.5px", lineHeight: 1.55, color: "var(--muted-foreground)" }}
+                >
+                  {t.unsavedBody}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={navigationGuard.stay}
+                aria-label={t.unsavedStay}
+                className="flex-shrink-0"
+                style={{ color: "var(--muted-foreground)" }}
+              >
+                <X size={15} strokeWidth={1.6} />
+              </button>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+              <button
+                type="button"
+                onClick={navigationGuard.stay}
+                className="font-sans font-medium"
+                style={{
+                  fontSize: "12.5px",
+                  color: "var(--primary-foreground)",
+                  background: "var(--primary)",
+                  borderRadius: "var(--shape-radius-sm)",
+                  padding: "10px 16px",
+                }}
+              >
+                {t.unsavedStay}
+              </button>
+              <button
+                type="button"
+                onClick={navigationGuard.discardAndLeave}
+                className="font-sans font-medium"
+                style={{
+                  fontSize: "12.5px",
+                  color: "var(--destructive)",
+                  border: "1px solid color-mix(in oklab, var(--destructive) 45%, transparent)",
+                  borderRadius: "var(--shape-radius-sm)",
+                  padding: "10px 16px",
+                }}
+              >
+                {t.unsavedLeave}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
