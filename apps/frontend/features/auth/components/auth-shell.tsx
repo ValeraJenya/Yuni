@@ -11,8 +11,14 @@ interface AuthShellProps {
 export function AuthShell({ children }: AuthShellProps) {
   const { lang, toggle } = useLang()
 
+  // overflow-hidden: декоративные градиенты ниже намеренно вынесены за границы
+  // экрана (`left: -10%`, `right: -10%`). Без клиппинга нижний правый выходит
+  // за правый край вьюпорта и даёт паразитный горизонтальный скролл на
+  // мобильном. Все секции лендинга уже используют этот же приём
+  // (`relative overflow-hidden`) — auth-shell был единственным местом с такими
+  // же градиентами и без него.
   return (
-    <div className="relative min-h-screen flex flex-col">
+    <div className="relative min-h-screen flex flex-col overflow-hidden">
 
       {/* ── Background ──────────────────────────────────── */}
       <div className="absolute inset-0 bg-obsidian" />
