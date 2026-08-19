@@ -23,6 +23,7 @@
 - `src/modules/users` - граница доменного модуля users.
 - `prisma/schema.prisma` - ORM-модель для Prisma Client.
 - `prisma/migrations` - основной способ применения greenfield PostgreSQL schema.
+- `prisma/seed.ts`, `prisma/seed/` - демо-данные для ручной проверки сценариев (Task 072/045), см. раздел «Демо-данные» ниже.
 - `uploads/profile-photos` - local adapter storage для загруженных profile photos через `ProfilePhotoStorage`. Папка ignored by git.
 
 ## Локальный запуск
@@ -117,6 +118,33 @@ Media MVP принимает только JPEG/PNG/WebP до `5 MB`, генер�
 
 ```bash
 pnpm --dir apps/backend dev
+```
+
+## Демо-данные
+
+Проверить продукт вручную на пустой базе почти невозможно: нужен матч, история переписки и продвинутый по стадиям диалог, а получить их вручную — значит зарегистрировать несколько пользователей, заполнить анкеты, загрузить фото и пролайкать крест-накрест. `prisma/seed.ts` создаёт это состояние одной командой.
+
+```bash
+pnpm --dir apps/backend prisma:seed
+```
+
+Скрипт идемпотентен: повторный запуск не создаёт дублей (upsert по фиксированным id/handle/storageKey, проверка перед вставкой сообщений и лайков). Он отказывается запускаться, если `NODE_ENV=production`, если `DATABASE_URL` не указывает явно на `localhost`/`127.0.0.1`, или если целевая база называется `yuni_test` (её данные считает e2e-сьют).
+
+Что создаётся:
+
+- 9 анкет с паролем **`YuniDemo123!`** у всех, логин по email `<handle>@seed.yuni.local` (например `demo@seed.yuni.local`). Все анкеты полностью заполнены по `PROFILE_COMPLETION_FIELDS` и видны в Discovery. У каждой — одна approved/published фотография-заглушка (сгенерированный силуэт, `prisma/seed/assets/photos/`, копируется в `uploads/profile-photos` при запуске).
+- `demo` — основной аккаунт для ручной проверки:
+  - активный матч и диалог с `anna_l` (Аня) на этапе 1, с историей из ~10 сообщений;
+  - активный матч и диалог с `igor_k` (Игорь) на этапе 2: пройдены обе игры этапа 1, показана текущая игра этапа 2, использован голосовой лимit (можно проверить остаток и отправку своих голосовых);
+  - `sonya_m` (Соня) и ещё 4 анкеты видны в Discovery и не лайкнуты — можно лайкнуть вживую и получить матч.
+- `conversation_starters` заполнена 4 активными фразами (Task 045) — `GET /chat/starters` больше не возвращает `[]` на чистой базе.
+
+Прогон на отдельной scratch-базе (не трогает `yuni`/`yuni_test`):
+
+```bash
+docker compose exec postgres psql -U postgres -c "CREATE DATABASE yuni_demo;"
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni_demo?schema=public pnpm --dir apps/backend prisma:migrate:deploy
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/yuni_demo?schema=public pnpm --dir apps/backend prisma:seed
 ```
 
 ## Важно
