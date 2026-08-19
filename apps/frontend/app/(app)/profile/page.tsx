@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ElementType } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import {
   ShieldCheck,
   Star,
@@ -11,7 +12,6 @@ import {
   GraduationCap,
   Languages,
   ChevronRight,
-  Settings,
   LogOut,
   Lock,
   Bell,
@@ -45,7 +45,6 @@ const copy = {
   ru: {
     edit: "Редактировать",
     verified: "Верифицирован",
-    premium: "Premium",
     completion: "Заполнен на",
     completionCta: "Улучшить",
     completionMissing: "Не хватает",
@@ -85,7 +84,6 @@ const copy = {
     accountLabel: "Аккаунт",
     privacyLabel: "Конфиденциальность",
     notificationsLabel: "Уведомления",
-    settingsLabel: "Настройки",
     logoutLabel: "Выйти",
     lookingFor: "Ищу",
     cm: "см",
@@ -97,14 +95,10 @@ const copy = {
     deletePhoto: "Удалить фото",
     uploadErrorLabel: "Не удалось загрузить фото",
     photoActionErrorLabel: "Не удалось обновить фото",
-    upgradeLabel: "Улучши профиль",
-    upgradeSub: "Получи больше показов и возможностей",
-    upgradeCta: "Подробнее",
   },
   en: {
     edit: "Edit",
     verified: "Verified",
-    premium: "Premium",
     completion: "Profile",
     completionCta: "Improve",
     completionMissing: "Missing",
@@ -144,7 +138,6 @@ const copy = {
     accountLabel: "Account",
     privacyLabel: "Privacy",
     notificationsLabel: "Notifications",
-    settingsLabel: "Settings",
     logoutLabel: "Sign out",
     lookingFor: "Looking for",
     cm: "cm",
@@ -156,9 +149,6 @@ const copy = {
     deletePhoto: "Delete photo",
     uploadErrorLabel: "Could not upload photo",
     photoActionErrorLabel: "Could not update photo",
-    upgradeLabel: "Boost your profile",
-    upgradeSub: "Get more visibility and matches",
-    upgradeCta: "Learn more",
   },
 }
 
@@ -246,20 +236,28 @@ function SettingsRow({
   label,
   danger = false,
   onClick,
+  href,
 }: {
   icon: React.ElementType
   label: string
   danger?: boolean
   onClick?: () => void
+  /** Task 030: строки-переходы рендерятся ссылкой, а не кнопкой —
+   *  так работают средний клик, «открыть в новой вкладке» и префетч. */
+  href?: string
 }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-4 w-full px-5 py-4 transition-all text-left"
-      style={{ borderBottom: "1px solid oklch(0.14 0.010 15 / 0.60)" }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "oklch(0.13 0.010 15 / 0.60)")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-    >
+  const className =
+    "flex items-center gap-4 w-full px-5 py-4 transition-all text-left"
+  const style = { borderBottom: "1px solid oklch(0.14 0.010 15 / 0.60)" }
+  const onMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.background = "oklch(0.13 0.010 15 / 0.60)"
+  }
+  const onMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.background = "transparent"
+  }
+
+  const content = (
+    <>
       <Icon
         size={15}
         strokeWidth={1.5}
@@ -280,6 +278,32 @@ function SettingsRow({
       {!danger && (
         <ChevronRight size={13} strokeWidth={1.5} style={{ color: "oklch(0.22 0.008 15)" }} />
       )}
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={className}
+        style={style}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={className}
+      style={style}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {content}
     </button>
   )
 }
@@ -409,7 +433,6 @@ export default function ProfilePage() {
       gender: profileRecord.gender,
       lookingFor: profileRecord.lookingFor,
       isVerified: false,
-      isPremium: false,
       completionPct: profileRecord.completion.percentage,
       height: undefined as number | undefined,
       occupation: undefined as string | undefined,
@@ -748,22 +771,6 @@ export default function ProfilePage() {
                       {t.verified}
                     </span>
                   )}
-                  {profile.isPremium && (
-                    <span
-                      className="flex items-center gap-1 rounded-full px-2.5 py-1 font-sans font-medium"
-                      style={{
-                        fontSize: "9px",
-                        letterSpacing: "0.08em",
-                        color: "oklch(0.84 0.12 72)",
-                        background: "oklch(0.08 0.012 15 / 0.78)",
-                        border: "1px solid oklch(0.82 0.12 72 / 0.28)",
-                        backdropFilter: "blur(12px)",
-                      }}
-                    >
-                      <Star size={8} strokeWidth={1.5} />
-                      PREMIUM
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
@@ -991,62 +998,6 @@ export default function ProfilePage() {
 
         {/* ── Right column: bio, interests, details, settings ── */}
         <div className="flex-1 px-5 md:px-8 flex flex-col gap-7 pt-5 md:pt-6">
-
-          {/* ── Upgrade banner (only show if not premium) ── */}
-          {!profile.isPremium && (
-            <div
-              className="rounded-2xl px-5 py-4 flex items-center gap-4 relative overflow-hidden"
-              style={{
-                background: "oklch(0.11 0.012 15 / 0.85)",
-                border: "1px solid oklch(0.65 0.26 12 / 0.20)",
-                boxShadow: "0 0 32px oklch(0.65 0.26 12 / 0.07)",
-              }}
-            >
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 0% 50%, oklch(0.65 0.26 12 / 0.08) 0%, transparent 55%)",
-                }}
-              />
-              <div
-                className="flex items-center justify-center rounded-full flex-shrink-0"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  background: "oklch(0.65 0.26 12 / 0.12)",
-                  border: "1px solid oklch(0.65 0.26 12 / 0.22)",
-                }}
-              >
-                <Star size={15} strokeWidth={1.5} style={{ color: "oklch(0.65 0.26 12)" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p
-                  className="font-sans font-medium"
-                  style={{ fontSize: "13px", color: "oklch(0.78 0.005 60)" }}
-                >
-                  {t.upgradeLabel}
-                </p>
-                <p
-                  className="font-sans"
-                  style={{ fontSize: "11.5px", color: "oklch(0.36 0.008 15)" }}
-                >
-                  {t.upgradeSub}
-                </p>
-              </div>
-              <button
-                className="flex-shrink-0 rounded-full px-4 py-2 font-sans font-medium"
-                style={{
-                  fontSize: "11.5px",
-                  color: "oklch(0.90 0.005 60)",
-                  background: "oklch(0.65 0.26 12 / 0.18)",
-                  border: "1px solid oklch(0.65 0.26 12 / 0.30)",
-                }}
-              >
-                {t.upgradeCta}
-              </button>
-            </div>
-          )}
 
           {/* ── Bio ── */}
           <div
@@ -1350,9 +1301,16 @@ export default function ProfilePage() {
                 boxShadow: "inset 0 1px 0 oklch(0.22 0.010 15 / 0.10)",
               }}
             >
-              <SettingsRow icon={Lock} label={t.privacyLabel} />
-              <SettingsRow icon={Bell} label={t.notificationsLabel} />
-              <SettingsRow icon={Settings} label={t.settingsLabel} />
+              <SettingsRow
+                icon={Lock}
+                label={t.privacyLabel}
+                href="/settings/privacy"
+              />
+              <SettingsRow
+                icon={Bell}
+                label={t.notificationsLabel}
+                href="/settings/notifications"
+              />
               <div style={{ borderBottom: "none" }}>
                 <SettingsRow icon={LogOut} label={t.logoutLabel} danger onClick={logout} />
               </div>
