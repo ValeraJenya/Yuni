@@ -7,7 +7,6 @@ import {
   MessageCircle,
   ArrowLeft,
   Send,
-  MoreHorizontal,
   Heart,
   Search,
 } from "lucide-react"
@@ -530,22 +529,6 @@ function MessagesInner() {
           </p>
         </div>
 
-        <div className="flex items-center gap-0.5">
-          <button
-            className="p-2 rounded-full transition-all"
-            style={{ color: "oklch(0.28 0.008 15)" }}
-            aria-label="Like profile"
-          >
-            <Heart size={16} strokeWidth={1.5} />
-          </button>
-          <button
-            className="p-2 rounded-full transition-all"
-            style={{ color: "oklch(0.28 0.008 15)" }}
-            aria-label="More options"
-          >
-            <MoreHorizontal size={16} strokeWidth={1.5} />
-          </button>
-        </div>
       </header>
 
       {/* The only scrollable zone of the thread. min-h-0 lets it shrink below
