@@ -11,6 +11,7 @@ import type { SwipeAction, UserProfile } from "@/types/app"
 import { ApiError } from "@/lib/auth-api"
 import { discoveryApi, toUserProfile } from "@/lib/discovery-api"
 import { likesApi } from "@/lib/likes-api"
+import { defaultAvatarUrl } from "@/lib/default-avatar"
 import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
@@ -37,6 +38,7 @@ const copy = {
     matchSub2: "понравились друг другу",
     matchCta: "Написать первой",
     matchSkip: "Продолжить",
+    youLabel: "Ты",
     rangeLabel: "Возраст",
     distanceLabel: "Расстояние",
     km: "км",
@@ -61,6 +63,7 @@ const copy = {
     matchSub2: "liked each other",
     matchCta: "Say hi",
     matchSkip: "Keep swiping",
+    youLabel: "You",
     rangeLabel: "Age",
     distanceLabel: "Distance",
     km: "km",
@@ -566,7 +569,7 @@ export default function DiscoverPage() {
             photoUrl:
               resolveProfilePhotoUrl(profile.primaryPhotoUrl) ??
               current.photos[0] ??
-              "/hero-portrait.jpg",
+              defaultAvatarUrl(current.gender, "card"),
           })
         }
       } else {
@@ -1124,7 +1127,14 @@ export default function DiscoverPage() {
                   position: "relative",
                 }}
               >
-                <img src="/hero-portrait.jpg" alt="Ты" className="w-full h-full object-cover" />
+                {/* Task 071: собственное фото и пол здесь недоступны — `useAuth`
+                    отдаёт только handle и displayName, — поэтому нейтральный
+                    силуэт вместо чужого портрета. */}
+                <img
+                  src={defaultAvatarUrl(null, "square")}
+                  alt={t.youLabel}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div
                 className="flex items-center justify-center rounded-full z-10 mx-[-10px]"

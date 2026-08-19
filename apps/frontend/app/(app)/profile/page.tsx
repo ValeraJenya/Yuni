@@ -23,6 +23,7 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { ApiError } from "@/lib/auth-api"
+import { defaultAvatarUrl } from "@/lib/default-avatar"
 import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 import { matchesApi } from "@/lib/matches-api"
@@ -160,8 +161,6 @@ const copy = {
     upgradeCta: "Learn more",
   },
 }
-
-const FALLBACK_PROFILE_PHOTO = "/hero-portrait.jpg"
 
 /** Shown by a stat tile that has no data source yet — an em dash rather than
  *  a "0", which would be a claim about the user's actual counts. */
@@ -597,10 +596,12 @@ export default function ProfilePage() {
       ...photo,
       resolvedUrl: resolveProfilePhotoUrl(photo.publicUrl) as string,
     }))
+  // Task 071: заглушка выбирается по собственному полу, а не показывает
+  // фотографию модели с лендинга.
   const primaryPhoto =
     allPhotos.find((photo) => photo.isPrimary)?.resolvedUrl ??
     allPhotos[0]?.resolvedUrl ??
-    FALLBACK_PROFILE_PHOTO
+    defaultAvatarUrl(profileRecord.gender, "card")
   // Completion is computed by the API over eight equally weighted fields, so at
   // 100% there is nothing left to improve here and the CTA is not rendered.
   const missingFields = profileRecord.completion.missingFields

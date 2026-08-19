@@ -1,4 +1,5 @@
 import type { ApiRequestMethod } from "@/lib/auth-api"
+import { defaultAvatarUrl } from "@/lib/default-avatar"
 import { resolveProfilePhotoUrl } from "@/lib/profile-api"
 import type { Gender, LookingFor, UserProfile } from "@/types/app"
 
@@ -35,7 +36,6 @@ type AuthenticatedRequest = <T>(
   options?: { method?: ApiRequestMethod; body?: unknown },
 ) => Promise<T>
 
-const fallbackPhotoUrl = "/hero-portrait.jpg"
 
 export const discoveryApi = {
   getCards(request: AuthenticatedRequest, query: DiscoveryCardsQuery = {}) {
@@ -73,7 +73,10 @@ export function toUserProfile(card: DiscoveryCard): UserProfile {
     city: card.city ?? card.country ?? "",
     country: card.country ?? "",
     bio: card.bio ?? "",
-    photos: uniquePhotoUrls.length > 0 ? uniquePhotoUrls : [fallbackPhotoUrl],
+    photos:
+      uniquePhotoUrls.length > 0
+        ? uniquePhotoUrls
+        : [defaultAvatarUrl(card.gender, "card")],
     interests: [],
     gender: toGender(card.gender),
     lookingFor: toLookingFor(card.lookingFor),
