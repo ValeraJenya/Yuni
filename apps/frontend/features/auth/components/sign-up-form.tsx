@@ -199,7 +199,10 @@ export function SignUpForm() {
         birthDate: formatBirthdateForApi(birthdate),
       })
       setFormState("success")
-      router.replace("/discover")
+      // Task 070: сразу после регистрации — анкета, а не Discovery. Профиль
+      // ещё пуст, backend отфильтровывает неполные анкеты, поэтому раньше
+      // человек попадал на пустой экран без объяснения, что делать дальше.
+      router.replace("/onboarding")
     } catch (error) {
       setErrors({
         general: error instanceof ApiError ? error.message : t.errorGeneral,
