@@ -368,6 +368,81 @@ Report responses must not expose:
 - moderator identity, notes or workflow state;
 - target user email, `birthDate`, private profile fields or session/token data.
 
+## Data Export Response Shape
+
+`GET /users/me/export` (Task 067a) отдаёт выгрузку персональных данных текущего
+пользователя по ст. 15 и 20 GDPR и ст. 14 152-ФЗ.
+
+Выгрузка строится на allowlist: состав определён построчным разбором полей
+модели `User` в `docs/tasks/067a-user-data-export.md`, где у каждого поля есть
+решение «включено / исключено» с причиной. Новое поле в `schema.prisma` по
+умолчанию в выгрузку не попадает.
+
+Экспорт может включать только секции:
+
+- `schemaVersion`, `exportedAt`;
+- `account`: `id`, `email`, `status`, `emailVerifiedAt`, `lastLoginAt`,
+  `createdAt`, `updatedAt`;
+- `profile`: собственные поля анкеты, включая `birthDate`, `latitude` и
+  `longitude`;
+- `photos`: метаданные собственных фото, включая `moderationStatus`;
+- `interests`: собственные интересы;
+- `sessions`: `deviceLabel`, `ipAddress`, `userAgent`, `createdAt`,
+  `lastUsedAt`, `expiresAt`, `revokedAt`;
+- `likesSent`: `likedUserId`, `kind`, `createdAt`, `expiresAt`;
+- `matches`: `id`, `otherUserId`, `conversationId`, `status`, `matchedAt`,
+  `expiresAt`, `endedAt`, `createdAt`;
+- `conversations`: `conversationId`, `joinedAt`, `leftAt`, `status`, `stage`,
+  `stage1/2/3StartedAt`, `stageUpdatedAt` и **собственный** `voiceTotalSec`;
+- `messages`: только собственные сообщения — `id`, `conversationId`, `text`,
+  `voiceDurationSec`, `messageWeight`, `isSystemMessage`, `status`,
+  `createdAt`, `editedAt`, `deletedAt`;
+- `gameAnswers`: собственный `answer`, `answeredAt` и системный контекст игры;
+- `blocksIssued`: `blockedUserId`, `reason`, `createdAt`;
+- `reportsFiled`: `id`, `reportedUserId`, `reasonCode`, `comment`,
+  публичный `status`, `createdAt`;
+- `privacySettings` и `notificationSettings` целиком, кроме
+  `anonymousAvatarKey`;
+- `notifications`: только полученные — `id`, `type`, `messageKey`,
+  `actorUserId`, `matchId`, `conversationId`, `messageId`, `readAt`,
+  `createdAt`.
+
+Экспорт не должен раскрывать:
+
+- `passwordHash`;
+- `tokenHash` и `revokedReason`;
+- `storageKey`, локальный путь, оригинальное имя файла;
+- `anonymousAvatarKey`;
+- `deletedAt` пользователя;
+- внутренний `ReportStatus`, `resolvedAt`, `resolutionNote`, личность
+  модератора;
+- `lastReadMessageId`;
+- голосовой тотал второго участника;
+- raw Prisma rows любой модели.
+
+### Права других лиц в экспорте
+
+Экспорт — self-эндпоинт, но каждая его секция описывает взаимодействие с другим
+человеком. Правило: **второй участник представлен голым UUID и ничем больше.**
+Ни одна секция не подтягивает чужой профиль, `handle`, `displayName` или фото.
+
+Из выгрузки полностью исключены четыре обратные стороны отношений — не потому,
+что это не данные пользователя, а потому что раскрытие затронуло бы права
+других лиц (ст. 15(4) GDPR, Recital 63):
+
+- `likesReceived` — кто лайкнул или пропустил. Продукт этого не показывает
+  нигде; взаимные лайки пользователь и так видит как матчи. Агрегированные
+  счётчики тоже не отдаются.
+- `blockedByUsers` — кто заблокировал. Раскрытие даёт заблокированному повод
+  для мести или обхода.
+- `reportsReceived` — жалобы на пользователя. Раскрытие ставит под удар
+  заявителя и ломает работу модерации.
+- `notificationsActed` — уведомления в чужих лентах, где пользователь актор.
+
+Сообщения второго участника не выгружаются ни под каким видом, включая предлог
+«контекст диалога». Экспорт диалога односторонний; это осознанное ограничение,
+зафиксированное в спеке задачи и в `docs/api`.
+
 ## Admin API Future Rule
 
 Admin API must be documented separately before implementation.
