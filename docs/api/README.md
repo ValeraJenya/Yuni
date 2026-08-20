@@ -832,6 +832,80 @@ Response shape:
 
 Report response never exposes internal moderation status, notes or workflow. `GET /reports/me`, admin panel, full moderation workflow, chat/messages, notifications and discovery ranking are outside Step 14.
 
+## User Data Export
+
+`GET /users/me/export` (Task 067a) отдаёт выгрузку персональных данных текущего
+пользователя — ст. 15 и 20 GDPR, ст. 14 152-ФЗ.
+
+```bash
+curl "$API/users/me/export" \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+Требует `JwtAccessGuard`. Идентичность берётся только из токена: user id в
+path, query или body не принимается. Без аутентификации — `401`.
+
+Ответ — обычный JSON (`Content-Type: application/json`), без
+`Content-Disposition: attachment`: скачивание файлом появится вместе с кнопкой
+в интерфейсе.
+
+Rate limit — `3` запроса в час по пользователю и `10` в час по IP. Превышение
+даёт `429` со стандартной формой ошибки лимитера.
+
+Верхний уровень ответа:
+
+```json
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-08-20T12:00:00.000Z",
+  "account": {},
+  "profile": {},
+  "photos": [],
+  "interests": [],
+  "sessions": [],
+  "likesSent": [],
+  "matches": [],
+  "conversations": [],
+  "messages": [],
+  "gameAnswers": [],
+  "blocksIssued": [],
+  "reportsFiled": [],
+  "privacySettings": {},
+  "notificationSettings": {},
+  "notifications": []
+}
+```
+
+Пустые секции присутствуют в ответе как `[]` или `null`, а не опускаются:
+отсутствие данных — тоже ответ на вопрос, что сервис хранит о человеке.
+`schemaVersion` растёт при несовместимом изменении состава выгрузки.
+
+Точный состав полей каждой секции и запреты — в
+`docs/security/data-exposure-rules.md`, раздел «Data Export Response Shape».
+Обоснование по каждому полю модели `User`, включая исключённые, — в
+`docs/tasks/067a-user-data-export.md`.
+
+### Ограничения выгрузки
+
+Два ограничения нужно знать потребителю API, потому что они меняют смысл
+данных, а не только их объём:
+
+1. **Диалоги выгружаются односторонне.** Секция `messages` содержит только
+   сообщения, отправленные самим пользователем. Реплики собеседника — его
+   персональные данные (ст. 15(4) GDPR), и не выгружаются ни под каким видом,
+   включая предлог «контекст диалога». Порядок восстанавливается по
+   `createdAt` и `conversationId`, но чужие реплики между ними отсутствуют.
+2. **Второй участник — всегда голый UUID.** Ни в одной секции нет чужого
+   `handle`, `displayName` или фотографий. Поля `likesReceived`,
+   `blockedByUsers`, `reportsReceived` и `notificationsActed` не выгружаются
+   вообще.
+
+Фотографии представлены метаданными и `publicUrl`; сами файлы в JSON не
+вкладываются.
+
+Удаление аккаунта (`DELETE /users/me`) — отдельная задача 067b, эндпоинта пока
+не существует.
+
 ## Cookie Behavior
 
 Для local development:
