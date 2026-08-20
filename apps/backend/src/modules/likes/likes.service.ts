@@ -42,6 +42,7 @@ const targetProfileSelect = {
       privacySettings: {
         select: {
           profileVisibilityMode: true,
+          discoverable: true,
         },
       },
     },
