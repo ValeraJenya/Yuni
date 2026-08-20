@@ -45,6 +45,22 @@ describe('access-control helpers', () => {
       ).not.toThrow();
     });
 
+    it('allows owners when the privacy discoverable flag is off', () => {
+      expect(() =>
+        assertCanAccessProfile(
+          {
+            userId: 'user-1',
+            isDiscoverable: true,
+            privacySettings: {
+              profileVisibilityMode: ProfileVisibilityMode.open,
+              discoverable: false,
+            },
+          },
+          'user-1',
+        ),
+      ).not.toThrow();
+    });
+
     it('allows other users to access open discoverable profiles', () => {
       expect(() =>
         assertCanAccessProfile(
@@ -53,6 +69,7 @@ describe('access-control helpers', () => {
             isDiscoverable: true,
             privacySettings: {
               profileVisibilityMode: ProfileVisibilityMode.open,
+              discoverable: true,
             },
           },
           'user-1',
@@ -68,6 +85,7 @@ describe('access-control helpers', () => {
             isDiscoverable: true,
             privacySettings: {
               profileVisibilityMode: ProfileVisibilityMode.private,
+              discoverable: true,
             },
           },
           'user-1',
@@ -81,11 +99,71 @@ describe('access-control helpers', () => {
             isDiscoverable: false,
             privacySettings: {
               profileVisibilityMode: ProfileVisibilityMode.open,
+              discoverable: true,
             },
           },
           'user-1',
         ),
       ).toThrow(ForbiddenException);
+    });
+
+    it('rejects other users when only the privacy discoverable flag is off', () => {
+      expect(() =>
+        assertCanAccessProfile(
+          {
+            userId: 'user-2',
+            isDiscoverable: true,
+            privacySettings: {
+              profileVisibilityMode: ProfileVisibilityMode.open,
+              discoverable: false,
+            },
+          },
+          'user-1',
+        ),
+      ).toThrow(ForbiddenException);
+    });
+
+    it('treats both discoverability flags the same way when each is turned off alone', () => {
+      const withProfileFlagOff = () =>
+        assertCanAccessProfile(
+          {
+            userId: 'user-2',
+            isDiscoverable: false,
+            privacySettings: {
+              profileVisibilityMode: ProfileVisibilityMode.open,
+              discoverable: true,
+            },
+          },
+          'user-1',
+        );
+      const withPrivacyFlagOff = () =>
+        assertCanAccessProfile(
+          {
+            userId: 'user-2',
+            isDiscoverable: true,
+            privacySettings: {
+              profileVisibilityMode: ProfileVisibilityMode.open,
+              discoverable: false,
+            },
+          },
+          'user-1',
+        );
+
+      expect(withProfileFlagOff).toThrow(ForbiddenException);
+      expect(withPrivacyFlagOff).toThrow(ForbiddenException);
+    });
+
+    it('falls back to discoverable when privacy settings are missing', () => {
+      expect(() =>
+        assertCanAccessProfile(
+          {
+            userId: 'user-2',
+            isDiscoverable: true,
+            privacySettings: null,
+          },
+          'user-1',
+        ),
+      ).not.toThrow();
     });
   });
 

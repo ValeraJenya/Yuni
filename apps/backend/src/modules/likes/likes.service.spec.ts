@@ -63,6 +63,7 @@ interface TargetProfileFixture {
     deletedAt: Date | null;
     privacySettings: {
       profileVisibilityMode: ProfileVisibilityMode;
+      discoverable: boolean;
     } | null;
   };
 }
@@ -258,6 +259,7 @@ describe('LikesService', () => {
           deletedAt: null,
           privacySettings: {
             profileVisibilityMode: ProfileVisibilityMode.private,
+            discoverable: true,
           },
         },
       }),
@@ -271,6 +273,65 @@ describe('LikesService', () => {
     }
 
     expect(prisma.like.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects LIKE and SKIP when the privacy discoverable flag is off', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profile.findUnique.mockResolvedValue(
+      makeTargetProfile({
+        isDiscoverable: true,
+        user: {
+          status: UserStatus.active,
+          deletedAt: null,
+          privacySettings: {
+            profileVisibilityMode: ProfileVisibilityMode.open,
+            discoverable: false,
+          },
+        },
+      }),
+    );
+
+    await expect(
+      service.likeProfile(CURRENT_USER, TARGET_PROFILE_USER_ID),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      service.skipProfile(CURRENT_USER, TARGET_PROFILE_USER_ID),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    expect(prisma.like.create).not.toHaveBeenCalled();
+  });
+
+  it('selects the privacy discoverable flag so the access check can see it', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(activeUser());
+    prisma.profile.findUnique.mockResolvedValue(makeTargetProfile());
+    prisma.like.findFirst.mockResolvedValue(null);
+    prisma.like.create.mockImplementation(async (args: LikeCreateArgs) => ({
+      likedUserId: args.data.likedUserId,
+      kind: args.data.kind,
+      expiresAt: args.data.expiresAt,
+    }));
+
+    await service.likeProfile(CURRENT_USER, TARGET_PROFILE_USER_ID);
+
+    // Без discoverable в select проверка доступа получила бы undefined и молча пропустила лайк.
+    expect(prisma.profile.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          user: expect.objectContaining({
+            select: expect.objectContaining({
+              privacySettings: {
+                select: {
+                  profileVisibilityMode: true,
+                  discoverable: true,
+                },
+              },
+            }),
+          }),
+        }),
+      }),
+    );
   });
 
   it('rejects inactive current users', async () => {
@@ -439,6 +500,7 @@ function makeTargetProfile(
       deletedAt: null,
       privacySettings: {
         profileVisibilityMode: ProfileVisibilityMode.open,
+        discoverable: true,
       },
     },
   };

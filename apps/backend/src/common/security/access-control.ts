@@ -22,6 +22,7 @@ export interface ProfileAccessResource extends OwnedResource {
   isDiscoverable?: boolean;
   privacySettings?: {
     profileVisibilityMode: ProfileVisibilityMode;
+    discoverable?: boolean;
   } | null;
 }
 
@@ -85,8 +86,17 @@ export function assertCanAccessProfile(
   }
 
   const visibilityMode = profile.privacySettings?.profileVisibilityMode ?? ProfileVisibilityMode.open;
+  // Profile.isDiscoverable and PrivacySettings.discoverable are separate flags with
+  // separate toggles in the UI, so either one being off must hide the profile.
+  // Missing privacy settings fall back to the schema default (true): the row is created
+  // together with the user, so null only shows up as broken data, never as an opt-out.
+  const privacyDiscoverable = profile.privacySettings?.discoverable ?? true;
 
-  if (!profile.isDiscoverable || visibilityMode !== ProfileVisibilityMode.open) {
+  if (
+    !profile.isDiscoverable ||
+    !privacyDiscoverable ||
+    visibilityMode !== ProfileVisibilityMode.open
+  ) {
     throw new ForbiddenException(FORBIDDEN_MESSAGE);
   }
 }
