@@ -1,5 +1,7 @@
 "use client"
 
+import { InView } from "./motion/in-view"
+
 interface SafetyProps {
   lang: "ru" | "en"
 }
@@ -78,7 +80,7 @@ export function Safety({ lang }: SafetyProps) {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.9fr] gap-16 lg:gap-28 items-start">
 
           {/* Left: large headline + sub */}
-          <div className="flex flex-col gap-10">
+          <InView className="flex flex-col gap-10">
             <h2
               className="font-display font-light leading-[0.97] tracking-[-0.01em] whitespace-pre-line text-balance"
               style={{ fontSize: "clamp(3rem, 7vw, 6.5rem)", color: "oklch(0.93 0.005 60)" }}
@@ -104,12 +106,16 @@ export function Safety({ lang }: SafetyProps) {
             >
               safe
             </div>
-          </div>
+          </InView>
 
           {/* Right: prose list — no icon boxes, just clean type */}
           <div className="flex flex-col divide-y" style={{ borderColor: "oklch(0.20 0.010 15 / 0.6)" }}>
             {t.items.map((item, i) => (
-              <div key={i} className="flex gap-6 py-7 first:pt-0 last:pb-0 items-start">
+              <InView
+                key={i}
+                delay={i * 90}
+                className="flex gap-6 py-7 first:pt-0 last:pb-0 items-start"
+              >
                 <span
                   className="font-display font-light leading-none flex-shrink-0 mt-1"
                   style={{ fontSize: "1rem", color: "oklch(0.65 0.26 12 / 0.35)" }}
@@ -130,7 +136,7 @@ export function Safety({ lang }: SafetyProps) {
                     {item.body}
                   </p>
                 </div>
-              </div>
+              </InView>
             ))}
           </div>
         </div>

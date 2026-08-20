@@ -1,6 +1,7 @@
 "use client"
 
 import { ArrowRight } from "lucide-react"
+import { InView } from "./motion/in-view"
 
 interface CtaSectionProps {
   lang: "ru" | "en"
@@ -73,7 +74,8 @@ export function CtaSection({ lang }: CtaSectionProps) {
         style={{ minHeight: "80vh", paddingTop: "8rem", paddingBottom: "8rem" }}
       >
         {/* Headline — large, left-anchored */}
-        <h2
+        <InView
+          as="h2"
           className="font-display font-light leading-[0.95] tracking-[-0.01em] mb-12"
           style={{ fontSize: "clamp(4rem, 10vw, 9.5rem)" }}
         >
@@ -84,10 +86,10 @@ export function CtaSection({ lang }: CtaSectionProps) {
           <span className="block" style={{ color: "oklch(0.65 0.26 12)" }}>
             {t.headline3}
           </span>
-        </h2>
+        </InView>
 
         {/* Sub + CTAs — constrained */}
-        <div className="flex flex-col gap-7 max-w-xs">
+        <InView delay={120} className="flex flex-col gap-7 max-w-xs">
           <p
             className="font-sans"
             style={{ fontSize: "13px", color: "oklch(0.44 0.008 15)" }}
@@ -97,7 +99,7 @@ export function CtaSection({ lang }: CtaSectionProps) {
 
           <a
             href="/join"
-            className="group inline-flex items-center gap-2.5 rounded-full px-8 py-4 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 w-fit"
+            className="motion-cta group inline-flex items-center gap-2.5 rounded-full px-8 py-4 font-sans font-semibold tracking-wide text-white hover:brightness-110 w-fit"
             style={{
               fontSize: "14px",
               background: "oklch(0.65 0.26 12)",
@@ -117,7 +119,7 @@ export function CtaSection({ lang }: CtaSectionProps) {
           >
             {t.ctaSub}
           </a>
-        </div>
+        </InView>
       </div>
     </section>
   )
