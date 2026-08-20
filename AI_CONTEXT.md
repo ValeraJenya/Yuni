@@ -6,7 +6,7 @@ Quick onboarding for any AI agent or LLM. Read this file first; follow links onl
 
 ## 1. Что за проект
 
-Yuni — dating app в монорепозитории. Стек: Next.js frontend, NestJS backend, PostgreSQL + Prisma, Docker Compose для локальной разработки. Production deployment не реализован. Разработка ведётся локально; CI запускается на GitHub Actions при PR и push в `main`. Verified state: commit `5779763`, 2026-07-21.
+Yuni — dating app в монорепозитории. Стек: Next.js frontend, NestJS backend, PostgreSQL + Prisma, Docker Compose для локальной разработки. Production deployment не реализован: образы backend/frontend публикуются в GHCR, но окружения для деплоя нет. Разработка ведётся локально; CI запускается на GitHub Actions при PR и push в `main`. Verified state: commit `42db25f`, 2026-08-20 (последний merged PR — #80).
 
 ---
 
@@ -25,20 +25,26 @@ Yuni — dating app в монорепозитории. Стек: Next.js fronten
 | Chat | conversations, messages, staged-chat metadata/games/starters | `partial` |
 | Moderation | block/unblock/list, report | `done` |
 | Notifications | list, unread-count, mark read/all | `done` |
+| Settings | GET/PATCH privacy и notifications | `done` |
+| Health | GET /health с проверкой Postgres | `done` |
+| Users | GET /users/me/export (экспорт своих данных) | `partial` |
 
-Инвентарь backend-тестов: 18 unit-spec-файлов + 1 e2e-файл (profile-completion.e2e-spec.ts). Это inventory, а не результат прогона.
+Инвентарь backend-тестов: 20 unit-spec-файлов и 6 e2e-файлов (`game-race`, `match-block-chat`, `media-path-params`, `profile-completion`, `settings`, `user-data-export`). Число unit-тестов на `42db25f` — 20 сьютов / 211 тестов, взято из прогона `pnpm --filter backend test`. По e2e зафиксирован только инвентарь файлов: им нужен реальный Postgres.
 
 **Не реализовано (known limitations):**
 - EXIF stripping и image sanitization
 - Object storage / CDN (только local adapter в `uploads/`)
-- Realtime / WebSocket для chat и notifications
-- Staged-chat concurrency guarantees для завершения игр и voice totals
-- Реальная загрузка/проверка/обрезка voice media и seed стартовых фраз
-- Production deployment architecture
+- Realtime / WebSocket для chat и notifications (ни одного gateway в `apps/backend/src`)
+- Реальная загрузка, проверка длительности и обрезка voice media: `voiceDurationSec` — число от клиента
+- Самостоятельное удаление аккаунта (Task 067b); экспорт есть, но без кнопки в интерфейсе и без файлов фотографий
+- Интересы: `Interest`/`ProfileInterest` есть в схеме, эндпоинтов нет
+- Production deployment architecture (образы публикуются, окружения нет)
 - Email verification, password reset backend
 - Admin/moderation panel
-- Superlike
+- Superlike (значение есть в enum `LikeKind`, эндпоинта нет)
 - Frontend tests (отсутствуют)
+
+**Закрыто с прошлой ревизии этого файла** — здесь стояли как открытые, но реализованы: staged-chat concurrency при завершении игр (Task 043) и при voice totals (Task 044), seed стартовых фраз (Task 045).
 
 **Media помечена `partial`:** фото автоматически `approved` при upload (без очереди модерации); local adapter только.
 
@@ -50,7 +56,7 @@ Yuni — dating app в монорепозитории. Стек: Next.js fronten
 /
 ├── apps/
 │   ├── backend/          NestJS backend (modules под src/modules/)
-│   │   ├── prisma/       schema.prisma + migrations (source of truth для БД)
+│   │   ├── prisma/       schema.prisma + migrations (source of truth для БД) + seed/ (демо-данные)
 │   │   └── uploads/      local media storage (не коммитится)
 │   └── frontend/         Next.js frontend
 ├── database/             SQL-first historical reference (не authoritative)
@@ -96,11 +102,14 @@ corepack pnpm check   # Prisma validate, backend tests, build, lint, frontend ty
 
 ## 5. Что сейчас в приоритете (backlog top-3)
 
+Открытых P0 нет.
+
 | ID | Задача | Приоритет | Статус |
 |---|---|---|---|
-| 024 | Atomic block and match lifecycle | P1 | in_progress — Match закрывается, Conversation остаётся активным |
-| 027 | Этапный чат — схема и бэкенд | P1 | in_progress — базовая реализация есть, остаются выделенные gaps |
-| 057 | Privacy/notification settings API | P0 | idea — UI-настройки не имеют backend API |
+| 074 | Главный CTA лендинга ниже сгиба | P1 | idea — на 1280×800 кнопка «Познакомиться» целиком за пределами первого экрана после PR #78 |
+| 067b | Self-service удаление аккаунта | P1 | idea — экспорт закрыт в 067a, удаления нет; soft delete с анонимизацией |
+| 027 | Этапный чат — схема и бэкенд | P1 | in_progress — 043, 044 и 045 закрыты, остаются 048 и 068 |
+| 046 | Неатомарные write-пути | P1 | in_progress — регистрация и like → match закрыты, остаются два пути уведомлений |
 
 Полный backlog: `docs/ROADMAP.md`.
 
