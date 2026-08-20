@@ -3,6 +3,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   UploadedFile,
@@ -46,7 +47,7 @@ export class MediaController {
   @UseRateLimit(RATE_LIMIT_POLICIES.mediaActions)
   setProfilePhotoPrimary(
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Param('photoId') photoId: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
   ) {
     return this.mediaService.setProfilePhotoPrimary(currentUser, photoId);
   }
@@ -55,7 +56,7 @@ export class MediaController {
   @UseRateLimit(RATE_LIMIT_POLICIES.mediaActions)
   deleteProfilePhoto(
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Param('photoId') photoId: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
   ) {
     return this.mediaService.deleteProfilePhoto(currentUser, photoId);
   }
