@@ -197,3 +197,166 @@
     background-color: oklch(0.09 0.008 15);
   }
 }
+
+/*
+  ── Landing motion ──────────────────────────────────────────────
+  Scoped to the marketing landing. Every effect below resolves to its
+  resting state under `prefers-reduced-motion` (see the block at the end),
+  so nothing here is load-bearing for legibility.
+*/
+
+/* Animatable angle for the CTA border beam. */
+@property --beam-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes yuni-reveal-word {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.36em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/*
+  Ends at --fade-to rather than a hard 1, so elements that rest below full
+  opacity (the scroll cue) keep their intended value once the animation fills.
+*/
+@keyframes yuni-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: var(--fade-to, 1);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes yuni-beam {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+@layer utilities {
+  /* Per-word hero reveal. Delay is set inline by <RevealText />. */
+  .motion-reveal-word {
+    display: inline-block;
+    animation: yuni-reveal-word 780ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Supporting hero copy — one soft lift, no per-word split. */
+  .motion-fade-up {
+    animation: yuni-fade-up 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Scroll-triggered section reveal. <InView /> flips data-visible. */
+  [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+    transition:
+      opacity 760ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 760ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  [data-reveal][data-visible='true'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    Primary landing CTAs (hero and closing section). A single 1px arc of light
+    rose travels the border — same hue as --primary, lifted in lightness so it
+    reads against the rose fill. Paired with a springy press; the secondary
+    links next to them stay plain by design.
+
+    `filter` is in the transition list for the closing CTA's hover brightness;
+    the hero CTA shifts background-color instead. Neither sets `transition-all`,
+    so the press stays on the spring curve rather than being flattened to ease.
+  */
+  .motion-cta {
+    position: relative;
+    isolation: isolate;
+    transition:
+      transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      background-color 200ms ease,
+      filter 200ms ease,
+      box-shadow 300ms ease;
+  }
+  .motion-cta:active {
+    transform: scale(0.97);
+  }
+  .motion-cta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--beam-angle),
+      transparent 0deg,
+      transparent 288deg,
+      oklch(0.93 0.11 12 / 0.9) 336deg,
+      transparent 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: yuni-beam 5.2s linear infinite;
+    pointer-events: none;
+  }
+  .motion-cta:hover {
+    box-shadow: 0 0 24px oklch(0.65 0.26 12 / 0.28);
+  }
+}
+
+/*
+  Reduced motion — resolve everything to its final state. Reveals must land on
+  opacity 1, or the preference would leave the page blank.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .motion-reveal-word {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .motion-fade-up {
+    animation: none !important;
+    opacity: var(--fade-to, 1) !important;
+    transform: none !important;
+  }
+
+  [data-reveal],
+  [data-reveal][data-visible='false'] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .motion-cta {
+    transition: none !important;
+  }
+  .motion-cta:active {
+    transform: none !important;
+  }
+  .motion-cta::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  [data-parallax] {
+    transform: none !important;
+  }
+}

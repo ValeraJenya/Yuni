@@ -1,5 +1,7 @@
 "use client"
 
+import { InView } from "./motion/in-view"
+
 interface ManifestoProps {
   lang: "ru" | "en"
 }
@@ -55,37 +57,39 @@ export function Manifesto({ lang }: ManifestoProps) {
       </div>
 
       {/* ── Massive editorial statement ─────────────────────── */}
-      <div className="mx-auto max-w-7xl px-6 md:px-10 pt-12 pb-0">
+      <InView className="mx-auto max-w-7xl px-6 md:px-10 pt-12 pb-0">
         <h2
           className="font-display font-light leading-[0.94] tracking-[-0.015em] whitespace-pre-line text-foreground"
           style={{ fontSize: "clamp(3.8rem, 9.5vw, 9rem)" }}
         >
           {t.bigStatement}
         </h2>
-      </div>
+      </InView>
 
       {/* ── Two-column body text — editorial layout ──────────── */}
       <div className="mx-auto max-w-7xl px-6 md:px-10 pt-14 pb-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 max-w-5xl ml-auto">
-          <p
+          <InView
+            as="p"
+            delay={80}
             className="font-sans leading-[1.75] text-pretty"
             style={{ fontSize: "14px", color: "oklch(0.50 0.010 15)" }}
           >
             {t.col1}
-          </p>
-          <p
+          </InView>
+          <InView
+            as="p"
+            delay={160}
             className="font-sans leading-[1.75] text-pretty"
             style={{ fontSize: "14px", color: "oklch(0.50 0.010 15)" }}
           >
             {t.col2}
-          </p>
+          </InView>
         </div>
       </div>
 
       {/* ── Pull quote — full-width, typographic, indented ───── */}
-      <div
-        className="mx-auto max-w-7xl px-6 md:px-10 pt-20 pb-24 md:pb-32"
-      >
+      <InView className="mx-auto max-w-7xl px-6 md:px-10 pt-20 pb-24 md:pb-32">
         {/* Left-offset rule + quote */}
         <div className="flex gap-8 md:gap-16 items-start">
           <div
@@ -103,7 +107,7 @@ export function Manifesto({ lang }: ManifestoProps) {
             {t.pullQuote}
           </blockquote>
         </div>
-      </div>
+      </InView>
     </section>
   )
 }
