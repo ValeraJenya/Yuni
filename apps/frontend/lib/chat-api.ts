@@ -10,8 +10,12 @@ export interface ChatParticipantSummary {
 export interface ChatMessage {
   id: string
   conversationId: string
-  senderUserId: string
+  /** `null` for system messages (stage transitions) — see `isSystemMessage`. */
+  senderUserId: string | null
   text: string
+  isSystemMessage: boolean
+  voiceDurationSec?: number
+  messageWeight?: number
   status: "sent" | "deleted"
   createdAt: string
 }
