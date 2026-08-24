@@ -38,7 +38,8 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 
 | ID | Название | Статус | Комментарий |
 |---|---|---|---|
-| 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; starters (045) закрыт в PR #77, остаются contract gaps (048) и аудио (068) |
+| 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; starters (045) закрыт в PR #77, contract gaps (048) закрыты кодом и тестами, ждут визуальной проверки; остаётся аудио (068) |
+| 048 | Staged-chat contract alignment | review | Ветка `feat/task-048-chat-contract` готова: контракт, рендер и тесты (frontend + backend) сделаны; визуальная проверка chrome-devtools-mcp не выполнена — недоступен в этой сессии, см. запись задачи |
 | 054 | Дрейф документации | in_progress | Четвёртый заход подряд. Синхронизация на `42db25f` / PR #80; процессные выводы — в PR этой задачи |
 
 ## Запланировано
@@ -48,7 +49,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |
 | 025 | Production deployment readiness | idea | P1 | Task 000 | Deployment architecture, secrets, HTTPS, reverse proxy. |
 | 026 | PostgreSQL integration checks in CI | idea | P2 | Task 000 | Общий integration gate. Postgres в CI уже поднимается, а journey-покрытие закрыто (Task 058 и 053 — `done`); остаётся зафиксировать политику покрытия для новых модулей. |
-| 027 | Этапный чат — схема и бэкенд | in_progress | P1 | Task 018 | Базовый backend реализован; выделенные gaps 043, 044 и 045 закрыты, остаются 048 (contract alignment) и 068 (аудио). |
+| 027 | Этапный чат — схема и бэкенд | in_progress | P1 | Task 018 | Базовый backend реализован; выделенные gaps 043, 044 и 045 закрыты, 048 (contract alignment) в review, остаётся 068 (аудио). |
 | 031 | Password reset backend | idea | P1 | — | Frontend мокает через setTimeout, backend endpoint отсутствует. Зафиксировано как TODO на `/terms` и `/help` (Task 063) |
 | 032 | Landing vs реальность | idea | P1 | — | Заявлена ручная верификация и круглосуточная модерация, по факту `media.service.ts:111` ставит `moderationStatus: approved` сразу при загрузке. Расхождение зафиксировано как TODO на `/privacy` (Task 063) |
 | 033 | Email verification | idea | P1 | — | Не реализован, любой email принимается; `emailVerifiedAt` никогда не заполняется. Зафиксировано как TODO на `/privacy` (Task 063) |
@@ -57,7 +58,6 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 037 | packageManager не закреплён | idea | P2 | — | Версия pnpm не зафиксирована в package.json |
 | 039 | Политика integration/e2e покрытия | idea | P3 | — | Обязательное покрытие критических сценариев |
 | 040 | OAuth-кнопки декоративны | idea | P1 | — | Google/Apple без onClick, помечены Social placeholders |
-| 048 | Staged-chat contract alignment | idea | P2 | Task 027 | Nullable system sender расходится с frontend DTO; staged contract tests отсутствуют. |
 | 050 | Дополнительные мёртвые кнопки | in_progress | P2 | — | Шапка диалога закрыта в PR #72, баннер «Улучши профиль» и бейджи PREMIUM удалены в PR #74 (коммит `d143078` перечисляет их поимённо). Остаётся «Добавить» в секции «Интересы» профиля: `Interest` и `ProfileInterest` есть в схеме, но ни одного эндпоинта нет, а `UpdateProfileDto` их не принимает — в коде backend они читаются только сериализатором экспорта (`users.service.ts:85`, `:269`) |
 | 054 | Дрейф документации | in_progress | P3 | — | Verified-baseline расходится с git-историей — процессный пункт. Четвёртый заход подряд: PR #33 (`75d527c`), PR #35 (`dbdac85`), PR #67 (`b30ce10`) и текущий |
 | 055 | Database-доки отстали от миграций | idea | P3 | — | staged-chat и Task 021 не отражены |
@@ -69,6 +69,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 074 | Главный CTA лендинга ниже сгиба | idea | P1 | — | Стек контента hero — 986px при обёртке `min-h-[100svh]`. На 1280×800 кнопка «Познакомиться» целиком за пределами первого экрана (`top=859`), на 1280×900 обрезана на 6px. Причина — `justify-start` вместе с сохранённым `pt-28` в `apps/frontend/components/landing/hero.tsx` из коммита `3a196a3` (PR #78 / merge `a5b2b15`): якорение к верху убрало пустоту на высоких окнах, но на типовых десктопных высотах увело CTA под сгиб. Возврат `justify-center` воспроизведёт исходный дефект — чинить высотой стека или отступом. Найдено визуальной проверкой PR #78 |
 | 075 | lint-baseline вырос с 17 до 18 | idea | P3 | Task 074 | `react-hooks/set-state-in-effect` в `apps/frontend/components/landing/motion/in-view.tsx:43`. Предупреждение стоит на `setVisible(true)` в ветке фолбэка `typeof IntersectionObserver === "undefined"`: она существует ровно для того, чтобы на старых движках контент показался сразу, а не остался невидимым блоком. **Механическое исправление сломает путь деградации.** Чинить ленивым начальным состоянием либо точечным `eslint-disable` с объяснением, зачем ветка нужна. Записано в строку явно, потому что следующий, кто увидит 18 вместо 17, иначе «почистит» предупреждение и уберёт фолбэк |
 | 077 | Общий пакет для PROFILE_COMPLETION_FIELDS | idea | P3 | Task 076 | `apps/frontend` и `apps/backend` — независимые пакеты монорепо, прямой импорт между ними невозможен. Task 076 закрыл дыру test-time text-parse'ом бэкендного файла (frontend-тест читает `profile-completion.policy.ts` как текст и регэкспом достаёт список полей) — это подпорка: ловит расхождение списков, но ломается на любом рефакторинге формата константы, а не только на реальном дрейфе. Правильное решение — вынести `PROFILE_COMPLETION_FIELDS` в общий пакет монорепо, из которого его импортируют обе стороны; тогда компилятор, а не regexp, гарантирует единый источник истины. |
+| 078 | Пять из восьми chat-эндпоинтов недостижимы с фронта | idea | P1 | Task 027 | `chat.controller.ts` — 8 эндпоинтов, `chatApi` (frontend) использует 3 (`getConversations`, `getMessages`, `sendMessage`). Без клиента: `GET conversations/:id/stage`, `GET starters`, `GET conversations/:id/game/current`, `POST game/postpone`, `POST game/:gameId/answer`. Именно этапность и игры — единственная причина существования Task 027 (P1) и всей цепочки 043/044/045/068 — с фронта недостижимы вообще: пользователь не видит текущий этап, не видит игровой вопрос, не может ответить или отложить игру. Backend-работа полностью инвестирована в функциональность, которую никто не может включить. Приоритет P1, не P2: это не отсутствующая мелкая фича, а причина, по которой P1-инвестиция в Task 027 не даёт никакого пользовательского эффекта. Найдено при верификации Task 048. |
 
 ## Выполнено
 
