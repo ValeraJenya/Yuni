@@ -28,13 +28,16 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 Открытых P0 нет. Продуктовые пробелы, найденные при ручной проверке сервиса
 14 августа, закрыты целиком: 071 (PR #73), 030 (PR #74), 069 (PR #75),
 070 (PR #76), 072 вместе с 045 (PR #77). Задача 067 разделена: 067a (экспорт
-данных) влит в PR #80, открыта только 067b (удаление аккаунта).
+данных) влит в PR #80, открыта только 067b (удаление аккаунта). 046 и 061
+закрыты по факту раньше, чем отражено здесь — статус поправлен при
+верификации Task 046 (2026-08); 076 влита в PR #84, статус тоже поправлен.
+После этого в разделе остаются только два реально открытых пункта: 027 и
+054.
 
 Ближайший P1 — 074: после PR #78 главный CTA лендинга ушёл ниже сгиба.
 
 | ID | Название | Статус | Комментарий |
 |---|---|---|---|
-| 076 | Jest во frontend + тесты чистой логики | review | Ветка `feat/task-076-frontend-tests` готова, ждёт merge |
 | 027 | Этапный чат — схема и бэкенд | in_progress | Базовая реализация есть; starters (045) закрыт в PR #77, остаются contract gaps (048) и аудио (068) |
 | 054 | Дрейф документации | in_progress | Четвёртый заход подряд. Синхронизация на `42db25f` / PR #80; процессные выводы — в PR этой задачи |
 
@@ -101,6 +104,7 @@ Priority vocabulary: `P0`, `P1`, `P2`, `P3`.
 | 069 | Профиль: режим просмотра и явное сохранение | done | P1 | PR #75 / merge `4d2f9be`; режим просмотра по умолчанию, редактирование в отдельной панели с липкой шапкой, dirty-состояние и предупреждение об уходе. Форма вынесена в `features/profile` и переиспользуется онбордингом. |
 | 046 | Неатомарные write-пути | done | P1 | Часть 1 (регистрация) — PR #63. Оставшиеся три пути (`like → match`, `match → notifications`, `message → notification`) закрыты одним коммитом `806fd28` в PR #69 — фактически уже полгода назад; ROADMAP отставал, потому что PR/ветка называлась `fix/task-046-like-match-atomicity` и ни сам PR, ни последующие Task 054 sync-проходы (`4490ba2`) не заметили, что дифф `806fd28` заодно трогает `notifications.service.ts` и `chat.service.ts`, а не только `like → match`. Перепроверено по коду заново (Task 046 verify, 2026-08): `NotificationsService.createNotificationForRecipient` пишет только через переданный `client`; оба продакшен-вызова передают `tx` — `matches.service.ts:205` (ветка с внешним `tx` от `likes.service.ts`) и `:269` (собственная `$transaction`), `chat.service.ts:700` внутри той же `$transaction`, что и `tx.message.create`. Полный грep по `apps/backend/src` подтвердил: `notification.create` вызывается только из `notifications.service.ts`, третьего пути нет. Покрыто юнит-тестами, которые сверяют объект `client` с `tx`: `matches.service.spec.ts` — `creates a match when the new LIKE has a reciprocal active LIKE` и `uses a provided transaction client without opening or locking another transaction`; `chat.service.spec.ts` — `trims and sends a plain-text message in a transaction`. |
 | 061 | Два флага видимости профиля | done | P2 | PR #82 / merge `5b4b9a9`; статус в ROADMAP остался `review` после мержа — поправлено при верификации Task 046. `discoverable` добавлен в `ProfileAccessResource` и в `targetProfileSelect` (`likes.service.ts`), закрыты оба пути — `GET /profiles/:handle` и лайк/скип. Схема и оба UI-переключателя не менялись; полная evidence — `docs-site/content/tasks/061.md`. |
+| 076 | Jest во frontend + тесты чистой логики | done | P2 | PR #84 / merge `2b0d39d`; статус в ROADMAP остался `review` после мержа — тот же класс расхождения, что у Task 061, поправлено заодно с ним. Jest 29.7.0/ts-jest/@types/jest наравне с бэкендом, `pnpm --filter frontend test` в `quality-gates.yml`. Покрыты `features/profile/form-state.ts`, `lib/default-avatar.ts`, `lib/utils.ts`, `lib/auth-api.ts`, плюс `required-fields.contract.test.ts` на расхождение обязательных полей frontend/backend (Task 070). Полная evidence — `docs-site/content/tasks/076.md`. |
 
 ## Отложено
 
