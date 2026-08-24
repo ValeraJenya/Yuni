@@ -77,10 +77,10 @@ export function Hero({ lang }: HeroProps) {
         min-height so the background, portrait and bottom scroll cue still span
         the viewport — only the text block moves up.
       */}
-      <div className="relative z-10 mx-auto flex min-h-screen min-h-[100svh] max-w-7xl flex-col justify-start px-6 pb-14 pt-20 md:px-10">
+      <div className="relative z-10 mx-auto flex min-h-screen min-h-[100svh] max-w-7xl flex-col justify-start px-6 pb-14 pt-28 md:px-10 md:pt-12">
 
         {/* Eyebrow */}
-        <div className="motion-fade-up mb-6 flex items-center gap-3">
+        <div className="motion-fade-up mb-8 flex items-center gap-3">
           <span className="h-px w-6 flex-shrink-0 bg-primary" />
           <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-primary">
             {t.eyebrow}
@@ -99,7 +99,7 @@ export function Hero({ lang }: HeroProps) {
         </div>
 
         {/* Bottom strip: tagline + sub + CTA */}
-        <div className="mt-8 flex max-w-sm flex-col gap-4">
+        <div className="mt-10 flex max-w-sm flex-col gap-5">
 
           {/* Emotional tagline — warm, direct */}
           <p
