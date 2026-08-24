@@ -353,6 +353,94 @@ describe('ChatService', () => {
     expectNoForbiddenKeys(result);
   });
 
+  // Task 048: the frontend ChatMessage type drifted from ChatMessageView for
+  // months (senderUserId typed as non-nullable string; isSystemMessage,
+  // voiceDurationSec, messageWeight missing entirely) and nobody noticed
+  // until a manual pass. Object.keys().sort() pins the exact key set per
+  // message kind — toEqual() would not catch this: Jest's toEqual treats a
+  // missing key the same as a key present with value undefined, so it can't
+  // tell "voiceDurationSec is absent" from "voiceDurationSec is undefined",
+  // which is exactly the distinction toMessageView()'s conditional field
+  // assignment relies on.
+  //
+  // This only protects the backend from silently changing its own contract:
+  // a shape edit now fails here, in the same PR that makes it, instead of
+  // surfacing on the frontend a month later. It does not cross-check
+  // apps/frontend/lib/chat-api.ts at all — that direct verification is
+  // Task 077 (shared package) territory, not reproduced here.
+  describe('ChatMessageView shape contract (Task 048)', () => {
+    const BASE_KEYS = [
+      'id',
+      'conversationId',
+      'senderUserId',
+      'text',
+      'isSystemMessage',
+      'status',
+      'createdAt',
+    ].sort();
+    const VOICE_KEYS = [...BASE_KEYS, 'voiceDurationSec', 'messageWeight'].sort();
+
+    it('pins the key set for a regular message: no voice keys, non-null sender', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue(activeUser());
+      prisma.conversation.findFirst.mockResolvedValue(makeConversation());
+      prisma.message.findMany.mockResolvedValue([
+        makeMessage({ senderUserId: OTHER_USER_ID, isSystemMessage: false }),
+      ]);
+
+      const result = await service.getMessages(CURRENT_USER, CONVERSATION_ID, query());
+      const [view] = result.messages;
+
+      expect(Object.keys(view).sort()).toEqual(BASE_KEYS);
+      expect(view.senderUserId).toBe(OTHER_USER_ID);
+    });
+
+    it('pins the key set for a voice message: voiceDurationSec and messageWeight present', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue(activeUser());
+      prisma.conversation.findFirst.mockResolvedValue(makeConversation());
+      prisma.message.findMany.mockResolvedValue([
+        makeMessage({ senderUserId: OTHER_USER_ID, voiceDurationSec: 30, messageWeight: 3 }),
+      ]);
+
+      const result = await service.getMessages(CURRENT_USER, CONVERSATION_ID, query());
+      const [view] = result.messages;
+
+      expect(Object.keys(view).sort()).toEqual(VOICE_KEYS);
+      expect(view.voiceDurationSec).toBe(30);
+      expect(view.messageWeight).toBe(3);
+    });
+
+    it('pins the key set for a system message: null senderUserId, no voice keys', async () => {
+      const { service, prisma } = createService();
+      prisma.user.findUnique.mockResolvedValue(activeUser());
+      prisma.conversation.findFirst.mockResolvedValue(makeConversation());
+      // makeMessage()'s overrides use `??`, which can't represent an
+      // explicit `null` — `senderUserId: null` would fall back to
+      // OTHER_USER_ID. Built directly instead of widening that helper.
+      prisma.message.findMany.mockResolvedValue([
+        {
+          id: MESSAGE_ID,
+          conversationId: CONVERSATION_ID,
+          senderUserId: null,
+          body: 'Stage advanced',
+          voiceDurationSec: null,
+          messageWeight: 1,
+          isSystemMessage: true,
+          status: MessageStatus.sent,
+          createdAt: FIXED_NOW,
+        },
+      ]);
+
+      const result = await service.getMessages(CURRENT_USER, CONVERSATION_ID, query());
+      const [view] = result.messages;
+
+      expect(Object.keys(view).sort()).toEqual(BASE_KEYS);
+      expect(view.senderUserId).toBeNull();
+      expect(view.isSystemMessage).toBe(true);
+    });
+  });
+
   it('does not send when the user is not an active participant', async () => {
     const { service, prisma } = createService();
     prisma.user.findUnique.mockResolvedValue(activeUser());
