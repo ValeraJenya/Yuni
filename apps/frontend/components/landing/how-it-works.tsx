@@ -1,5 +1,7 @@
 "use client"
 
+import { InView } from "./motion/in-view"
+
 interface HowItWorksProps {
   lang: "ru" | "en"
 }
@@ -56,8 +58,8 @@ export function HowItWorks({ lang }: HowItWorksProps) {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
-            {t.steps.map((step) => (
-              <div key={step.num} className="flex flex-col gap-6">
+            {t.steps.map((step, i) => (
+              <InView key={step.num} delay={i * 90} className="flex flex-col gap-6">
 
                 {/* Roman numeral — sits on the line */}
                 <div className="flex items-center gap-4">
@@ -88,7 +90,7 @@ export function HowItWorks({ lang }: HowItWorksProps) {
                     {step.body}
                   </p>
                 </div>
-              </div>
+              </InView>
             ))}
           </div>
         </div>

@@ -1,5 +1,7 @@
 "use client"
 
+import { InView } from "./motion/in-view"
+
 interface SupportProps {
   lang: "ru" | "en"
 }
@@ -47,15 +49,16 @@ export function Support({ lang }: SupportProps) {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-24 items-end">
 
           {/* Left: headline */}
-          <h2
+          <InView
+            as="h2"
             className="font-display font-light leading-[0.97] tracking-[-0.01em]"
             style={{ fontSize: "clamp(3rem, 7vw, 6.5rem)", color: "oklch(0.93 0.005 60)" }}
           >
             {t.headline}
-          </h2>
+          </InView>
 
           {/* Right: body + contact strip */}
-          <div className="flex flex-col gap-10">
+          <InView delay={120} className="flex flex-col gap-10">
             <p
               className="font-sans leading-[1.75] max-w-md text-pretty"
               style={{ fontSize: "14px", color: "oklch(0.44 0.008 15)" }}
@@ -109,7 +112,7 @@ export function Support({ lang }: SupportProps) {
                 </a>
               </div>
             </div>
-          </div>
+          </InView>
         </div>
       </div>
     </section>

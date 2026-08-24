@@ -133,4 +133,22 @@ export const RATE_LIMIT_POLICIES = {
       key: 'user',
     },
   ],
+  // Task 067a: экспорт читает пятнадцать таблиц в одной транзакции, поэтому
+  // лимит на порядок строже остальных self-эндпоинтов. Ключ user отсекает
+  // повторные выгрузки одним аккаунтом, ключ ip — перебор через свежие
+  // регистрации.
+  usersDataExport: [
+    {
+      name: 'users.dataExport.user',
+      limit: 3,
+      windowMs: RATE_LIMIT_WINDOW_MS.hour,
+      key: 'user',
+    },
+    {
+      name: 'users.dataExport.ip',
+      limit: 10,
+      windowMs: RATE_LIMIT_WINDOW_MS.hour,
+      key: 'ip',
+    },
+  ],
 } as const satisfies Record<string, RateLimitPolicy>;
