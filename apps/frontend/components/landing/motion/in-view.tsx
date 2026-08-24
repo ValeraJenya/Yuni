@@ -38,8 +38,15 @@ export function InView({
     if (!node) return
 
     // Older engines without IntersectionObserver get the content immediately
-    // rather than a block that never reveals.
+    // rather than a block that never reveals. A lazy `useState` initializer
+    // can't replace this: Next SSRs this "use client" component on a server
+    // that has no IntersectionObserver, so the initializer would render
+    // `true` server-side and `false` client-side and produce a hydration
+    // mismatch (verified — React logs "attributes ... didn't match" for
+    // every InView instance when tried). The setState-in-effect warning is
+    // the lesser cost; don't remove this branch to silence it.
     if (typeof IntersectionObserver === "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true)
       return
     }
