@@ -67,6 +67,9 @@ jobs:
       - name: Typecheck backend
         run: corepack pnpm --filter backend typecheck
 
+      - name: Test frontend
+        run: corepack pnpm --filter frontend test
+
       - name: Lint frontend
         run: corepack pnpm --filter frontend lint
 
