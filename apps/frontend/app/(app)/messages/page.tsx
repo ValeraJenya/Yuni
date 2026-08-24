@@ -9,6 +9,7 @@ import {
   Send,
   Heart,
   Search,
+  Mic,
 } from "lucide-react"
 import { ApiError } from "@/lib/auth-api"
 import { chatApi, type ChatMessage, type ConversationSummary } from "@/lib/chat-api"
@@ -16,6 +17,10 @@ import { useAuth } from "@/lib/auth-context"
 import { useLang } from "@/lib/lang-context"
 import { defaultAvatarUrl } from "@/lib/default-avatar"
 import { resolveProfilePhotoUrl } from "@/lib/profile-api"
+import {
+  getMessageBubbleKind,
+  shouldGroupWithPrevious,
+} from "@/features/chat/message-render"
 
 const copy = {
   ru: {
@@ -70,6 +75,15 @@ const fallbackPhotoUrl = defaultAvatarUrl(null, "square")
 function formatMsgTime(iso: string) {
   const d = new Date(iso)
   return d.toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" })
+}
+
+// Task 048: minimal duration tag on voice messages, not a player — that's
+// Task 068 (no audio upload endpoint exists yet to play back).
+function formatVoiceDuration(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.round(totalSeconds))
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`
 }
 
 function getProfileName(conversation: ConversationSummary) {
@@ -357,7 +371,7 @@ function MessagesInner() {
             const last = conversation.lastMessage
             const isActive = conversation.conversationId === activeId
             const profileName = getProfileName(conversation)
-            const isLastMine = last?.senderUserId === user?.id
+            const lastKind = last ? getMessageBubbleKind(last, user?.id) : null
 
             return (
               <button
@@ -421,9 +435,16 @@ function MessagesInner() {
                   {last ? (
                     <p
                       className="font-sans truncate"
-                      style={{ fontSize: "11.5px", color: "oklch(0.34 0.008 15)" }}
+                      style={{
+                        fontSize: "11.5px",
+                        color:
+                          lastKind === "system"
+                            ? "var(--muted-foreground)"
+                            : "oklch(0.34 0.008 15)",
+                        fontStyle: lastKind === "system" ? "italic" : "normal",
+                      }}
                     >
-                      {isLastMine ? t.youPrefix : ""}
+                      {lastKind === "mine" ? t.youPrefix : ""}
                       {last.text}
                     </p>
                   ) : (
@@ -627,10 +648,36 @@ function MessagesInner() {
           </p>
         ) : (
           messages.map((msg, idx) => {
-            const isMe = msg.senderUserId === user?.id
+            const kind = getMessageBubbleKind(msg, user?.id)
             const prevMsg = messages[idx - 1]
-            const sameGroupAsPrev =
-              prevMsg && prevMsg.senderUserId === msg.senderUserId
+            const sameGroupAsPrev = shouldGroupWithPrevious(msg, prevMsg)
+
+            if (kind === "system") {
+              return (
+                <div
+                  key={msg.id}
+                  className="flex justify-center"
+                  style={{ marginTop: "14px", marginBottom: "6px" }}
+                >
+                  <p
+                    className="font-sans text-center"
+                    style={{
+                      maxWidth: "80%",
+                      fontSize: "11px",
+                      lineHeight: 1.4,
+                      padding: "6px 14px",
+                      borderRadius: "var(--shape-radius-md)",
+                      background: "var(--muted)",
+                      color: "var(--muted-foreground)",
+                    }}
+                  >
+                    {msg.text}
+                  </p>
+                </div>
+              )
+            }
+
+            const isMe = kind === "mine"
 
             return (
               <div
@@ -662,6 +709,22 @@ function MessagesInner() {
                         : "0 2px 10px oklch(0.04 0.005 15 / 0.28)",
                     }}
                   >
+                    {typeof msg.voiceDurationSec === "number" && (
+                      <div
+                        className="flex items-center gap-1.5"
+                        style={{
+                          marginBottom: "4px",
+                          color: isMe
+                            ? "oklch(0.90 0.008 60 / 0.75)"
+                            : "oklch(0.76 0.005 60 / 0.75)",
+                        }}
+                      >
+                        <Mic size={12} strokeWidth={2} />
+                        <span className="font-sans" style={{ fontSize: "10.5px" }}>
+                          {formatVoiceDuration(msg.voiceDurationSec)}
+                        </span>
+                      </div>
+                    )}
                     <p
                       className="font-sans leading-relaxed whitespace-pre-wrap break-words"
                       style={{
