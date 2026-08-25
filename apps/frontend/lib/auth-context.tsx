@@ -224,5 +224,14 @@ export function useAuth() {
     ensureBootstrapped()
   }, [ensureBootstrapped])
 
-  return publicValue
+  // value is already memoized in AuthProvider, but the rest-spread above
+  // builds a fresh object on every call regardless — without this useMemo,
+  // useAuth() would return a new reference on every render even when
+  // nothing changed, breaking dependency arrays for anyone who does
+  // `const auth = useAuth()` and lists it as a dependency.
+  // publicValue is derived from value alone (see destructure above); adding
+  // it to the deps array would defeat the memo, since it's a fresh object
+  // every render by construction.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => publicValue, [value])
 }
