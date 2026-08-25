@@ -187,7 +187,7 @@ export function SignInForm() {
         className="group w-full flex items-center justify-center gap-2.5 rounded-full py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed bg-primary"
         style={{
           fontSize: "13px",
-          boxShadow: formState !== "loading" ? "0 0 28px oklch(from var(--primary) l c h / 0.25)" : "none",
+          boxShadow: formState !== "loading" ? "0 0 28px color-mix(in oklab, var(--primary) 25%, transparent)" : "none",
         }}
       >
         {formState === "loading" ? t.ctaLoading : (
