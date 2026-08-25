@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useRef } from "react"
 import { useLang } from "@/lib/lang-context"
 
 interface BirthdateFieldProps {
@@ -43,7 +43,6 @@ export function BirthdateField({ value, onChange, error }: BirthdateFieldProps) 
   const { lang } = useLang()
   const t = copy[lang]
   const inputRef = useRef<HTMLInputElement>(null)
-  const [focused, setFocused] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = digitsOnly(e.target.value)
@@ -64,23 +63,12 @@ export function BirthdateField({ value, onChange, error }: BirthdateFieldProps) 
   }
 
   const isFilled = value.replace(/\D/g, "").length === 8
-  const borderColor = error
-    ? "oklch(0.52 0.20 25 / 0.80)"
-    : focused
-    ? "oklch(0.65 0.26 12 / 0.70)"
-    : "oklch(0.22 0.010 15)"
 
   return (
     <div className="flex flex-col gap-2">
       <label
         htmlFor="birthdate"
-        className="font-sans"
-        style={{
-          fontSize: "11px",
-          color: "oklch(0.44 0.008 15)",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-        }}
+        className="font-sans text-[11px] uppercase tracking-[0.06em] text-surface-6"
       >
         {t.label}
       </label>
@@ -104,30 +92,19 @@ export function BirthdateField({ value, onChange, error }: BirthdateFieldProps) 
           // bday-year fields — a bigger UX change, tracked separately, not
           // this task.
           autoComplete="off"
+          aria-invalid={!!error}
           placeholder={t.placeholder}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
           maxLength={10}
           aria-describedby={error ? "birthdate-error" : undefined}
-          className="w-full bg-transparent font-sans outline-none transition-all"
-          style={{
-            fontSize: "14px",
-            color: isFilled ? "oklch(0.88 0.005 60)" : "oklch(0.88 0.005 60)",
-            padding: "12px 0",
-            borderBottom: `1px solid ${borderColor}`,
-            caretColor: "oklch(0.65 0.26 12)",
-            transition: "border-color 0.18s ease",
-            letterSpacing: "0.08em",
-          }}
+          className="w-full bg-transparent font-sans text-sm text-text-5 tracking-[0.08em] outline-none transition-all caret-primary py-3 px-0 border-b border-b-surface-3 focus:border-b-primary/70 aria-invalid:border-b-destructive/80 aria-invalid:focus:border-b-destructive"
         />
         {/* Year digit count hint — shown while typing */}
         {!isFilled && value.length > 0 && (
           <span
-            className="absolute right-0 top-1/2 -translate-y-1/2 font-sans pointer-events-none"
-            style={{ fontSize: "10px", color: "oklch(0.30 0.008 15)" }}
+            className="absolute right-0 top-1/2 -translate-y-1/2 font-sans text-[10px] text-surface-4 pointer-events-none"
             aria-hidden="true"
           >
             {value.replace(/\D/g, "").length}/8
@@ -136,10 +113,12 @@ export function BirthdateField({ value, onChange, error }: BirthdateFieldProps) 
       </div>
 
       {error && (
+        // Task 087a: same hue25 family finding as auth-field.tsx — deferred,
+        // not forced onto --destructive.
         <p
           id="birthdate-error"
-          className="font-sans"
-          style={{ fontSize: "11px", color: "oklch(0.62 0.18 25)" }}
+          className="font-sans text-[11px]"
+          style={{ color: "oklch(0.62 0.18 25)" }}
           role="alert"
         >
           {error}
