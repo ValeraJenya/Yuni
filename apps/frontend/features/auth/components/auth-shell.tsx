@@ -36,7 +36,8 @@ export function AuthShell({ children }: AuthShellProps) {
           left: "calc(min(100vw, 1440px) * -0.10)",
           width: "calc(min(100vw, 1440px) * 0.55)",
           height: "60vh",
-          background: "radial-gradient(ellipse at center, oklch(0.65 0.26 12 / 0.07) 0%, transparent 65%)",
+          background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 65%)",
+          opacity: 0.07,
           filter: "blur(60px)",
         }}
       />
@@ -48,7 +49,8 @@ export function AuthShell({ children }: AuthShellProps) {
           right: "calc(min(100vw, 1440px) * -0.10)",
           width: "calc(min(100vw, 1440px) * 0.50)",
           height: "55vh",
-          background: "radial-gradient(ellipse at center, oklch(0.48 0.22 18 / 0.05) 0%, transparent 65%)",
+          background: "radial-gradient(ellipse at center, var(--ruby) 0%, transparent 65%)",
+          opacity: 0.05,
           filter: "blur(80px)",
         }}
       />
@@ -85,14 +87,14 @@ export function AuthShell({ children }: AuthShellProps) {
           </div>
           <div className="flex flex-col leading-none">
             <span
-              className="font-display font-light tracking-[0.22em] transition-colors"
-              style={{ fontSize: "1.2rem", color: "oklch(0.72 0.005 60)" }}
+              className="font-display font-light tracking-[0.22em] transition-colors text-text-3"
+              style={{ fontSize: "1.2rem" }}
             >
               YUNI
             </span>
             <span
-              className="font-sans font-normal tracking-[0.22em] uppercase"
-              style={{ fontSize: "7px", color: "oklch(0.26 0.008 15)", marginTop: "2px" }}
+              className="font-sans font-normal tracking-[0.22em] uppercase text-surface-3"
+              style={{ fontSize: "7px", marginTop: "2px" }}
             >
               by Pink Rabbit
             </span>
@@ -106,9 +108,9 @@ export function AuthShell({ children }: AuthShellProps) {
           style={{ fontSize: "11px" }}
           aria-label="Switch language"
         >
-          <span style={{ color: lang === "ru" ? "oklch(0.65 0.26 12)" : "oklch(0.34 0.008 15)" }}>RU</span>
-          <span style={{ color: "oklch(0.24 0.008 15)", margin: "0 4px" }}>/</span>
-          <span style={{ color: lang === "en" ? "oklch(0.65 0.26 12)" : "oklch(0.34 0.008 15)" }}>EN</span>
+          <span className={lang === "ru" ? "text-primary" : "text-surface-5"}>RU</span>
+          <span className="text-surface-3 mx-1">/</span>
+          <span className={lang === "en" ? "text-primary" : "text-surface-5"}>EN</span>
         </button>
       </header>
 
@@ -119,33 +121,23 @@ export function AuthShell({ children }: AuthShellProps) {
 
       {/* ── Bottom legal strip ──────────────────────────── */}
       <footer
-        className="relative z-10 flex items-center justify-center gap-6 px-6 py-6"
-        style={{ borderTop: "1px solid oklch(0.14 0.008 15)" }}
+        className="relative z-10 flex items-center justify-center gap-6 px-6 py-6 border-t border-smoke"
       >
         <a
           href="/privacy"
-          className="font-sans transition-colors"
-          style={{ fontSize: "11px", color: "oklch(0.28 0.008 15)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.50 0.005 60)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.28 0.008 15)")}
+          className="font-sans text-[11px] text-surface-4 transition-colors hover:text-text-1"
         >
           {lang === "ru" ? "Конфиденциальность" : "Privacy"}
         </a>
-        <span style={{ color: "oklch(0.20 0.008 15)", fontSize: "11px" }}>·</span>
+        <span className="text-surface-3 text-[11px]">·</span>
         <a
           href="/terms"
-          className="font-sans transition-colors"
-          style={{ fontSize: "11px", color: "oklch(0.28 0.008 15)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.50 0.005 60)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.28 0.008 15)")}
+          className="font-sans text-[11px] text-surface-4 transition-colors hover:text-text-1"
         >
           {lang === "ru" ? "Условия" : "Terms"}
         </a>
-        <span style={{ color: "oklch(0.20 0.008 15)", fontSize: "11px" }}>·</span>
-        <span
-          className="font-sans"
-          style={{ fontSize: "11px", color: "oklch(0.24 0.008 15)" }}
-        >
+        <span className="text-surface-3 text-[11px]">·</span>
+        <span className="font-sans text-[11px] text-surface-3">
           {`© ${new Date().getFullYear()} Yuni by Pink Rabbit`}
         </span>
       </footer>

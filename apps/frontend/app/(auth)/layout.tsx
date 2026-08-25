@@ -58,8 +58,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <span
-          className="font-sans tracking-[0.18em] uppercase"
-          style={{ fontSize: "10px", color: "oklch(0.42 0.008 15)" }}
+          className="font-sans tracking-[0.18em] uppercase text-surface-6"
+          style={{ fontSize: "10px" }}
         >
           {lang === "ru" ? "Загрузка" : "Loading"}
         </span>

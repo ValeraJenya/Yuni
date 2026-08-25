@@ -142,19 +142,18 @@ function Checkbox({
           role="checkbox"
           aria-checked={checked}
           onClick={() => onChange(!checked)}
-          className="flex-shrink-0 w-4 h-4 rounded flex items-center justify-center transition-all mt-0.5"
-          style={{
-            border: error ? "1px solid oklch(0.52 0.20 25 / 0.80)" : "1px solid oklch(0.28 0.010 15)",
-            background: checked ? "oklch(0.65 0.26 12)" : "transparent",
-          }}
+          className={`flex-shrink-0 w-4 h-4 rounded flex items-center justify-center transition-all mt-0.5 border ${
+            error ? "border-destructive/80" : "border-surface-4"
+          } ${checked ? "bg-primary" : "bg-transparent"}`}
         >
           {checked && <Check size={10} color="white" strokeWidth={3} />}
         </button>
-        <span className="font-sans leading-relaxed" style={{ fontSize: "12px", color: "oklch(0.46 0.008 15)" }}>
+        <span className="font-sans leading-relaxed text-surface-6" style={{ fontSize: "12px" }}>
           {children}
         </span>
       </label>
       {error && (
+        // Task 087a: same hue25-family finding as AuthField — deferred.
         <p className="font-sans ml-7" style={{ fontSize: "11px", color: "oklch(0.62 0.18 25)" }} role="alert">
           {error}
         </p>
@@ -214,10 +213,7 @@ export function SignUpForm() {
   if (formState === "success") {
     return (
       <div className="flex flex-col items-center gap-6 py-8 text-center">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ background: "oklch(0.65 0.26 12 / 0.10)", border: "1px solid oklch(0.65 0.26 12 / 0.22)" }}
-        >
+        <div className="w-14 h-14 rounded-full flex items-center justify-center bg-primary/10 border border-primary/22">
           <img
             src="/yuni-logo.png"
             alt=""
@@ -229,10 +225,10 @@ export function SignUpForm() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <p className="font-display font-light" style={{ fontSize: "1.8rem", color: "oklch(0.88 0.005 60)" }}>
+          <p className="font-display font-light text-text-5" style={{ fontSize: "1.8rem" }}>
             {t.successHeadline}
           </p>
-          <p className="font-sans leading-relaxed" style={{ fontSize: "13px", color: "oklch(0.40 0.008 15)" }}>
+          <p className="font-sans leading-relaxed text-surface-6" style={{ fontSize: "13px" }}>
             {t.successSub}
           </p>
         </div>
@@ -244,13 +240,8 @@ export function SignUpForm() {
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-7 w-full">
       {errors.general && (
         <div
-          className="px-4 py-3 rounded-lg font-sans text-sm"
-          style={{
-            background: "oklch(0.52 0.20 25 / 0.08)",
-            border: "1px solid oklch(0.52 0.20 25 / 0.22)",
-            color: "oklch(0.70 0.16 25)",
-            fontSize: "13px",
-          }}
+          className="px-4 py-3 rounded-lg font-sans text-sm bg-destructive/8 border border-destructive/22"
+          style={{ color: "oklch(0.70 0.16 25)", fontSize: "13px" }}
           role="alert"
         >
           {errors.general}
@@ -305,8 +296,7 @@ export function SignUpForm() {
           <button
             type="button"
             onClick={() => setShowPw(!showPw)}
-            className="absolute right-0 top-[34px] p-1 transition-colors"
-            style={{ color: "oklch(0.36 0.008 15)" }}
+            className="absolute right-0 top-[34px] p-1 transition-colors text-surface-5"
             aria-label={showPw ? "Hide password" : "Show password"}
           >
             {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -327,21 +317,11 @@ export function SignUpForm() {
         </Checkbox>
         <Checkbox checked={agreedToTerms} onChange={setAgreedToTerms} error={errors.terms}>
           {t.consentTerms}{" "}
-          <a
-            href="/terms"
-            style={{ color: "oklch(0.65 0.26 12)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.78 0.22 12)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
-          >
+          <a href="/terms" className="text-primary transition-colors hover:text-primary-hover">
             {t.terms}
           </a>
           {" "}{t.and}{" "}
-          <a
-            href="/privacy"
-            style={{ color: "oklch(0.65 0.26 12)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.78 0.22 12)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
-          >
+          <a href="/privacy" className="text-primary transition-colors hover:text-primary-hover">
             {t.privacy}
           </a>
         </Checkbox>
@@ -351,11 +331,10 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={formState === "loading"}
-        className="group w-full flex items-center justify-center gap-2.5 rounded-full py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="group w-full flex items-center justify-center gap-2.5 rounded-full py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed bg-primary"
         style={{
           fontSize: "13px",
-          background: "oklch(0.65 0.26 12)",
-          boxShadow: formState !== "loading" ? "0 0 28px oklch(0.65 0.26 12 / 0.25)" : "none",
+          boxShadow: formState !== "loading" ? "0 0 28px oklch(from var(--primary) l c h / 0.25)" : "none",
         }}
       >
         {formState === "loading" ? t.ctaLoading : (
@@ -368,9 +347,9 @@ export function SignUpForm() {
 
       {/* Divider */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px" style={{ background: "oklch(0.18 0.008 15)" }} />
-        <span className="font-sans" style={{ fontSize: "11px", color: "oklch(0.30 0.008 15)" }}>{t.divider}</span>
-        <div className="flex-1 h-px" style={{ background: "oklch(0.18 0.008 15)" }} />
+        <div className="flex-1 h-px bg-carbon" />
+        <span className="font-sans text-[11px] text-surface-4">{t.divider}</span>
+        <div className="flex-1 h-px bg-carbon" />
       </div>
 
       {/* Social placeholders */}
@@ -382,23 +361,10 @@ export function SignUpForm() {
           <button
             key={icon}
             type="button"
-            className="w-full flex items-center justify-center gap-3 rounded-full py-3 font-sans font-medium transition-all"
-            style={{
-              fontSize: "13px",
-              color: "oklch(0.55 0.005 60)",
-              border: "1px solid oklch(0.20 0.010 15)",
-              background: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "oklch(0.28 0.010 15)"
-              e.currentTarget.style.color = "oklch(0.72 0.005 60)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "oklch(0.20 0.010 15)"
-              e.currentTarget.style.color = "oklch(0.55 0.005 60)"
-            }}
+            className="w-full flex items-center justify-center gap-3 rounded-full py-3 font-sans font-medium transition-all text-text-2 border border-border bg-transparent hover:border-surface-4 hover:text-text-3"
+            style={{ fontSize: "13px" }}
           >
-            <span className="font-display font-light" style={{ fontSize: "14px", color: "oklch(0.40 0.008 15)" }}>
+            <span className="font-display font-light text-surface-6" style={{ fontSize: "14px" }}>
               {icon}
             </span>
             {label}
@@ -407,15 +373,9 @@ export function SignUpForm() {
       </div>
 
       {/* Sign in link */}
-      <p className="text-center font-sans" style={{ fontSize: "12px", color: "oklch(0.36 0.008 15)" }}>
+      <p className="text-center font-sans text-surface-5" style={{ fontSize: "12px" }}>
         {t.hasAccount}{" "}
-        <a
-          href="/signin"
-          className="transition-colors"
-          style={{ color: "oklch(0.65 0.26 12)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.78 0.22 12)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.65 0.26 12)")}
-        >
+        <a href="/signin" className="text-primary transition-colors hover:text-primary-hover">
           {t.signIn}
         </a>
       </p>
