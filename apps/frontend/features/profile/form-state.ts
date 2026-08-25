@@ -51,7 +51,13 @@ export const PROFILE_FORM_FIELDS: readonly ProfileFormFieldDescriptor[] = [
     kind: "text",
     required: true,
     completionField: "displayName",
-    autoComplete: "nickname",
+    // Task 081: "nickname" is a valid WHATWG autofill token, but Chrome's
+    // own validity list disagrees and flags it as non-standard (confirmed
+    // in DevTools → Issues on both /profile and /onboarding, which render
+    // this shared field list) — the same way Chrome rejects the spec-valid
+    // "bday" token elsewhere in this app. No autofill behavior is lost by
+    // dropping it: Chrome wasn't treating it as a valid target anyway.
+    autoComplete: "off",
     maxLength: 60,
   },
   {
