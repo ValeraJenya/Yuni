@@ -75,6 +75,59 @@
   --obsidian:   oklch(0.09 0.008 15);
   --smoke:      oklch(0.14 0.008 15);
   --carbon:     oklch(0.18 0.010 15);
+
+  /*
+   * Task 085/task-085-tokens: neutral scale from docs/audits/color-literals-2026-08-25.md.
+   * Not used anywhere yet — migrating call sites is Task 087. Values are
+   * cluster representatives (mean L, occurrence-weighted) from that audit,
+   * normalized to chroma 0.010 / hue 15 (the observed range in the source
+   * literals was chroma 0.005–0.012, hue mostly 15) — checked: at these
+   * lightnesses that normalization shifts relative luminance by at most
+   * ~4.5% (darkest step) and moves the tightest real contrast pair in the
+   * audit (surface-1/text-2, 4.80:1) by at most ±0.02, nowhere near the
+   * WCAG 4.5:1 line it was chosen to clear. surface-3 and text-6 are
+   * deliberately NOT new tokens — see below.
+   */
+  --surface-1: oklch(0.060 0.010 15);
+  --surface-2: oklch(0.129 0.010 15);
+  /*
+   * surface-3 (L=0.209) has no token of its own: --border/--sidebar-border
+   * sit at 0.20, inside this level's range, at a cost of only +0.001 max
+   * shift. Deliberately not reused anyway — --border names a role (what
+   * draws edges), not a lightness step, and today's match is coincidence.
+   * Aliasing them would make "make borders slightly lighter" impossible
+   * without also moving every surface-3 background. Kept separate.
+   */
+  --surface-3: oklch(0.209 0.010 15);
+  --surface-4: oklch(0.288 0.010 15);
+  --surface-5: oklch(0.359 0.010 15);
+  --surface-6: oklch(0.427 0.010 15);
+
+  --text-1: oklch(0.507 0.010 15);
+  /*
+   * text-2 (L=0.577) deliberately does NOT alias --muted-foreground
+   * (0.55), even though it sits inside this level's range. Aliasing it
+   * drops the audit's tightest real contrast pair (surface-1/text-2,
+   * "подзаголовок страницы" on /notifications) from 4.80:1 to 4.25–4.29:1
+   * — below the 4.5:1 line that k=6 was specifically chosen to hold. Kept
+   * as its own value.
+   */
+  --text-2: oklch(0.577 0.010 15);
+  --text-3: oklch(0.686 0.010 15);
+  --text-4: oklch(0.782 0.010 15);
+  --text-5: oklch(0.881 0.010 15);
+  /*
+   * text-6 (L=0.946) aliases --foreground (0.96), unlike surface-3/border:
+   * --foreground already names the same role text-6 would — primary
+   * text — not a coincidental lightness match. Kept in the numbered
+   * sequence (not skipped) so the scale reads as complete.
+   */
+  --text-6: var(--foreground);
+
+  /* Colored states from the same audit — hue clusters with no existing token */
+  --online:  oklch(0.78 0.20 145);
+  --info:    oklch(0.72 0.20 220);
+  --warning: oklch(0.70 0.16 28);
 }
 
 @theme inline {
@@ -128,6 +181,23 @@
   --color-obsidian:  var(--obsidian);
   --color-smoke:     var(--smoke);
   --color-carbon:    var(--carbon);
+
+  /* Task 085/task-085-tokens neutral scale + state colors — unused until Task 087 */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+  --color-surface-5: var(--surface-5);
+  --color-surface-6: var(--surface-6);
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-text-5: var(--text-5);
+  --color-text-6: var(--text-6);
+  --color-online:  var(--online);
+  --color-info:    var(--info);
+  --color-warning: var(--warning);
 }
 
 @layer base {
