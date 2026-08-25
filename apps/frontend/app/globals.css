@@ -79,16 +79,21 @@
   /*
    * Task 085/task-085-tokens: neutral scale from docs/audits/color-literals-2026-08-25.md.
    * Not used anywhere yet — migrating call sites is Task 087. Values are
-   * cluster representatives (mean L, occurrence-weighted) from that audit,
-   * normalized to chroma 0.010 / hue 15 (the observed range in the source
-   * literals was chroma 0.005–0.012, hue mostly 15) — checked: at these
-   * lightnesses that normalization shifts relative luminance by at most
-   * ~4.5% (darkest step) and moves the tightest real contrast pair in the
-   * audit (surface-1/text-2, 4.80:1) by at most ±0.02, nowhere near the
-   * WCAG 4.5:1 line it was chosen to clear. Of these eleven, only text-6
-   * is not a new value — it aliases --foreground. surface-3 gets its own
-   * value despite --border/--sidebar-border sitting inside its range at
-   * negligible cost — see the comment at surface-3 for why.
+   * cluster representatives (mean L, occurrence-weighted) from that audit.
+   * Lightness (the number that matters for the contrast decision below)
+   * is never touched by hue/chroma normalization — checked at the time:
+   * that shifts relative luminance by at most ~4.5% at the darkest step,
+   * nowhere near the WCAG 4.5:1 line surface-1/text-2 (4.82:1) was chosen
+   * to clear. Of these eleven, only text-6 is not a new value — it
+   * aliases --foreground. surface-3 gets its own value despite
+   * --border/--sidebar-border sitting inside its range at negligible
+   * cost — see the comment at surface-3 for why.
+   *
+   * --surface-1..6 are hue 15 / chroma 0.010; --text-1..5 are hue 60 /
+   * chroma 0.005 — not the same normalization, on purpose, fixed in Task
+   * 086 after the first version put everything at hue 15. See the
+   * comment at --text-1 for why the two halves of the scale use
+   * different hue/chroma.
    */
   --surface-1: oklch(0.060 0.010 15);
   --surface-2: oklch(0.129 0.010 15);
@@ -105,19 +110,33 @@
   --surface-5: oklch(0.359 0.010 15);
   --surface-6: oklch(0.427 0.010 15);
 
-  --text-1: oklch(0.507 0.010 15);
+  /*
+   * Task 086 fix: --text-1..5 use hue 60 / chroma 0.005, not hue 15 /
+   * chroma 0.010 like --surface-*. Verified across the whole frontend,
+   * not just this file: dark surfaces (L<0.5) are hue 15 in 334 of 337
+   * occurrences, light text (L>=0.5) is hue 60 in 104 of 121 — an
+   * intentional split (rose-tinted dark surfaces, warm light text), not
+   * noise, and every existing text-role token already follows it
+   * (--foreground: oklch(0.96 0.005 60)). The first version of this scale
+   * put every level at hue 15/chroma 0.010, which made --text-1..5 read
+   * pink against ~104 warm literals and against --text-6 itself (an
+   * alias to --foreground, hue 60) — a self-inconsistent scale. Surfaces
+   * are untouched: hue 15/chroma 0.010 there matches the data.
+   */
+  --text-1: oklch(0.507 0.005 60);
   /*
    * text-2 (L=0.577) deliberately does NOT alias --muted-foreground
    * (0.55), even though it sits inside this level's range. Aliasing it
    * drops the audit's tightest real contrast pair (surface-1/text-2,
    * "подзаголовок страницы" on /notifications) from 4.80:1 to 4.25–4.29:1
    * — below the 4.5:1 line that k=6 was specifically chosen to hold. Kept
-   * as its own value.
+   * as its own value. Rechecked after the hue/chroma fix above: 4.82:1 —
+   * moved further from the threshold, not closer.
    */
-  --text-2: oklch(0.577 0.010 15);
-  --text-3: oklch(0.686 0.010 15);
-  --text-4: oklch(0.782 0.010 15);
-  --text-5: oklch(0.881 0.010 15);
+  --text-2: oklch(0.577 0.005 60);
+  --text-3: oklch(0.686 0.005 60);
+  --text-4: oklch(0.782 0.005 60);
+  --text-5: oklch(0.881 0.005 60);
   /*
    * text-6 (L=0.946) aliases --foreground (0.96), unlike surface-3/border:
    * --foreground already names the same role text-6 would — primary
