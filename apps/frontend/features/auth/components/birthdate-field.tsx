@@ -91,7 +91,19 @@ export function BirthdateField({ value, onChange, error }: BirthdateFieldProps) 
           id="birthdate"
           type="text"
           inputMode="numeric"
-          autoComplete="bday"
+          // Task 081: Chrome flags `bday` as a non-standard autocomplete value
+          // on this element regardless of `type` (confirmed against both
+          // `type="text"` and `type="date"` in DevTools → Issues) — its
+          // internal validity list disagrees with the WHATWG spec here, the
+          // same way it rejects the spec-valid `nickname` token. It also
+          // wouldn't have worked in practice: `handleChange` below strips
+          // anything Chrome injects down to bare digits regardless of their
+          // order, so an autofilled ISO date (YYYY-MM-DD) would scramble
+          // into the wrong DD.MM.YYYY. The real fix is switching to a native
+          // `type="date"` input or three separate bday-day/bday-month/
+          // bday-year fields — a bigger UX change, tracked separately, not
+          // this task.
+          autoComplete="off"
           placeholder={t.placeholder}
           value={value}
           onChange={handleChange}
