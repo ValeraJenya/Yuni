@@ -28,3 +28,12 @@ docs-site/.hugo_build.lock
 docs-site/cd
 docs-site/git
 docs-site/xcopy
+
+# Build artifacts
+*.tsbuildinfo
+
+# Claude Code: machine-local files. .claude/settings.json stays tracked,
+# and .claude/skills/ (once it exists) should ride through git too — listed
+# individually rather than ignoring .claude/ wholesale.
+.claude/settings.local.json
+.claude/launch.json

@@ -1,0 +1,18 @@
+# Normalize text files to LF in the repository and on checkout, on both
+# developers' machines, regardless of local core.autocrlf. Zero files carry
+# CRLF in the index today (verified on 39c4082) — this only stops future
+# "LF will be replaced by CRLF" warnings, it doesn't rewrite history.
+* text=auto eol=lf
+
+# Binary types actually present in the repo (git ls-files --eol -> i/-text).
+# Don't diff/merge them as text.
+*.png binary
+*.jpg binary
+*.webp binary
+
+# pnpm-lock.yaml is machine-generated and huge on every dependency bump.
+# linguist-generated collapses it by default in GitHub's PR diff view.
+# Deliberately not paired with -diff: that would also silence `git diff`
+# and `git log -p` locally, which is what code review actually reads to
+# catch an unexpected package sneaking into the lockfile.
+pnpm-lock.yaml linguist-generated=true
