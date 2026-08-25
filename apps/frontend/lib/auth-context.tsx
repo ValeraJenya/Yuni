@@ -34,6 +34,11 @@ interface AuthContextValue {
     path: string,
     options?: { method?: ApiRequestMethod; body?: unknown },
   ) => Promise<T>
+  /**
+   * Task 079: internal to useAuth(). Not part of the public hook surface —
+   * see the destructure in useAuth() below.
+   */
+  ensureBootstrapped: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -84,20 +89,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return refreshPromiseRef.current
   }, [applySession, clearSession])
 
-  useEffect(() => {
-    let active = true
+  /**
+   * Task 079: the AuthProvider mounts unconditionally at the root layout,
+   * so it must not fire refreshSession() itself — that hit /auth/refresh
+   * (and logged a 401) on every anonymous public page. Bootstrap is
+   * triggered lazily, once, by the first useAuth() consumer that mounts
+   * (see ensureBootstrapped below and its call site in useAuth()).
+   *
+   * bootstrappedRef is set synchronously so concurrent consumers mounting
+   * in the same tick still only trigger one refreshSession() call.
+   */
+  const bootstrappedRef = useRef(false)
+
+  const ensureBootstrapped = useCallback(() => {
+    if (bootstrappedRef.current) {
+      return
+    }
+
+    bootstrappedRef.current = true
 
     refreshSession()
       .catch(() => null)
       .finally(() => {
-        if (active) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
       })
-
-    return () => {
-      active = false
-    }
   }, [refreshSession])
 
   const register = useCallback(
@@ -173,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshSession,
       authenticatedRequest,
+      ensureBootstrapped,
     }),
     [
       user,
@@ -183,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshSession,
       authenticatedRequest,
+      ensureBootstrapped,
     ],
   )
 
@@ -196,5 +213,25 @@ export function useAuth() {
     throw new Error("useAuth must be used inside AuthProvider")
   }
 
-  return value
+  const { ensureBootstrapped, ...publicValue } = value
+
+  // Task 079: every useAuth() consumer requests bootstrap on mount. This is
+  // what makes it structurally impossible for a public page to end up with
+  // isLoading stuck at true — anyone reading session state runs this effect.
+  // ensureBootstrapped() itself is idempotent (see AuthProvider), so having
+  // several consumers on one page never triggers more than one refresh.
+  useEffect(() => {
+    ensureBootstrapped()
+  }, [ensureBootstrapped])
+
+  // value is already memoized in AuthProvider, but the rest-spread above
+  // builds a fresh object on every call regardless — without this useMemo,
+  // useAuth() would return a new reference on every render even when
+  // nothing changed, breaking dependency arrays for anyone who does
+  // `const auth = useAuth()` and lists it as a dependency.
+  // publicValue is derived from value alone (see destructure above); adding
+  // it to the deps array would defeat the memo, since it's a fresh object
+  // every render by construction.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => publicValue, [value])
 }

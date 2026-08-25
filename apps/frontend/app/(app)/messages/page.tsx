@@ -328,6 +328,8 @@ function MessagesInner() {
           />
           <input
             type="text"
+            id="messages-search"
+            name="messages-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchPlaceholder}
