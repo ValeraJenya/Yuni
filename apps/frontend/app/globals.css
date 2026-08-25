@@ -85,18 +85,20 @@
    * lightnesses that normalization shifts relative luminance by at most
    * ~4.5% (darkest step) and moves the tightest real contrast pair in the
    * audit (surface-1/text-2, 4.80:1) by at most ±0.02, nowhere near the
-   * WCAG 4.5:1 line it was chosen to clear. surface-3 and text-6 are
-   * deliberately NOT new tokens — see below.
+   * WCAG 4.5:1 line it was chosen to clear. Of these eleven, only text-6
+   * is not a new value — it aliases --foreground. surface-3 gets its own
+   * value despite --border/--sidebar-border sitting inside its range at
+   * negligible cost — see the comment at surface-3 for why.
    */
   --surface-1: oklch(0.060 0.010 15);
   --surface-2: oklch(0.129 0.010 15);
   /*
-   * surface-3 (L=0.209) has no token of its own: --border/--sidebar-border
-   * sit at 0.20, inside this level's range, at a cost of only +0.001 max
-   * shift. Deliberately not reused anyway — --border names a role (what
-   * draws edges), not a lightness step, and today's match is coincidence.
-   * Aliasing them would make "make borders slightly lighter" impossible
-   * without also moving every surface-3 background. Kept separate.
+   * surface-3 (L=0.209) keeps its own value rather than aliasing
+   * --border/--sidebar-border (0.20), even though they sit inside this
+   * level's range at a cost of only +0.001 max shift. --border names a
+   * role (what draws edges), not a lightness step, and today's match is
+   * coincidence. Aliasing them would make "make borders slightly
+   * lighter" impossible without also moving every surface-3 background.
    */
   --surface-3: oklch(0.209 0.010 15);
   --surface-4: oklch(0.288 0.010 15);
