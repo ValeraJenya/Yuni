@@ -57,13 +57,19 @@ export function AppContent({ children }: { children: ReactNode }) {
         style={{ zIndex: 0 }}
         aria-hidden="true"
       >
-        {/* Rose bloom — top left anchor */}
+        {/* Rose bloom — top left anchor. Horizontal position and width frozen
+            at their ~1440px viewport values past that point (Task 091): the
+            three glows scale at different vw fractions (70/55/50) and
+            different offsets, so past 1440 they used to drift apart faster
+            than the centred content does, reading as light coming from one
+            side only. Below 1440, min(100vw,1440px)=100vw, so this is
+            numerically identical to the original percentages/vw values. */}
         <div
           style={{
             position: "absolute",
             top: "-20%",
-            left: "-20%",
-            width: "70vw",
+            left: "calc(min(100vw, 1440px) * -0.20)",
+            width: "calc(min(100vw, 1440px) * 0.70)",
             height: "65vh",
             background:
               "radial-gradient(ellipse at center, oklch(0.65 0.26 12 / 0.075) 0%, transparent 60%)",
@@ -75,8 +81,8 @@ export function AppContent({ children }: { children: ReactNode }) {
           style={{
             position: "absolute",
             bottom: "-15%",
-            right: "-15%",
-            width: "55vw",
+            right: "calc(min(100vw, 1440px) * -0.15)",
+            width: "calc(min(100vw, 1440px) * 0.55)",
             height: "55vh",
             background:
               "radial-gradient(ellipse at center, oklch(0.48 0.22 18 / 0.055) 0%, transparent 60%)",
@@ -88,8 +94,8 @@ export function AppContent({ children }: { children: ReactNode }) {
           style={{
             position: "absolute",
             top: "35%",
-            left: "30%",
-            width: "50vw",
+            left: "calc(min(100vw, 1440px) * 0.30)",
+            width: "calc(min(100vw, 1440px) * 0.50)",
             height: "40vh",
             background:
               "radial-gradient(ellipse at center, oklch(0.65 0.18 18 / 0.022) 0%, transparent 65%)",

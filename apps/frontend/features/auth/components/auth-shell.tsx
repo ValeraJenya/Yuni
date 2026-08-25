@@ -23,13 +23,18 @@ export function AuthShell({ children }: AuthShellProps) {
       {/* ── Background ──────────────────────────────────── */}
       <div className="absolute inset-0 bg-obsidian" />
 
-      {/* Atmospheric rose glow — top left */}
+      {/* Atmospheric rose glow — top left. Horizontal position and width
+          frozen at their ~1440px viewport values past that point (Task 091):
+          this glow is 55vw and the one below is 50vw, so past 1440 they used
+          to drift apart faster than the centred form does, reading as light
+          coming from one side only. Below 1440, min(100vw,1440px)=100vw, so
+          this is numerically identical to the original "-10%"/"55vw". */}
       <div
         className="absolute pointer-events-none"
         style={{
           top: "-10%",
-          left: "-10%",
-          width: "55vw",
+          left: "calc(min(100vw, 1440px) * -0.10)",
+          width: "calc(min(100vw, 1440px) * 0.55)",
           height: "60vh",
           background: "radial-gradient(ellipse at center, oklch(0.65 0.26 12 / 0.07) 0%, transparent 65%)",
           filter: "blur(60px)",
@@ -40,8 +45,8 @@ export function AuthShell({ children }: AuthShellProps) {
         className="absolute pointer-events-none"
         style={{
           bottom: "-15%",
-          right: "-10%",
-          width: "50vw",
+          right: "calc(min(100vw, 1440px) * -0.10)",
+          width: "calc(min(100vw, 1440px) * 0.50)",
           height: "55vh",
           background: "radial-gradient(ellipse at center, oklch(0.48 0.22 18 / 0.05) 0%, transparent 65%)",
           filter: "blur(80px)",
