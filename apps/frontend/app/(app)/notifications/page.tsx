@@ -231,7 +231,7 @@ export default function NotificationsPage() {
             size="sm"
             onClick={handleMarkAllRead}
             disabled={!hasUnread || isMarkingAll}
-            className="mt-2 rounded-full bg-muted font-sans font-medium text-text-6 border-primary/22 hover:bg-muted hover:text-text-6 disabled:opacity-40 dark:bg-muted dark:border-primary/22 dark:hover:bg-muted"
+            className="mt-2 rounded-full bg-muted font-sans font-medium text-text-6 border-primary/22 hover:bg-muted hover:text-text-6 disabled:opacity-40"
             style={{ fontSize: "12px" }}
           >
             {isMarkingAll ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={14} />}
@@ -300,7 +300,7 @@ export default function NotificationsPage() {
                 size="sm"
                 onClick={() => void loadNotifications(nextCursor)}
                 disabled={isLoadingMore}
-                className="mx-auto mt-4 rounded-full bg-surface-2 font-sans font-medium text-text-4 border-surface-3 hover:bg-surface-2 hover:text-text-4 dark:bg-surface-2 dark:border-surface-3 dark:hover:bg-surface-2"
+                className="mx-auto mt-4 rounded-full bg-surface-2 font-sans font-medium text-text-4 border-surface-3 hover:bg-surface-2 hover:text-text-4"
                 style={{ fontSize: "12px" }}
               >
                 {isLoadingMore && <Loader2 size={14} className="animate-spin" />}
