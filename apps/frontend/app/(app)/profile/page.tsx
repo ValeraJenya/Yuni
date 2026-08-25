@@ -1056,8 +1056,12 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ── Right column: bio, interests, details, settings ── */}
-        <div className="flex-1 px-5 md:px-8 flex flex-col gap-7 pt-5 md:pt-6">
+        {/* ── Right column: bio, interests, details, settings ──
+            Task 091: capped at 720px — the column's natural width at the
+            1280 baseline (viewport minus the 220px nav rail and 340px photo
+            column) — so field rows stop stretching edge to edge above that,
+            while 1280 itself renders byte-for-byte the same as before. */}
+        <div className="flex-1 min-w-0 md:mx-auto md:max-w-[720px] px-5 md:px-8 flex flex-col gap-7 pt-5 md:pt-6">
 
           {isEditing ? (
             /* ── Панель редактирования ────────────────────────
