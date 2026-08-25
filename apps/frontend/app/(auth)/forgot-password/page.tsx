@@ -63,13 +63,10 @@ function ForgotPasswordContent() {
 
       {/* Eyebrow */}
       <div className="flex items-center gap-3 mb-10">
+        <span className="h-px w-5 flex-shrink-0 bg-primary/65" />
         <span
-          className="h-px w-5 flex-shrink-0"
-          style={{ background: "oklch(0.65 0.26 12 / 0.65)" }}
-        />
-        <span
-          className="font-sans font-medium tracking-[0.26em] uppercase"
-          style={{ fontSize: "9.5px", color: "oklch(0.65 0.26 12)" }}
+          className="font-sans font-medium tracking-[0.26em] uppercase text-primary"
+          style={{ fontSize: "9.5px" }}
         >
           {t.eyebrow}
         </span>
@@ -80,25 +77,24 @@ function ForgotPasswordContent() {
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-3">
             <h1
-              className="font-display font-light leading-[0.96] tracking-[-0.01em]"
-              style={{ fontSize: "clamp(2.2rem, 5vw, 3.2rem)", color: "oklch(0.92 0.005 60)" }}
+              className="font-display font-light leading-[0.96] tracking-[-0.01em] text-foreground"
+              style={{ fontSize: "clamp(2.2rem, 5vw, 3.2rem)" }}
             >
               {t.successHeadline}
             </h1>
             <p
-              className="font-sans leading-relaxed text-pretty"
-              style={{ fontSize: "13px", color: "oklch(0.40 0.008 15)" }}
+              className="font-sans leading-relaxed text-pretty text-surface-6"
+              style={{ fontSize: "13px" }}
             >
               {t.successSub}
             </p>
           </div>
           <a
             href="/signin"
-            className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 w-fit"
+            className="group inline-flex items-center gap-2.5 rounded-full px-7 py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 w-fit bg-primary"
             style={{
               fontSize: "13px",
-              background: "oklch(0.65 0.26 12)",
-              boxShadow: "0 0 24px oklch(0.65 0.26 12 / 0.22)",
+              boxShadow: "0 0 24px color-mix(in oklab, var(--primary) 22%, transparent)",
             }}
           >
             {t.successCta}
@@ -110,14 +106,14 @@ function ForgotPasswordContent() {
         <div className="flex flex-col gap-10">
           <div>
             <h1
-              className="font-display font-light tracking-[-0.02em] mb-3 whitespace-nowrap"
-              style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.2rem)", lineHeight: 1.0, color: "oklch(0.92 0.005 60)" }}
+              className="font-display font-light tracking-[-0.02em] mb-3 whitespace-nowrap text-foreground"
+              style={{ fontSize: "clamp(2.2rem, 5.5vw, 3.2rem)", lineHeight: 1.0 }}
             >
               {t.headline}
             </h1>
             <p
-              className="font-sans leading-relaxed"
-              style={{ fontSize: "13px", color: "oklch(0.40 0.008 15)" }}
+              className="font-sans leading-relaxed text-surface-6"
+              style={{ fontSize: "13px" }}
             >
               {t.sub}
             </p>
@@ -138,11 +134,10 @@ function ForgotPasswordContent() {
             <button
               type="submit"
               disabled={formState === "loading"}
-              className="group w-full flex items-center justify-center gap-2.5 rounded-full py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="group w-full flex items-center justify-center gap-2.5 rounded-full py-3.5 font-sans font-semibold tracking-wide text-white transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed bg-primary"
               style={{
                 fontSize: "13px",
-                background: "oklch(0.65 0.26 12)",
-                boxShadow: formState !== "loading" ? "0 0 28px oklch(0.65 0.26 12 / 0.25)" : "none",
+                boxShadow: formState !== "loading" ? "0 0 28px color-mix(in oklab, var(--primary) 25%, transparent)" : "none",
               }}
             >
               {formState === "loading" ? t.ctaLoading : (
@@ -156,10 +151,8 @@ function ForgotPasswordContent() {
 
           <a
             href="/signin"
-            className="group inline-flex items-center gap-2 font-sans transition-colors w-fit"
-            style={{ fontSize: "12px", color: "oklch(0.36 0.008 15)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "oklch(0.65 0.005 60)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "oklch(0.36 0.008 15)")}
+            className="group inline-flex items-center gap-2 font-sans transition-colors w-fit text-surface-5 hover:text-text-3"
+            style={{ fontSize: "12px" }}
           >
             <ArrowLeft size={12} />
             {t.backToSignIn}

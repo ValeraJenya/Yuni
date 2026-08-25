@@ -15,49 +15,28 @@ export function AuthField({ label, error, hint, id, ...props }: AuthFieldProps) 
     <div className="flex flex-col gap-2">
       <label
         htmlFor={fieldId}
-        className="font-sans"
-        style={{ fontSize: "11px", color: "oklch(0.44 0.008 15)", letterSpacing: "0.06em", textTransform: "uppercase" }}
+        className="font-sans text-[11px] uppercase tracking-[0.06em] text-surface-6"
       >
         {label}
       </label>
       <input
         id={fieldId}
-        className="w-full bg-transparent font-sans outline-none transition-all placeholder-shown:opacity-100"
-        style={{
-          fontSize: "14px",
-          color: "oklch(0.88 0.005 60)",
-          padding: "12px 0",
-          borderBottom: error
-            ? "1px solid oklch(0.52 0.20 25 / 0.80)"
-            : "1px solid oklch(0.22 0.010 15)",
-          caretColor: "oklch(0.65 0.26 12)",
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderBottomColor = error
-            ? "oklch(0.52 0.20 25)"
-            : "oklch(0.65 0.26 12 / 0.70)"
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderBottomColor = error
-            ? "oklch(0.52 0.20 25 / 0.80)"
-            : "oklch(0.22 0.010 15)"
-        }}
+        aria-invalid={!!error}
+        className="w-full bg-transparent font-sans text-sm text-text-5 placeholder-shown:opacity-100 outline-none transition-all caret-primary py-3 px-0 border-b border-b-surface-3 focus:border-b-primary/70 aria-invalid:border-b-destructive/80 aria-invalid:focus:border-b-destructive"
         {...props}
       />
       {error && (
-        <p
-          className="font-sans"
-          style={{ fontSize: "11px", color: "oklch(0.62 0.18 25)" }}
-          role="alert"
-        >
+        // Task 087a: family of oklch(0.6x-0.7x 0.18-0.20 25) has three
+        // real lightness levels (error text here, banner text, --destructive
+        // itself) — same finding as --warning in the Task 086 pilot. Not
+        // migrating to --destructive would shift the visible color;
+        // deferred, not silently forced onto the one existing token.
+        <p className="font-sans text-[11px]" style={{ color: "oklch(0.62 0.18 25)" }} role="alert">
           {error}
         </p>
       )}
       {hint && !error && (
-        <p
-          className="font-sans"
-          style={{ fontSize: "11px", color: "oklch(0.36 0.008 15)" }}
-        >
+        <p className="font-sans text-[11px] text-surface-5">
           {hint}
         </p>
       )}

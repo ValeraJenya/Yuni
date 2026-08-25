@@ -21,6 +21,11 @@
   /* Electric Rose — primary CTA */
   --primary: oklch(0.65 0.26 12);
   --primary-foreground: oklch(0.98 0 0);
+  /* Task 087a: lightened hover state for primary-colored text links (not
+     buttons — those already brighten via `hover:brightness-110`). Found
+     repeated 6× across the project (sign-in/sign-up/profile) as the same
+     literal before this token existed. */
+  --primary-hover: oklch(0.78 0.22 12);
 
   /* Deep ruby — secondary emphasis */
   --secondary: oklch(0.20 0.030 12);
@@ -164,6 +169,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
