@@ -1,0 +1,204 @@
+{
+  "label": "after",
+  "accountResults": [
+    {
+      "handle": "demo",
+      "email": "demo@seed.yuni.local",
+      "count": 2
+    },
+    {
+      "handle": "dima_r",
+      "email": "dima_r@seed.yuni.local",
+      "count": 0
+    }
+  ],
+  "listAccount": {
+    "handle": "demo",
+    "email": "demo@seed.yuni.local",
+    "count": 2
+  },
+  "emptyAccount": {
+    "handle": "dima_r",
+    "email": "dima_r@seed.yuni.local",
+    "count": 0
+  },
+  "screens": [
+    {
+      "state": "list",
+      "account": "demo@seed.yuni.local",
+      "viewport": "390x844",
+      "screenshot": "task087b-after-list-390x844.png",
+      "loaded": {
+        "url": "http://localhost:3000/matches",
+        "text": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\n\nЗагружаем матчи...\n\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль",
+        "ready": true
+      },
+      "metrics": {
+        "bodyText": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\n2\n\n2 активных матча\n\nАня\n\n8 д назад\n\nИгорь\n\n10 д назад\n\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль",
+        "cardCount": 2,
+        "emptyVisible": false,
+        "firstCard": {
+          "rect": {
+            "x": 16,
+            "y": 116.765625,
+            "width": 173,
+            "height": 230.65625
+          },
+          "borderColor": "lab(56.4147 84.1721 24.2322 / 0.28)",
+          "boxShadow": "oklab(0.650009 0.254286 0.0540738 / 0.12) 0px 4px 24px 0px, oklab(0.650009 0.254286 0.0540738 / 0.06) 0px 0px 0px 1px"
+        },
+        "bgRect": null,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 924,
+        "clientHeight": 844
+      },
+      "console": [
+        "[console.log] [Fast Refresh] rebuilding",
+        "[console.log] [Fast Refresh] done in 1082ms",
+        "[console.info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+        "[console.log] [HMR] connected",
+        "[console.warning] Image with src \"http://localhost:4000/uploads/profile-photos/b1e00000-0000-4000-8000-000000000003.png\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"
+      ],
+      "hover": null
+    },
+    {
+      "state": "list",
+      "account": "demo@seed.yuni.local",
+      "viewport": "1280x900",
+      "screenshot": "task087b-after-list-1280x900.png",
+      "loaded": {
+        "url": "http://localhost:3000/matches",
+        "text": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\n2\n\n2 активных матча\n\nАня\n\n8 д назад\n\nИгорь\n\n10 д назад\n\nYUNI\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль\nRU\n/\nEN\nНа главную\nВыйти",
+        "ready": true
+      },
+      "metrics": {
+        "bodyText": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\n2\n\n2 активных матча\n\nАня\n\n8 д назад\n\nИгорь\n\n10 д назад\n\nYUNI\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль\nRU\n/\nEN\nНа главную\nВыйти",
+        "cardCount": 2,
+        "emptyVisible": false,
+        "firstCard": {
+          "rect": {
+            "x": 252,
+            "y": 128.765625,
+            "width": 237,
+            "height": 316
+          },
+          "borderColor": "lab(56.4147 84.1721 24.2322 / 0.28)",
+          "boxShadow": "oklab(0.650009 0.254286 0.0540738 / 0.12) 0px 4px 24px 0px, oklab(0.650009 0.254286 0.0540738 / 0.06) 0px 0px 0px 1px"
+        },
+        "bgRect": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "scrollHeight": 900,
+        "clientHeight": 900
+      },
+      "console": [
+        "[console.info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+        "[console.log] [HMR] connected",
+        "[console.warning] Image with src \"http://localhost:3000/yuni-logo.png\" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: \"auto\"' or 'height: \"auto\"' to maintain the aspect ratio.",
+        "[console.warning] Image with src \"http://localhost:4000/uploads/profile-photos/b1e00000-0000-4000-8000-000000000002.png\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"
+      ],
+      "hover": {
+        "x": 370.5,
+        "y": 286.765625,
+        "beforeBorder": "lab(56.4147 84.1721 24.2322 / 0.28)",
+        "beforeShadow": "oklab(0.650009 0.254286 0.0540738 / 0.12) 0px 4px 24px 0px, oklab(0.650009 0.254286 0.0540738 / 0.06) 0px 0px 0px 1px",
+        "afterBorder": "oklab(0.650009 0.254286 0.0540738 / 0.36)",
+        "afterShadow": "oklab(0.650009 0.254286 0.0540738 / 0.16) 0px 8px 36px 0px, oklab(0.650009 0.254286 0.0540738 / 0.1) 0px 0px 0px 1px"
+      }
+    },
+    {
+      "state": "list",
+      "account": "demo@seed.yuni.local",
+      "viewport": "1920x900",
+      "screenshot": "task087b-after-list-1920x900.png",
+      "loaded": {
+        "url": "http://localhost:3000/matches",
+        "text": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\n\nЗагружаем матчи...\n\nYUNI\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль\nRU\n/\nEN\nНа главную\nВыйти",
+        "ready": true
+      },
+      "metrics": {
+        "bodyText": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\n2\n\n2 активных матча\n\nАня\n\n8 д назад\n\nИгорь\n\n10 д назад\n\nYUNI\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль\nRU\n/\nEN\nНа главную\nВыйти",
+        "cardCount": 2,
+        "emptyVisible": false,
+        "firstCard": {
+          "rect": {
+            "x": 252,
+            "y": 128.765625,
+            "width": 397,
+            "height": 529.328125
+          },
+          "borderColor": "lab(56.4147 84.1721 24.2322 / 0.28)",
+          "boxShadow": "oklab(0.650009 0.254286 0.0540738 / 0.12) 0px 4px 24px 0px, oklab(0.650009 0.254286 0.0540738 / 0.06) 0px 0px 0px 1px"
+        },
+        "bgRect": null,
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 900,
+        "clientHeight": 900
+      },
+      "console": [
+        "[console.info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+        "[console.log] [HMR] connected",
+        "[console.warning] Image with src \"http://localhost:3000/yuni-logo.png\" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: \"auto\"' or 'height: \"auto\"' to maintain the aspect ratio.",
+        "[console.warning] Image with src \"http://localhost:4000/uploads/profile-photos/b1e00000-0000-4000-8000-000000000002.png\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"
+      ],
+      "hover": null
+    },
+    {
+      "state": "empty",
+      "account": "dima_r@seed.yuni.local",
+      "viewport": "390x844",
+      "screenshot": "task087b-after-empty-390x844.png",
+      "loaded": {
+        "url": "http://localhost:3000/matches",
+        "text": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\nПока нет матчей.\nЗайди в поиск и поставь несколько лайков.\nПерейти в поиск\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль",
+        "ready": true
+      },
+      "metrics": {
+        "bodyText": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\nПока нет матчей.\nЗайди в поиск и поставь несколько лайков.\nПерейти в поиск\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль",
+        "cardCount": 0,
+        "emptyVisible": true,
+        "firstCard": null,
+        "bgRect": null,
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 924,
+        "clientHeight": 844
+      },
+      "console": [
+        "[console.info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+        "[console.log] [HMR] connected"
+      ],
+      "hover": null
+    },
+    {
+      "state": "empty",
+      "account": "dima_r@seed.yuni.local",
+      "viewport": "1280x900",
+      "screenshot": "task087b-after-empty-1280x900.png",
+      "loaded": {
+        "url": "http://localhost:3000/matches",
+        "text": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\nПока нет матчей.\nЗайди в поиск и поставь несколько лайков.\nПерейти в поиск\nYUNI\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль\nRU\n/\nEN\nНа главную\nВыйти",
+        "ready": true
+      },
+      "metrics": {
+        "bodyText": "ВЗАИМНАЯ СИМПАТИЯ\nМатчи\nПока нет матчей.\nЗайди в поиск и поставь несколько лайков.\nПерейти в поиск\nYUNI\nПоиск\nМатчи\nЧаты\nСобытия\nПрофиль\nRU\n/\nEN\nНа главную\nВыйти",
+        "cardCount": 0,
+        "emptyVisible": true,
+        "firstCard": null,
+        "bgRect": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "scrollHeight": 900,
+        "clientHeight": 900
+      },
+      "console": [
+        "[console.info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold",
+        "[console.log] [HMR] connected",
+        "[console.warning] Image with src \"http://localhost:3000/yuni-logo.png\" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: \"auto\"' or 'height: \"auto\"' to maintain the aspect ratio."
+      ],
+      "hover": null
+    }
+  ]
+}
