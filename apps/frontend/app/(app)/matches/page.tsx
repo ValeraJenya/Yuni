@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { type CSSProperties, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -391,30 +391,17 @@ export default function MatchesPage() {
               return (
                 <div
                   key={match.id}
-                  className="group relative rounded-2xl overflow-hidden transition-all"
+                  className="group relative overflow-hidden rounded-2xl border transition-all [border-color:var(--match-card-border)] [box-shadow:var(--match-card-shadow)] hover:[border-color:color-mix(in_oklab,var(--primary)_36%,transparent)] hover:[box-shadow:0_8px_36px_color-mix(in_oklab,var(--primary)_16%,transparent),0_0_0_1px_color-mix(in_oklab,var(--primary)_10%,transparent)] focus-within:[border-color:color-mix(in_oklab,var(--primary)_36%,transparent)] focus-within:[box-shadow:0_8px_36px_color-mix(in_oklab,var(--primary)_16%,transparent),0_0_0_1px_color-mix(in_oklab,var(--primary)_10%,transparent)]"
                   style={{
                     aspectRatio: "3/4",
                     background: "var(--background)",
-                    border: match.conversationStarted
-                      ? "1px solid var(--rose-glow)"
-                      : "1px solid color-mix(in oklab, var(--carbon) 65%, transparent)",
-                    boxShadow: match.conversationStarted
+                    "--match-card-border": match.conversationStarted
+                      ? "var(--rose-glow)"
+                      : "color-mix(in oklab, var(--carbon) 65%, transparent)",
+                    "--match-card-shadow": match.conversationStarted
                       ? "0 4px 24px color-mix(in oklab, var(--primary) 12%, transparent), 0 0 0 1px color-mix(in oklab, var(--primary) 6%, transparent)"
                       : "0 4px 16px color-mix(in oklab, var(--surface-1) 40%, transparent)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "color-mix(in oklab, var(--primary) 36%, transparent)"
-                    e.currentTarget.style.boxShadow =
-                      "0 8px 36px color-mix(in oklab, var(--primary) 16%, transparent), 0 0 0 1px color-mix(in oklab, var(--primary) 10%, transparent)"
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = match.conversationStarted
-                      ? "var(--rose-glow)"
-                      : "color-mix(in oklab, var(--carbon) 65%, transparent)"
-                    e.currentTarget.style.boxShadow = match.conversationStarted
-                      ? "0 4px 24px color-mix(in oklab, var(--primary) 12%, transparent), 0 0 0 1px color-mix(in oklab, var(--primary) 6%, transparent)"
-                      : "0 4px 16px color-mix(in oklab, var(--surface-1) 40%, transparent)"
-                  }}
+                  } as CSSProperties}
                 >
                   <button
                     type="button"
