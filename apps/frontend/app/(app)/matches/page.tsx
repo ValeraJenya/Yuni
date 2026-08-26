@@ -5,6 +5,16 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Ban, Clock, Flag, Flame, Heart } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { ApiError } from "@/lib/auth-api"
 import { blocksApi } from "@/lib/blocks-api"
 import { useAuth } from "@/lib/auth-context"
@@ -263,18 +273,9 @@ export default function MatchesPage() {
             {t.title}
           </h1>
           {activeMatches.length > 0 && (
-            <span
-              className="flex items-center justify-center rounded-full font-sans font-semibold text-white"
-              style={{
-                width: "22px",
-                height: "22px",
-                fontSize: "10px",
-                background: "var(--primary)",
-                boxShadow: "0 0 14px color-mix(in oklab, var(--primary) 45%, transparent)",
-              }}
-            >
+            <Badge className="h-[22px] w-[22px] rounded-full border-0 bg-primary p-0 font-sans text-[10px] font-semibold text-white shadow-[0_0_14px_color-mix(in_oklab,var(--primary)_45%,transparent)]">
               {activeMatches.length}
-            </span>
+            </Badge>
           )}
         </div>
         {activeMatches.length > 0 && (
@@ -290,11 +291,10 @@ export default function MatchesPage() {
       {/* ── Content ──────────────────────────────────────── */}
       <div className="flex-1 px-4 md:px-8 pb-24 md:pb-12">
         {(moderationError || conversationError || moderationMessage) && (
-          <p
-            className="font-sans mb-4 rounded-xl px-4 py-3"
+          <Alert
+            className="mb-4 rounded-xl px-4 py-3 font-sans text-[12px]"
             role="status"
             style={{
-              fontSize: "12px",
               color: moderationError || conversationError
                 // The hue-25 family has two visible levels but only one token.
                 ? "oklch(0.60 0.18 25 / 0.85)"
@@ -307,8 +307,10 @@ export default function MatchesPage() {
                 : "1px solid oklch(0.62 0.15 145 / 0.22)",
             }}
           >
-            {moderationError ?? conversationError ?? moderationMessage}
-          </p>
+            <AlertDescription className="text-[12px] leading-normal text-inherit">
+              {moderationError ?? conversationError ?? moderationMessage}
+            </AlertDescription>
+          </Alert>
         )}
         {isMatchesLoading ? (
           <div className="flex flex-col items-center gap-4 text-center py-20">
@@ -336,42 +338,38 @@ export default function MatchesPage() {
           </div>
         ) : activeMatches.length === 0 ? (
           /* Empty state */
-          <div className="flex flex-col items-center gap-6 text-center py-20">
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center"
+          <Empty className="border border-[color:color-mix(in_oklab,var(--primary)_14%,transparent)] bg-transparent p-0 py-20 md:p-0 md:py-20">
+            <EmptyMedia
+              className="mb-0 flex h-16 w-16 items-center justify-center rounded-full"
               style={{
                 background: "color-mix(in oklab, var(--primary) 7%, transparent)",
                 border: "1px solid color-mix(in oklab, var(--primary) 14%, transparent)",
                 boxShadow: "0 0 36px color-mix(in oklab, var(--primary) 6%, transparent)",
               }}
             >
-              <Heart size={22} style={{ color: "color-mix(in oklab, var(--primary) 55%, transparent)" }} strokeWidth={1.5} />
-            </div>
-            <div>
-              <p
-                className="font-display font-light mb-2"
+              <Heart className="size-[22px]" style={{ color: "color-mix(in oklab, var(--primary) 55%, transparent)" }} strokeWidth={1.5} />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle
+                className="font-display text-[1.55rem] font-light tracking-normal text-text-3"
                 style={{ fontSize: "1.55rem", color: "var(--text-3)", lineHeight: 1.05 }}
               >
                 {t.empty}
-              </p>
-              <p className="font-sans" style={{ fontSize: "13px", color: "var(--surface-5)" }}>
+              </EmptyTitle>
+              <EmptyDescription className="font-sans text-[13px] leading-normal text-surface-5">
                 {t.emptySub}
-              </p>
-            </div>
-            <Link
-              href="/discover"
-              className="flex items-center gap-2 rounded-full px-7 py-3.5 font-sans font-medium transition-all hover:brightness-110"
-              style={{
-                fontSize: "13px",
-                color: "white",
-                background: "var(--primary)",
-                boxShadow: "0 0 26px color-mix(in oklab, var(--primary) 30%, transparent)",
-              }}
+              </EmptyDescription>
+            </EmptyHeader>
+            <Button
+              asChild
+              className="h-auto rounded-full px-7 py-3.5 font-sans text-[13px] font-medium text-white shadow-[0_0_26px_color-mix(in_oklab,var(--primary)_30%,transparent)] hover:bg-primary hover:brightness-110"
             >
-              <Flame size={13} />
-              {t.discoverCta}
-            </Link>
-          </div>
+              <Link href="/discover">
+                <Flame className="size-[13px]" />
+                {t.discoverCta}
+              </Link>
+            </Button>
+          </Empty>
         ) : (
           /* Match grid */
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
@@ -478,13 +476,15 @@ export default function MatchesPage() {
                   )}
 
                   <div className="absolute top-3 left-3 z-20 flex gap-1.5">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-sm"
                       title={t.reportLabel}
                       aria-label={t.reportLabel}
                       disabled={Boolean(pendingModerationUserId)}
                       onClick={() => void reportMatch(match)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-45"
+                      className="h-7 w-7 rounded-full p-0 disabled:opacity-45"
                       style={{
                         color: "var(--text-5)",
                         background: "color-mix(in oklab, var(--surface-1) 78%, transparent)",
@@ -492,15 +492,17 @@ export default function MatchesPage() {
                         backdropFilter: "blur(10px)",
                       }}
                     >
-                      <Flag size={12} strokeWidth={1.7} />
-                    </button>
-                    <button
+                      <Flag className="size-3" strokeWidth={1.7} />
+                    </Button>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-sm"
                       title={t.blockLabel}
                       aria-label={t.blockLabel}
                       disabled={Boolean(pendingModerationUserId)}
                       onClick={() => void blockMatch(match)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-45"
+                      className="h-7 w-7 rounded-full p-0 disabled:opacity-45"
                       style={{
                         color: isModerationPending
                           // The hue-25 family has two visible levels but only one token.
@@ -511,8 +513,8 @@ export default function MatchesPage() {
                         backdropFilter: "blur(10px)",
                       }}
                     >
-                      <Ban size={12} strokeWidth={1.7} />
-                    </button>
+                      <Ban className="size-3" strokeWidth={1.7} />
+                    </Button>
                   </div>
 
                   {/* Online indicator */}
