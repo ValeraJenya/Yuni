@@ -346,3 +346,35 @@ stash`, не по памяти). 1920 — геометрия декоратив�
 на каждом экране — полная перезагрузка, не переход по ссылке (см.
 CLAUDE.md); новых ошибок/issues нет, кроме уже известного 401 на
 `/auth/refresh` при выходе из системы (не относится к этой задаче).
+
+## Дополнение: Task 087b — `/matches`, 2026-08-26
+
+Ветка `feat/task-087b-matches`. Один экран: `apps/frontend/app/(app)/matches/page.tsx`.
+
+### Компоненты
+
+`Alert`/`AlertDescription`, `Badge`, `Button` и `Empty`-семейство подошли без правки CVA. Как и в пилоте, компонент выбирался не по совпадению имени, а по визуальной роли: loading/error transient-state остались своей разметкой, empty-state переведён на `Empty`, потому что это стабильное пустое состояние. Иконочные report/block actions переведены на `Button variant="ghost" size="icon-sm"` с сохранением текущего glass-слоя через `style`, потому что базовый ghost сам по себе не описывает этот поверхностный слой.
+
+### Литералы и три цветные семьи
+
+`oklch(` на `/matches`: **64 → 4**.
+
+Важный вывод для следующих частей Task 087: на одном экране реально участвуют три цветные семьи, и у каждой разная стратегия.
+
+| Семья | Что произошло | Вывод |
+|---|---|---|
+| primary / hue-12 | Основная brand-семья почти целиком ушла в `var(--primary)`, `bg-primary`, `text-primary`, `color-mix(in oklab, var(--primary), transparent)` и CSS hover. | Для alpha-слоёв brand-цвета текущего `color-mix` достаточно; новые alpha-токены не нужны. |
+| destructive/error / hue-25 | Остались два литерала `oklch(0.60 0.18 25 / ...)` для более светлого error-level, рядом с `--destructive` для border mix. | Как и после 087a, семья hue-25 имеет больше одного видимого уровня; сводить всё к одному `--destructive` молча нельзя. Нужен отдельный design-level/token decision. |
+| success / hue-145 | Остались два литерала `oklch(0.62 0.15 145 / ...)` для success toast/message. | У проекта уже есть `--online` в зелёной области, но success-message это не та же роль. Нужен отдельный success token или явное решение переиспользовать существующую зелёную роль. |
+
+То есть Task 087b подтвердил находку пилота и 087a: “ближайший токен по оттенку” недостаточен как правило миграции. Если внутри семьи есть несколько заметных уровней или разные semantic roles, литерал лучше оставить с комментарием, чем незаметно ухудшить визуальную систему.
+
+### Hover
+
+Единственный `/matches` `onMouseEnter`/`onMouseLeave` был на карточке матча и менял border/shadow. Он переведён на CSS `hover:`/`focus-within:` arbitrary utilities. Visual QA на 1280×900 показала тот же state transition: base primary border 28% → hover 36%, shadow 12%/6% → 16%/10%. Browser сериализует токены после миграции как `lab/oklab`, но численно это тот же resolved color path.
+
+### Visual QA
+
+В отличие от Task 086, скриншоты получены. Evidence лежит в `docs-site/content/tasks/087b.md` и `docs-site/static/task-087b/`: before/after 390×844 и 1280×900 для списка и empty-state, 1920×900 guard Task 091, hover карточки. Список проверен на `demo@seed.yuni.local`, пустое состояние — на `dima_r@seed.yuni.local`.
+
+Консоль проверялась полной навигацией/reload для каждого экрана. Новых `/matches` runtime errors нет; остался существующий Docker dev-server шум React DevTools/HMR и Next Image warnings.
