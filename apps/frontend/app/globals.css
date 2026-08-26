@@ -154,6 +154,45 @@
   --online:  oklch(0.78 0.20 145);
   --info:    oklch(0.72 0.20 220);
   --warning: oklch(0.70 0.16 28);
+
+  /*
+   * Task 093: inline validation error text, observed as
+   * oklch(0.62 0.18 25) 3× in auth fields. It is also the approved
+   * consolidation target for oklch(0.60 0.18 25), currently written 8×
+   * across app screens (7 text uses and 1 pending-action icon).
+   */
+  --destructive-text: oklch(0.62 0.18 25);
+  /*
+   * Task 093: strong general-error banner text, observed as
+   * oklch(0.70 0.16 25) 2× at runtime in the sign-in and sign-up forms.
+   */
+  --destructive-strong: oklch(0.70 0.16 25);
+  /*
+   * Task 093: online-badge foreground text, observed as
+   * oklch(0.80 0.18 145) 3× in discover profile presentations.
+   */
+  --online-foreground: oklch(0.80 0.18 145);
+  /*
+   * Task 093: successful-action feedback, observed as
+   * oklch(0.62 0.15 145) 3× on matches/profile. This is intentionally a
+   * separate role from online presence even though both share hue 145.
+   */
+  --success: oklch(0.62 0.15 145);
+  /*
+   * Task 093: muted info structure (borders and glows), observed as
+   * oklch(0.65 0.20 220) 6× in superlike controls and feedback.
+   */
+  --info-muted: oklch(0.65 0.20 220);
+  /*
+   * Task 093: info hover foreground, observed as
+   * oklch(0.82 0.18 220) 1× on the superlike action.
+   */
+  --info-hover: oklch(0.82 0.18 220);
+  /*
+   * Task 093: ruby UI foreground, observed as oklch(0.70 0.22 18) 1×
+   * on the notification-type icon; distinct from decorative --ruby glows.
+   */
+  --ruby-foreground: oklch(0.70 0.22 18);
 }
 
 @theme inline {
@@ -225,6 +264,13 @@
   --color-online:  var(--online);
   --color-info:    var(--info);
   --color-warning: var(--warning);
+  --color-destructive-text: var(--destructive-text);
+  --color-destructive-strong: var(--destructive-strong);
+  --color-online-foreground: var(--online-foreground);
+  --color-success: var(--success);
+  --color-info-muted: var(--info-muted);
+  --color-info-hover: var(--info-hover);
+  --color-ruby-foreground: var(--ruby-foreground);
 }
 
 @layer base {
