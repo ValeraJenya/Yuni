@@ -251,14 +251,14 @@ export default function MatchesPage() {
       <header className="px-5 pt-6 pb-6 md:px-10 md:pt-8 md:pb-7">
         <span
           className="font-sans font-medium tracking-[0.20em] uppercase block mb-1"
-          style={{ fontSize: "9px", color: "oklch(0.65 0.26 12 / 0.70)" }}
+          style={{ fontSize: "9px", color: "color-mix(in oklab, var(--primary) 70%, transparent)" }}
         >
           {t.eyebrow}
         </span>
         <div className="flex items-center gap-3">
           <h1
             className="font-display font-light tracking-[-0.01em]"
-            style={{ fontSize: "1.55rem", color: "oklch(0.90 0.005 60)", lineHeight: 1.1 }}
+            style={{ fontSize: "1.55rem", color: "var(--text-5)", lineHeight: 1.1 }}
           >
             {t.title}
           </h1>
@@ -269,8 +269,8 @@ export default function MatchesPage() {
                 width: "22px",
                 height: "22px",
                 fontSize: "10px",
-                background: "oklch(0.65 0.26 12)",
-                boxShadow: "0 0 14px oklch(0.65 0.26 12 / 0.45)",
+                background: "var(--primary)",
+                boxShadow: "0 0 14px color-mix(in oklab, var(--primary) 45%, transparent)",
               }}
             >
               {activeMatches.length}
@@ -280,7 +280,7 @@ export default function MatchesPage() {
         {activeMatches.length > 0 && (
           <p
             className="font-sans mt-1.5"
-            style={{ fontSize: "12px", color: "oklch(0.30 0.008 15)" }}
+            style={{ fontSize: "12px", color: "var(--surface-4)" }}
           >
             {t.activeNote(activeMatches.length)}
           </p>
@@ -296,11 +296,14 @@ export default function MatchesPage() {
             style={{
               fontSize: "12px",
               color: moderationError || conversationError
+                // The hue-25 family has two visible levels but only one token.
                 ? "oklch(0.60 0.18 25 / 0.85)"
+                // The hue-145 family has two visible levels but only one token.
                 : "oklch(0.62 0.15 145 / 0.85)",
-              background: "oklch(0.11 0.012 15 / 0.80)",
+              background: "color-mix(in oklab, var(--popover) 80%, transparent)",
               border: moderationError || conversationError
-                ? "1px solid oklch(0.55 0.20 25 / 0.25)"
+                ? "1px solid color-mix(in oklab, var(--destructive) 25%, transparent)"
+                // The hue-145 family has two visible levels but only one token.
                 : "1px solid oklch(0.62 0.15 145 / 0.22)",
             }}
           >
@@ -312,22 +315,22 @@ export default function MatchesPage() {
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{
-                background: "oklch(0.65 0.26 12 / 0.07)",
-                border: "1px solid oklch(0.65 0.26 12 / 0.14)",
+                background: "color-mix(in oklab, var(--primary) 7%, transparent)",
+                border: "1px solid color-mix(in oklab, var(--primary) 14%, transparent)",
               }}
             >
-              <Heart size={20} style={{ color: "oklch(0.65 0.26 12 / 0.55)" }} strokeWidth={1.5} />
+              <Heart size={20} style={{ color: "color-mix(in oklab, var(--primary) 55%, transparent)" }} strokeWidth={1.5} />
             </div>
-            <p className="font-sans" style={{ fontSize: "13px", color: "oklch(0.42 0.008 15)" }}>
+            <p className="font-sans" style={{ fontSize: "13px", color: "var(--surface-6)" }}>
               {t.loading}
             </p>
           </div>
         ) : loadError ? (
           <div className="flex flex-col items-center gap-4 text-center py-20">
-            <p className="font-display font-light" style={{ fontSize: "1.4rem", color: "oklch(0.72 0.005 60)" }}>
+            <p className="font-display font-light" style={{ fontSize: "1.4rem", color: "var(--text-3)" }}>
               {t.loadError}
             </p>
-            <p className="font-sans max-w-xs" style={{ fontSize: "13px", color: "oklch(0.45 0.008 15)" }}>
+            <p className="font-sans max-w-xs" style={{ fontSize: "13px", color: "var(--surface-6)" }}>
               {loadError}
             </p>
           </div>
@@ -337,21 +340,21 @@ export default function MatchesPage() {
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center"
               style={{
-                background: "oklch(0.65 0.26 12 / 0.07)",
-                border: "1px solid oklch(0.65 0.26 12 / 0.14)",
-                boxShadow: "0 0 36px oklch(0.65 0.26 12 / 0.06)",
+                background: "color-mix(in oklab, var(--primary) 7%, transparent)",
+                border: "1px solid color-mix(in oklab, var(--primary) 14%, transparent)",
+                boxShadow: "0 0 36px color-mix(in oklab, var(--primary) 6%, transparent)",
               }}
             >
-              <Heart size={22} style={{ color: "oklch(0.65 0.26 12 / 0.55)" }} strokeWidth={1.5} />
+              <Heart size={22} style={{ color: "color-mix(in oklab, var(--primary) 55%, transparent)" }} strokeWidth={1.5} />
             </div>
             <div>
               <p
                 className="font-display font-light mb-2"
-                style={{ fontSize: "1.55rem", color: "oklch(0.72 0.005 60)", lineHeight: 1.05 }}
+                style={{ fontSize: "1.55rem", color: "var(--text-3)", lineHeight: 1.05 }}
               >
                 {t.empty}
               </p>
-              <p className="font-sans" style={{ fontSize: "13px", color: "oklch(0.34 0.008 15)" }}>
+              <p className="font-sans" style={{ fontSize: "13px", color: "var(--surface-5)" }}>
                 {t.emptySub}
               </p>
             </div>
@@ -361,8 +364,8 @@ export default function MatchesPage() {
               style={{
                 fontSize: "13px",
                 color: "white",
-                background: "oklch(0.65 0.26 12)",
-                boxShadow: "0 0 26px oklch(0.65 0.26 12 / 0.30)",
+                background: "var(--primary)",
+                boxShadow: "0 0 26px color-mix(in oklab, var(--primary) 30%, transparent)",
               }}
             >
               <Flame size={13} />
@@ -391,26 +394,26 @@ export default function MatchesPage() {
                   className="group relative rounded-2xl overflow-hidden transition-all"
                   style={{
                     aspectRatio: "3/4",
-                    background: "oklch(0.10 0.012 15)",
+                    background: "var(--background)",
                     border: match.conversationStarted
-                      ? "1px solid oklch(0.65 0.26 12 / 0.28)"
-                      : "1px solid oklch(0.18 0.012 15 / 0.65)",
+                      ? "1px solid var(--rose-glow)"
+                      : "1px solid color-mix(in oklab, var(--carbon) 65%, transparent)",
                     boxShadow: match.conversationStarted
-                      ? "0 4px 24px oklch(0.65 0.26 12 / 0.12), 0 0 0 1px oklch(0.65 0.26 12 / 0.06)"
-                      : "0 4px 16px oklch(0.04 0.005 15 / 0.40)",
+                      ? "0 4px 24px color-mix(in oklab, var(--primary) 12%, transparent), 0 0 0 1px color-mix(in oklab, var(--primary) 6%, transparent)"
+                      : "0 4px 16px color-mix(in oklab, var(--surface-1) 40%, transparent)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "oklch(0.65 0.26 12 / 0.36)"
+                    e.currentTarget.style.borderColor = "color-mix(in oklab, var(--primary) 36%, transparent)"
                     e.currentTarget.style.boxShadow =
-                      "0 8px 36px oklch(0.65 0.26 12 / 0.16), 0 0 0 1px oklch(0.65 0.26 12 / 0.10)"
+                      "0 8px 36px color-mix(in oklab, var(--primary) 16%, transparent), 0 0 0 1px color-mix(in oklab, var(--primary) 10%, transparent)"
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = match.conversationStarted
-                      ? "oklch(0.65 0.26 12 / 0.28)"
-                      : "oklch(0.18 0.012 15 / 0.65)"
+                      ? "var(--rose-glow)"
+                      : "color-mix(in oklab, var(--carbon) 65%, transparent)"
                     e.currentTarget.style.boxShadow = match.conversationStarted
-                      ? "0 4px 24px oklch(0.65 0.26 12 / 0.12), 0 0 0 1px oklch(0.65 0.26 12 / 0.06)"
-                      : "0 4px 16px oklch(0.04 0.005 15 / 0.40)"
+                      ? "0 4px 24px color-mix(in oklab, var(--primary) 12%, transparent), 0 0 0 1px color-mix(in oklab, var(--primary) 6%, transparent)"
+                      : "0 4px 16px color-mix(in oklab, var(--surface-1) 40%, transparent)"
                   }}
                 >
                   <button
@@ -433,8 +436,8 @@ export default function MatchesPage() {
                     <div
                       className="absolute inset-0 flex items-center justify-center"
                       style={{
-                        background: "oklch(0.13 0.012 15)",
-                        color: "oklch(0.65 0.26 12 / 0.70)",
+                        background: "var(--surface-2)",
+                        color: "color-mix(in oklab, var(--primary) 70%, transparent)",
                       }}
                     >
                       <Heart size={28} strokeWidth={1.5} />
@@ -446,8 +449,8 @@ export default function MatchesPage() {
                     className="absolute inset-0 pointer-events-none"
                     style={{
                       background: [
-                        "linear-gradient(to top, oklch(0.05 0.010 15 / 0.96) 0%, oklch(0.06 0.008 15 / 0.55) 32%, transparent 58%)",
-                        "linear-gradient(to bottom, oklch(0.05 0.008 15 / 0.28) 0%, transparent 20%)",
+                        "linear-gradient(to top, color-mix(in oklab, var(--surface-1) 96%, transparent) 0%, color-mix(in oklab, var(--surface-1) 55%, transparent) 32%, transparent 58%)",
+                        "linear-gradient(to bottom, color-mix(in oklab, var(--surface-1) 28%, transparent) 0%, transparent 20%)",
                       ].join(", "),
                     }}
                   />
@@ -460,9 +463,9 @@ export default function MatchesPage() {
                         width: "9px",
                         height: "9px",
                         borderRadius: "50%",
-                        background: "oklch(0.65 0.26 12)",
-                        boxShadow: "0 0 10px oklch(0.65 0.26 12 / 0.75)",
-                        border: "1.5px solid oklch(0.07 0.008 15)",
+                        background: "var(--primary)",
+                        boxShadow: "0 0 10px color-mix(in oklab, var(--primary) 75%, transparent)",
+                        border: "1.5px solid var(--surface-1)",
                       }}
                     />
                   )}
@@ -470,15 +473,15 @@ export default function MatchesPage() {
                   {isConversationPending && (
                     <div
                       className="absolute inset-0 z-10 flex items-center justify-center"
-                      style={{ background: "oklch(0.05 0.010 15 / 0.30)" }}
+                      style={{ background: "color-mix(in oklab, var(--surface-1) 30%, transparent)" }}
                     >
                       <span
                         className="rounded-full px-3 py-1.5 font-sans"
                         style={{
                           fontSize: "11px",
-                          color: "oklch(0.86 0.005 60)",
-                          background: "oklch(0.09 0.012 15 / 0.76)",
-                          border: "1px solid oklch(0.24 0.012 15 / 0.70)",
+                          color: "var(--text-5)",
+                          background: "color-mix(in oklab, var(--background) 76%, transparent)",
+                          border: "1px solid color-mix(in oklab, var(--surface-3) 70%, transparent)",
                           backdropFilter: "blur(10px)",
                         }}
                       >
@@ -496,9 +499,9 @@ export default function MatchesPage() {
                       onClick={() => void reportMatch(match)}
                       className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-45"
                       style={{
-                        color: "oklch(0.88 0.005 60)",
-                        background: "oklch(0.07 0.012 15 / 0.78)",
-                        border: "1px solid oklch(0.28 0.012 15 / 0.58)",
+                        color: "var(--text-5)",
+                        background: "color-mix(in oklab, var(--surface-1) 78%, transparent)",
+                        border: "1px solid color-mix(in oklab, var(--surface-4) 58%, transparent)",
                         backdropFilter: "blur(10px)",
                       }}
                     >
@@ -513,10 +516,11 @@ export default function MatchesPage() {
                       className="flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-45"
                       style={{
                         color: isModerationPending
+                          // The hue-25 family has two visible levels but only one token.
                           ? "oklch(0.60 0.18 25 / 0.65)"
-                          : "oklch(0.88 0.005 60)",
-                        background: "oklch(0.07 0.012 15 / 0.78)",
-                        border: "1px solid oklch(0.55 0.20 25 / 0.34)",
+                          : "var(--text-5)",
+                        background: "color-mix(in oklab, var(--surface-1) 78%, transparent)",
+                        border: "1px solid color-mix(in oklab, var(--destructive) 34%, transparent)",
                         backdropFilter: "blur(10px)",
                       }}
                     >
@@ -535,18 +539,18 @@ export default function MatchesPage() {
                           className="font-display font-light"
                           style={{
                             fontSize: "1.05rem",
-                            color: "oklch(0.94 0.004 60)",
+                            color: "var(--foreground)",
                             lineHeight: 1.15,
-                            textShadow: "0 2px 12px oklch(0.04 0.005 15 / 0.80)",
+                            textShadow: "0 2px 12px color-mix(in oklab, var(--surface-1) 80%, transparent)",
                           }}
                         >
                           {profileName}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <Clock size={9} style={{ color: "oklch(0.65 0.26 12 / 0.70)" }} />
+                          <Clock size={9} style={{ color: "color-mix(in oklab, var(--primary) 70%, transparent)" }} />
                           <span
                             className="font-sans"
-                            style={{ fontSize: "9.5px", color: "oklch(0.65 0.26 12 / 0.70)" }}
+                            style={{ fontSize: "9.5px", color: "color-mix(in oklab, var(--primary) 70%, transparent)" }}
                           >
                             {expiry}
                           </span>
@@ -562,16 +566,16 @@ export default function MatchesPage() {
                         className="font-display font-light"
                         style={{
                           fontSize: "1.05rem",
-                          color: "oklch(0.95 0.004 60)",
+                          color: "var(--foreground)",
                           lineHeight: 1.1,
-                          textShadow: "0 2px 12px oklch(0.04 0.005 15 / 0.80)",
+                          textShadow: "0 2px 12px color-mix(in oklab, var(--surface-1) 80%, transparent)",
                         }}
                       >
                         {profileName}
                       </p>
                       <p
                         className="font-sans mt-0.5"
-                        style={{ fontSize: "10px", color: "oklch(0.36 0.008 15)" }}
+                        style={{ fontSize: "10px", color: "var(--surface-5)" }}
                       >
                         {relativeTime(match.matchedAt, nowMs, t)}
                       </p>
