@@ -268,11 +268,33 @@
 
 
 
-\### Этап 0 — Baseline
+\### Этап 0 — Baseline — выполнен
+
+\- \[x] Baseline выполнен 2026-09-06 относительно commit `80de2c161f58e821d28bf2eb1d0a6ff7fd6329aa`. Полное evidence — [02-BASELINE.md](02-BASELINE.md).
+
+Краткие результаты (baseline observations, не окончательные audit findings):
+
+\- backend: 220 тестов PASS;
+
+\- frontend: 60 тестов PASS;
+
+\- build/typecheck/lint/Prisma validate и generate: PASS;
+
+\- frontend lint: 17 предупреждений, 0 ошибок;
+
+\- e2e: BLOCKED — нет подтверждённой отдельной тестовой БД, Docker daemon недоступен; migrations и DB integration остаются непроверенными;
+
+\- coverage: NOT CONFIGURED, процент покрытия неизвестен;
+
+\- корневой `.env` автоматически не загружается при локальном запуске backend из `apps/backend`;
+
+\- выявлены различия между локальными scripts и CI, включая frontend typecheck и состав aggregate checks; сравнение приведено в baseline-отчёте.
+
+Завершение этапа означает фиксацию результатов и ограничений, а не успешное прохождение заблокированных проверок.
 
 
 
-Зафиксировать исходное состояние:
+Категории исходного состояния, рассмотренные в baseline (статусы и ограничения — в отчёте):
 
 
 
@@ -308,7 +330,7 @@
 
 
 
-Baseline проводится без исправления найденных проблем.
+Baseline проведён без исправления найденных проблем.
 
 
 
@@ -518,9 +540,9 @@ Finding
 
 \- Корневой `.env.example` остаётся единственным содержательным шаблоном окружения.
 
-\- Во время baseline необходимо проверить загрузку корневого `.env` при локальном запуске backend.
+\- Baseline подтвердил: default ConfigModule не загружает корневой `.env` при CWD `apps/backend`; проверка выполнена на synthetic fixture без запуска dev-сервера.
 
-\- Во время baseline необходимо проверить необходимость `NODE_ENV` и `TEST_DATABASE_URL` в корневом `.env.example`.
+\- Необходимость `NODE_ENV` и `TEST_DATABASE_URL` рассмотрена в baseline: первый необязателен для локального development-default, второй полезно документировать для отдельной тестовой БД вместе со способом передачи в процесс. Изменения `.env.example` не выполнялись.
 
 
 
@@ -537,6 +559,7 @@ Finding
 | 2026-09-06 | Проверка CodeGraph через Codex Desktop | Интеграция Codex Desktop → MCP → CodeGraph работает; сервер `codegraph` и инструменты профиля `core` доступны; `AuthService` найден через MCP без изменения проекта. |
 | 2026-09-06 | Read-only проверка stash и backend `.env.example` | Через `stash@{0}^3` проверен пустой `apps/backend/.env.example` (0 байт): секретов, placeholders и переменных нет. Решено не добавлять файл в Git и сохранить корневой `.env.example` единственным содержательным шаблоном. Вопросы загрузки окружения и полноты шаблона перенесены в baseline. |
 | 2026-09-06 | Завершение блока проверки stash | Ранее `stash@{0}` содержал только пустой `apps/backend/.env.example` размером 0 байт. При финальной проверке `refs/stash` уже отсутствовал, оставшихся stash не было. Команда `git stash drop` в этой проверке не выполнялась. Блок проверки завершён; кем и когда stash был удалён, не установлено. |
+| 2026-09-06 | Baseline выполнен | Проверен commit `80de2c161f58e821d28bf2eb1d0a6ff7fd6329aa`: backend 220 tests PASS, frontend 60 tests PASS, build/typecheck/lint/Prisma PASS; frontend lint — 17 warnings, 0 errors. E2e BLOCKED из-за неподтверждённой отдельной тестовой БД и недоступного Docker daemon; coverage NOT CONFIGURED. Зафиксированы отсутствие автоматической загрузки root `.env` из backend CWD и различия local scripts/CI. Полное evidence — [02-BASELINE.md](02-BASELINE.md); код не исправлялся. |
 
 
 
@@ -548,8 +571,8 @@ Finding
 
 
 
-1\. Создать и зафиксировать протокол аудита.
+1\. Создать единый реестр findings.
 
-2\. Определить формат findings и приоритеты P0–P3.
+2\. Создать основной audit skill.
 
-3\. Провести baseline проекта.
+3\. После этого запустить первую волну: Architecture/Spaghetti Code, Test Reliability и Security/Data Integrity.
