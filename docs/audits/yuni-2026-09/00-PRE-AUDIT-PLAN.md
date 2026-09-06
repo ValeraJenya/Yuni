@@ -230,7 +230,7 @@
 
 \- \[ ] Определить правила cross-review.
 
-\- \[ ] Создать основной audit skill или audit prompt.
+\- \[x] Создать и проверить основной repo-level skill `yuni-audit`.
 
 \- \[ ] Определить процесс принятия best practices.
 
@@ -528,6 +528,12 @@ Finding
 
 
 
+\- Созданы и проверены repo-level skills: `.agents/skills/yuni-audit/SKILL.md`, `.agents/skills/yuni-code-review/SKILL.md` и `.agents/skills/yuni-refactor/SKILL.md`.
+
+\- Codex Desktop успешно обнаружил все три skill; наличие и инструкции подтверждены чтением соответствующих `SKILL.md`.
+
+\- Подтверждено разделение режимов: `yuni-audit` работает в read-only режиме; `yuni-code-review` не изменяет код; `yuni-refactor` требует явного scope и acceptance criteria. Удаление зависимостей разрешено только после доказательства их неиспользования и безопасности удаления; одного поиска imports недостаточно.
+
 \- Интеграция Codex Desktop → MCP → CodeGraph успешно проверена 2026-09-06.
 
 \- CodeGraph нашёл `AuthService` через MCP-инструменты и не изменял проект. Использованы `codegraph_symbol_search`, `codegraph_get_detailed_symbol` и `codegraph_get_ai_context`; инструменты профиля `core` доступны в Codex Desktop.
@@ -560,6 +566,7 @@ Finding
 | 2026-09-06 | Read-only проверка stash и backend `.env.example` | Через `stash@{0}^3` проверен пустой `apps/backend/.env.example` (0 байт): секретов, placeholders и переменных нет. Решено не добавлять файл в Git и сохранить корневой `.env.example` единственным содержательным шаблоном. Вопросы загрузки окружения и полноты шаблона перенесены в baseline. |
 | 2026-09-06 | Завершение блока проверки stash | Ранее `stash@{0}` содержал только пустой `apps/backend/.env.example` размером 0 байт. При финальной проверке `refs/stash` уже отсутствовал, оставшихся stash не было. Команда `git stash drop` в этой проверке не выполнялась. Блок проверки завершён; кем и когда stash был удалён, не установлено. |
 | 2026-09-06 | Baseline выполнен | Проверен commit `80de2c161f58e821d28bf2eb1d0a6ff7fd6329aa`: backend 220 tests PASS, frontend 60 tests PASS, build/typecheck/lint/Prisma PASS; frontend lint — 17 warnings, 0 errors. E2e BLOCKED из-за неподтверждённой отдельной тестовой БД и недоступного Docker daemon; coverage NOT CONFIGURED. Зафиксированы отсутствие автоматической загрузки root `.env` из backend CWD и различия local scripts/CI. Полное evidence — [02-BASELINE.md](02-BASELINE.md); код не исправлялся. |
+| 2026-09-06 | Создание и проверка repo-level skills | Созданы и проверены `yuni-audit`, `yuni-code-review` и `yuni-refactor`; Codex Desktop успешно обнаружил все три skill. Подтверждены read-only audit/review, явные scope и acceptance criteria для refactor и обязательное доказательство неиспользования перед удалением зависимостей. Аудит и рефакторинг при проверке skills не запускались. |
 
 
 
@@ -571,8 +578,10 @@ Finding
 
 
 
-1\. Создать единый реестр findings.
+1\. Определить финальный commit, относительно которого проводится аудит.
 
-2\. Создать основной audit skill.
+2\. Создать план первой волны sub-agent’ов.
 
-3\. После этого запустить первую волну: Architecture/Spaghetti Code, Test Reliability и Security/Data Integrity.
+3\. Подготовить отдельные audit-pass задания для Architecture and Spaghetti Code, Test Reliability и Security and Data Integrity.
+
+4\. После этого создать audit tag и запустить первую волну.
