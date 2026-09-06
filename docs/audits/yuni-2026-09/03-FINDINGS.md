@@ -53,7 +53,7 @@ Master register и detailed entry должны иметь одинаковый �
 
 ## 5. Detailed finding template
 
-Ниже — шаблон для будущих записей, не finding. При создании записи заполнить все поля; неприменимое обозначить `N/A` с причиной. Severity: `P0–P3`; Confidence: `High / Medium / Low` по charter. Source pass должен ссылаться на конкретный отчёт/проход и checked commit, а не только на имя агента.
+Ниже — шаблон для будущих записей, не finding. При создании записи заполнить основные поля; неприменимое обозначить `N/A` с причиной. Условные поля ниже включать только когда применимы; недостающие данные обозначать Unknown, не выдумывать значения. Severity: `P0–P3`; Confidence: `High / Medium / Low` по charter. Source pass должен ссылаться на конкретный отчёт/проход и checked commit, а не только на имя агента.
 
 ```markdown
 ## [ID] Title
@@ -67,10 +67,21 @@ Master register и detailed entry должны иметь одинаковый �
 - Affected symbols:
 - Related findings:
 - Best-practice candidate:
+- Checklist references:
+- Checklist source SHA:
+- Applicability:
+- Assessment result:
+- Last verified commit:
+- Verification environment:
+- Verification date:
+- Reverification trigger:
+- Remediation horizon:
 
 ### Current behavior
 
-Наблюдаемое поведение и ожидаемый invariant/контракт с источником ожидания.
+Наблюдаемое поведение и ожидаемый invariant/контракт с источником ожидания. Если удобно структурировать, использовать условное поле ниже вместо повторения invariant в тексте:
+
+- Protected invariant:
 
 ### Evidence
 
@@ -93,7 +104,12 @@ Master register и detailed entry должны иметь одинаковый �
 
 ### Risk and impact
 
-Последствия, затронутые пользователи/данные/сценарии, вероятность и обоснование severity.
+Последствия, затронутые пользователи/данные и обоснование severity. Условные поля конкретизируют этот раздел, не дублируют его текст:
+
+- Failure or attack scenario:
+- Likelihood:
+- Accepted-risk owner:
+- Accepted-risk review condition/date:
 
 ### Root cause
 
@@ -101,7 +117,16 @@ Master register и detailed entry должны иметь одинаковый �
 
 ### Recommended solution for Yuni
 
-Минимальный применимый подход с учётом существующей архитектуры. Рекомендация не разрешает автоматическое исправление.
+Описать решение один раз в полях ниже с учётом существующей архитектуры; если подходы совпадают, Target fix ссылается на Minimal fix. Рекомендация не разрешает автоматическое исправление.
+
+- Minimal fix:
+- Target fix:
+
+Условные поля, только если применимы:
+
+- Decision owner:
+- Dependencies:
+- Estimated complexity:
 
 ### Alternatives considered
 
@@ -125,6 +150,12 @@ Invariants, negative/boundary cases, тип тестов и применимые
 ```
 
 ## 6. Registry rules
+
+- `Status` — lifecycle finding; `Assessment result` — результат указанной проверки: PASS / FAIL / BLOCKED / SKIPPED / N/A. PASS ограниченного invariant при достаточном evidence обычно относится к [Assurance Register](06-ASSURANCE-REGISTER.md), а не создаёт finding; один зелёный check не создаёт assurance, запись в реестр требует явного разрешения; PASS отдельного check не закрывает существующую проблему автоматически.
+- BLOCKED не означает отсутствие проблемы или подтверждение корректности. N/A требует evidence отсутствия или неприменимости компонента; его обычно хранить в mapping. Отсутствие условной технологии не является finding.
+- `Checklist references` хранит section/subsection IDs; `Checklist source SHA` — SHA256 immutable master-input, не Git SHA. `Last verified commit` — полный Git SHA фактически выполненной проверки, не автоматический статус Verified; environment/date/trigger уточняют условия и необходимость recheck. Неисполненное обозначать Unknown/not verified.
+- `Applicability` использовать по mapping; `Remediation horizon` — now / before production / at scale либо Unknown до решения. Условные поля заполнять только по применимости; принятый риск требует owner и условия/даты review, но не означает Verified.
+- Evidence может ссылаться на единые metadata проверки вместо повторения SHA/environment/date; risk, confidence, tests required и acceptance criteria сохраняются в своих разделах. Это уточнение шаблона не вводит обязательные оценки сложности или отдельные owner-решения для каждого finding.
 
 - Один finding описывает одну основную проблему. Разные последствия одной причины связываются через Related findings, а не создают повторяющиеся записи; доказанные дубли получают `Rejected` со ссылкой на основной ID.
 - Generic best practice без evidence конкретной проблемы Yuni не является finding. Best-practice candidate рассматривается отдельно по charter и не становится обязательным правилом автоматически.

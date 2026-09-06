@@ -41,6 +41,9 @@ description: Run evidence-based read-only technical audit passes for Yuni, inclu
 - Отдели реально исполненные проверки от предложенных; явно обозначь BLOCKED/SKIPPED и blind spots. Не считай mock-тест доказательством runtime/DB-поведения.
 - При обычном падении check сохрани безопасное evidence и продолжай независимые разрешённые проверки; условия остановки применяй по разделу 10.
 
+- Возвращай доказанно корректный ограниченный invariant как assurance candidate с evidence, negative checks, coverage boundaries, commit SHA, environment, датой и reverification trigger; отсутствие finding или только зелёный тест недостаточны.
+- Используй правила `docs/audits/yuni-2026-09/06-ASSURANCE-REGISTER.md`; не редактируй Assurance Register без явного разрешения. Candidate не означает независимое подтверждение.
+
 ## 6. CodeGraph workflow
 
 - Сначала используй доступные MCP-инструменты CodeGraph для поиска символов, зависимостей и impact area; начни с symbol search, затем запроси связи или контекст.
@@ -76,6 +79,7 @@ description: Run evidence-based read-only technical audit passes for Yuni, inclu
 - Rejected hypotheses с основанием отклонения и сохранёнными связями.
 - Blind spots and blocked checks.
 - Best-practice candidates.
+- Assurance candidates с evidence, границами проверки и условиями recheck.
 - Recommended next verification: минимальные проверки оставшихся вопросов.
 
 ## 10. Stop conditions

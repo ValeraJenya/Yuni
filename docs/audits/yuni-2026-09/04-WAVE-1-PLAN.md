@@ -25,10 +25,15 @@ Scope создания: только этот документ; аудит, со
 - При недоступности CodeGraph продолжить через `rg`/`rg --files` и чтение кода, записать ограничения; не менять tooling configuration ради прохода.
 - Неразрешимые противоречия evidence, потребность изменить поведение или небезопасная проверка требуют остановки зависимого шага и решения владельцев по skill. Независимые безопасные checks продолжать; FAIL/BLOCKED/SKIPPED не считать PASS.
 
+Отсутствие заранее согласованных SLO, RPO/RTO и production topology не блокирует запуск Wave 1: эти решения остаются отдельными вопросами последующих этапов. Требования единого audit SHA, scope и безопасности проверок сохраняются.
+Разделы master-checklist 121–124 не включаются полностью в Wave 1: они относятся к отдельному Consistency/Idempotency pass. Пересекающиеся критические риски и invariants отмечать для последующей проверки, не переносить всю failure matrix в три первичных прохода.
+
 ## 3. Pass A — Architecture and Spaghetti Code
 
 Scope:
 
+- Построить фактическую карту модулей, основные data flows и trust boundaries; составить inventory условных компонентов по коду/configuration, не по примерам master.
+- Не считать отсутствие Redis, queues, WSS, product AI, payments, replicas и других необязательных технологий проблемой; неподтверждённое наличие оставлять Conditional.
 - Module boundaries, dependency direction и circular dependencies.
 - God-services, god-components и god-modules; смешивание transport, UI, domain и data-access logic.
 - Duplicated business rules, hidden side effects и temporal coupling.
@@ -49,6 +54,7 @@ Output: `docs/audits/yuni-2026-09/passes/wave-1/01-ARCHITECTURE-SPAGHETTI.md`.
 
 Scope:
 
+- Использовать ограниченную репрезентативную выборку: обязательно рассмотреть auth/session, ownership/cross-user, transaction/rollback и meaningful frontend tests; указать критерии отбора и непроверенные области. Если нужных тестов нет, зафиксировать gap, не создавать их во время pass.
 - Weak assertions, happy-path-only и excessive mocking.
 - Tautological tests, tests of implementation details и expected values, повторяющие production algorithm.
 - Missing negative/boundary cases, auth и cross-user permission tests.
@@ -66,9 +72,11 @@ Output: `docs/audits/yuni-2026-09/passes/wave-1/02-TEST-RELIABILITY.md`.
 
 Scope:
 
+- Создать ограниченную auth/session policy matrix: сценарий, ожидаемое поведение access/refresh credentials, источник policy, фактическое evidence и ограничения.
+- Unresolved logout/revocation/role-change policy отметить `Owner Decision Required`; не выводить ожидаемую policy только из текущего кода. Остановить зависящий от решения вывод и продолжить независимые безопасные проверки.
 - Authentication, authorization, access to another user's data и JWT/refresh-session lifecycle.
 - Input validation, file uploads, secrets и environment configuration.
-- Rate limiting, error disclosure и insecure defaults.
+- Rate limiting, serializers, error disclosure и insecure defaults; проверить критические data invariants в пределах выбранных workflows.
 - Database constraints, transactions, race conditions и partial writes.
 - Privacy, moderation и deletion flows; применимые owner, visibility, block/report, safe serializer и media invariants из `AGENTS.md`.
 
@@ -89,6 +97,7 @@ Output: `docs/audits/yuni-2026-09/passes/wave-1/03-SECURITY-DATA-INTEGRITY.md`.
 - Rejected hypotheses с причинами отклонения.
 - Blocked checks and blind spots.
 - Best-practice candidates с проблемой Yuni, применимостью, альтернативами и компромиссами; статус Candidate до cross-review и отдельного принятия владельцами.
+- Assurance candidates — ограниченные invariants с evidence и coverage boundaries по `06-ASSURANCE-REGISTER.md`; не записывать в реестр без явного разрешения.
 - Recommended next verification.
 - Final git status со сравнением с исходным и списком ожидаемых output-файлов.
 
