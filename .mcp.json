@@ -7,6 +7,17 @@
         "chrome-devtools-mcp@latest"
       ],
       "env": {}
+    },
+    "codegraph": {
+      "type": "stdio",
+      "command": "codegraph-mcp",
+      "args": [
+        "--profile",
+        "core"
+      ],
+      "env": {
+        "CODEGRAPH_TELEMETRY": "off"
+      }
     }
   }
 }
