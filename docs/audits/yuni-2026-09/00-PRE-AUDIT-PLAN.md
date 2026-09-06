@@ -12,7 +12,7 @@
 
 \- \*\*Начало подготовки:\*\* 2026-09-06
 
-\- \*\*Статус:\*\* In Progress
+\- \*\*Статус:\*\* In Progress — интеграция результатов Wave 1 в центральные findings/assurances; validation и Owner Decisions ещё не выполнены.
 
 \- \*\*Начальный синхронизированный `main`:\*\* `2aa1011`
 
@@ -20,7 +20,7 @@
 
 \- \*\*Коммит с tooling:\*\* `521dd23`
 
-\- \*\*Финальный audit commit/tag:\*\* Pending
+\- \*\*Audit commit/tag Wave 1:\*\* `fed276a97fd84f29032c5eac1b11447bb1f3ed4c` / `audit/yuni-2026-09-wave1` (по Synthesis).
 
 
 
@@ -190,9 +190,9 @@
 
 \- \[ ] Влить или подготовить `chore/pre-audit-setup` к слиянию с `main`.
 
-\- \[ ] Зафиксировать финальный commit SHA для аудита.
+\- \[x] Зафиксирован commit SHA для Wave 1: `fed276a97fd84f29032c5eac1b11447bb1f3ed4c`; это не commit интеграции отчётов.
 
-\- \[ ] Создать audit tag.
+\- \[x] Audit tag Wave 1 `audit/yuni-2026-09-wave1` подтверждён Synthesis; новый tag в этой интеграции не создаётся.
 
 
 
@@ -334,7 +334,9 @@ Baseline проведён без исправления найденных пр�
 
 
 
-\### Этап 1 — Architecture and Spaghetti Code
+\### Этап 1 — Architecture and Spaghetti Code — primary Wave 1 завершён
+
+\- \[x] Завершён ограниченный primary pass Wave 1: [01-ARCHITECTURE-SPAGHETTI.md](passes/wave-1/01-ARCHITECTURE-SPAGHETTI.md); результаты рассмотрены Synthesis. Это завершение static scope с указанными blind spots, не runtime PASS всей области.
 
 
 
@@ -366,7 +368,9 @@ Baseline проведён без исправления найденных пр�
 
 
 
-\### Этап 2 — Test Reliability
+\### Этап 2 — Test Reliability — primary Wave 1 завершён
+
+\- \[x] Завершён ограниченный primary pass Wave 1: [02-TEST-RELIABILITY.md](passes/wave-1/02-TEST-RELIABILITY.md); результаты рассмотрены Synthesis. Это завершение static scope с указанными blind spots, не runtime PASS всей области.
 
 
 
@@ -396,7 +400,9 @@ Baseline проведён без исправления найденных пр�
 
 
 
-\### Этап 3 — Security and Data Integrity
+\### Этап 3 — Security and Data Integrity — primary Wave 1 завершён
+
+\- \[x] Завершён ограниченный primary pass Wave 1: [03-SECURITY-DATA-INTEGRITY.md](passes/wave-1/03-SECURITY-DATA-INTEGRITY.md); результаты рассмотрены Synthesis. Это завершение static scope с указанными blind spots, не runtime PASS всей области.
 
 
 
@@ -464,7 +470,9 @@ Baseline проведён без исправления найденных пр�
 
 
 
-\### Этап 8 — Synthesis and Red-Team Review
+\### Этап 8 — Synthesis and Red-Team Review — Wave 1 завершён
+
+\- \[x] Независимый [Synthesis / Red-Team Wave 1](passes/wave-1/04-SYNTHESIS-RED-TEAM.md) завершён 2026-09-07. SHA synthesis result: `f2e9471` (`f2e94711b710262a58c88ca65416c12aaae6fc51`). Финальный synthesis всего многоэтапного аудита и принятие best practices этим не закрыты.
 
 
 
@@ -526,6 +534,15 @@ Finding
 
 \## 7. Предварительные наблюдения
 
+\- \[x] Три primary Wave 1 pass и Synthesis / Red-Team завершены. Проверенный код: `fed276a97fd84f29032c5eac1b11447bb1f3ed4c`; primary reports: `bac836bb06b536e9805fa382ab3272f4d49adec1`; synthesis input: `a756c5a4d721638b786c50903c2857fb6fd1e632`; synthesis result: `f2e9471`.
+
+\- Подтверждённых P0/P1 нет. SEC-003 остаётся Proposed / provisional P1 и требует RV-01 runtime validation плюс решения о block/unblock semantics; отсутствие runtime не означает Rejected.
+
+\- Центральные [findings](03-FINDINGS.md) и [assurances](06-ASSURANCE-REGISTER.md) находятся на этапе интеграции по решениям Synthesis: 9 Confirmed findings (8 P2, 1 P3), 1 Proposed; SEC-002/004 сохранены merged sources ARCH-001/002 без отдельных findings. Четыре Confirmed assurances ограничены static evidence.
+
+\- [07-WAVE-1-FOLLOWUPS.md](07-WAVE-1-FOLLOWUPS.md) хранит 9 неисполненных validation items и 6 Pending Owner Decisions; решения Валеры и Жени, runtime execution и remediation не подменяются интеграцией документов. AGENTS.md не меняется по allowlist владельца: новых workflow/security rules не вводится.
+
+
 
 
 \- Созданы и проверены repo-level skills: `.agents/skills/yuni-audit/SKILL.md`, `.agents/skills/yuni-code-review/SKILL.md` и `.agents/skills/yuni-refactor/SKILL.md`.
@@ -567,6 +584,8 @@ Finding
 | 2026-09-06 | Завершение блока проверки stash | Ранее `stash@{0}` содержал только пустой `apps/backend/.env.example` размером 0 байт. При финальной проверке `refs/stash` уже отсутствовал, оставшихся stash не было. Команда `git stash drop` в этой проверке не выполнялась. Блок проверки завершён; кем и когда stash был удалён, не установлено. |
 | 2026-09-06 | Baseline выполнен | Проверен commit `80de2c161f58e821d28bf2eb1d0a6ff7fd6329aa`: backend 220 tests PASS, frontend 60 tests PASS, build/typecheck/lint/Prisma PASS; frontend lint — 17 warnings, 0 errors. E2e BLOCKED из-за неподтверждённой отдельной тестовой БД и недоступного Docker daemon; coverage NOT CONFIGURED. Зафиксированы отсутствие автоматической загрузки root `.env` из backend CWD и различия local scripts/CI. Полное evidence — [02-BASELINE.md](02-BASELINE.md); код не исправлялся. |
 | 2026-09-06 | Создание и проверка repo-level skills | Созданы и проверены `yuni-audit`, `yuni-code-review` и `yuni-refactor`; Codex Desktop успешно обнаружил все три skill. Подтверждены read-only audit/review, явные scope и acceptance criteria для refactor и обязательное доказательство неиспользования перед удалением зависимостей. Аудит и рефакторинг при проверке skills не запускались. |
+| 2026-09-07 | Завершение primary Wave 1 и независимого Synthesis / Red-Team | Завершены Architecture, Test Reliability, Security/Data Integrity; решения и ограничения — [Synthesis](passes/wave-1/04-SYNTHESIS-RED-TEAM.md), result SHA `f2e9471` (`f2e94711b710262a58c88ca65416c12aaae6fc51`). Подтверждённых P0/P1 нет; SEC-003 Proposed / provisional P1 требует runtime validation. |
+| 2026-09-07 | Интеграция центральных результатов Wave 1 | По разрешению владельца подготовлен перенос в 03-FINDINGS.md и 06-ASSURANCE-REGISTER.md: 10 самостоятельных findings (9 Confirmed, 1 Proposed), 2 merged sources без отдельных findings, 4 static assurances. В 07-WAVE-1-FOLLOWUPS.md вынесены 9 RV и 6 Pending Owner Decisions. Интеграция не является новым аудитом, runtime validation или принятием remediation; production code/reports не изменялись. |
 
 
 
@@ -578,10 +597,8 @@ Finding
 
 
 
-1\. Определить финальный commit, относительно которого проводится аудит.
+1\. Принять Owner Decisions, необходимые до validation; вопросы и зависимости — [07-WAVE-1-FOLLOWUPS.md](07-WAVE-1-FOLLOWUPS.md#owner-decisions-required). Решения принимают Валера и Женя.
 
-2\. Создать план первой волны sub-agent’ов.
+2\. Определить отдельную безопасную runtime-validation environment, synthetic fixtures, версии/targets и разрешённые операции (DEC-005).
 
-3\. Подготовить отдельные audit-pass задания для Architecture and Spaghetti Code, Test Reliability и Security and Data Integrity.
-
-4\. После этого создать audit tag и запустить первую волну.
+3\. Решить: запускать targeted validation pass (первым RV-01 для SEC-003) или переходить к Wave 2 с явно сохранёнными blocker-ами. Ни один вариант не выбран автоматически.
