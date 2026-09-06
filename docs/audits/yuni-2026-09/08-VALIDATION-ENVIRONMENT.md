@@ -73,6 +73,10 @@ Use Docker Compose with a dedicated project name and an explicit validation env 
 
 ### Current availability
 
+#### Port preflight update
+
+Runtime preflight rejected host port `55432`: Windows reserves TCP ports `55372–55471`. Port `56032` was checked with `Get-NetTCPConnection` and `netstat` and is free. The validation infrastructure therefore uses `127.0.0.1:56032` for the host endpoint and retains PostgreSQL container port `5432`.
+
 On this computer, `docker version --format '{{.Client.Version}}|{{.Server.Version}}'` returned client `29.7.2` but no server version. The daemon was unavailable because `dockerDesktopLinuxEngine` could not be opened. No Docker lifecycle command was run. Option A remains preferred once this preflight becomes PASS.
 
 ## 6. Option B — Fallback: local PostgreSQL audit database

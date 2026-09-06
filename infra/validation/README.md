@@ -8,7 +8,7 @@ The stack is intentionally separate from ordinary Yuni Compose:
 - Service: `validation-postgres` only; no frontend or backend service is defined.
 - PostgreSQL: `postgres:16-alpine`.
 - Database: `yuni_validation_test`.
-- Host binding: `127.0.0.1:55432` to container port `5432`; host port `5432` is never used.
+- Host binding: `127.0.0.1:56032` to container port `5432`; host port `5432` is never used.
 - Storage and network: `yuni-validation-postgres-data` and `yuni-validation-network`.
 
 ## Local validation input
@@ -42,7 +42,7 @@ After DEC-005, the relevant Owner Decisions, and a specific RV scope are approve
 
 1. **Preflight** — verify dedicated validation worktree and a clean Git state; confirm synthetic-only data, local-only providers, canonical validation media root, and no root `.env` input.
 2. **Guard** — run `guard.ps1`; any failure is a STOP. Run it again immediately before a migration, reset/drop, cleanup, or another destructive action.
-3. **Compose config** — run the read-only `docker compose ... config` command above and verify only `validation-postgres`, host binding `127.0.0.1:55432`, database `yuni_validation_test`, validation network, and validation volume appear.
+3. **Compose config** — run the read-only `docker compose ... config` command above and verify only `validation-postgres`, host binding `127.0.0.1:56032`, database `yuni_validation_test`, validation network, and validation volume appear.
 4. **Start validation PostgreSQL** — only under the approved RV scope, repeat the guard, then run:
 
    ```powershell
@@ -71,8 +71,8 @@ After DEC-005, the relevant Owner Decisions, and a specific RV scope are approve
 
 - project name is `yuni-validation`;
 - env markers are `yuni-audit-validation` and `disabled` for external providers;
-- database name is exactly `yuni_validation_test`, contains `validation`, and both optional DB URLs resolve to it on host port `55432`;
-- host binding value is exactly `55432`, never `5432`;
+- database name is exactly `yuni_validation_test`, contains `validation`, and both optional DB URLs resolve to it on host port `56032`;
+- host binding value is exactly `56032`, never `5432`;
 - the compose file exists, declares PostgreSQL 16 Alpine and the expected project name, binds only `127.0.0.1`, and has no reference to `yuni-postgres-1`, `yuni_postgres_data`, or the ordinary Yuni network;
 - `DATABASE_URL` and `TEST_DATABASE_URL`, if set, are both set, point to the same target, and contain no production/staging target marker.
 

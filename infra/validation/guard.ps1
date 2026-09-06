@@ -14,7 +14,7 @@ $ErrorActionPreference = 'Stop'
 
 $ExpectedProject = 'yuni-validation'
 $ExpectedDatabase = 'yuni_validation_test'
-$ExpectedHostPort = 55432
+$ExpectedHostPort = 56032
 $ForbiddenTerms = @('prod', 'production', 'stage', 'staging')
 
 function Stop-Guard {
