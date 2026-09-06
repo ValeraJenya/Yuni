@@ -1,0 +1,30 @@
+name: yuni-validation
+
+services:
+  validation-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: yuni_validation_test
+      POSTGRES_USER: ${VALIDATION_POSTGRES_USER:?Set VALIDATION_POSTGRES_USER in the validation env file}
+      POSTGRES_PASSWORD: ${VALIDATION_POSTGRES_PASSWORD:?Set VALIDATION_POSTGRES_PASSWORD in the validation env file}
+    ports:
+      - "127.0.0.1:${VALIDATION_POSTGRES_PORT:?Set VALIDATION_POSTGRES_PORT to 55432}:5432"
+    volumes:
+      - validation_postgres_data:/var/lib/postgresql/data
+    networks:
+      - validation_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+volumes:
+  validation_postgres_data:
+    name: yuni-validation-postgres-data
+
+networks:
+  validation_network:
+    name: yuni-validation-network
+    internal: true
