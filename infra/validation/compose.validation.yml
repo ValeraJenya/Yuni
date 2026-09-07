@@ -27,4 +27,4 @@ volumes:
 networks:
   validation_network:
     name: yuni-validation-network
-    internal: true
+    driver: bridge

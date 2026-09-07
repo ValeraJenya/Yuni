@@ -35,8 +35,10 @@ $validationCompose = 'infra/validation/compose.validation.yml'
 docker compose `
   --project-name yuni-validation `
   --env-file $validationEnv `
-  -f $validationCompose config
+  -f $validationCompose config --quiet
 ```
+
+Never run a full rendered `docker compose ... config` command with a real `.env.validation`: rendered environment values can expose credentials. Use `config --quiet` only; it validates Compose interpolation without printing the rendered environment.
 
 After DEC-005, the relevant Owner Decisions, and a specific RV scope are approved, the future workflow is strictly:
 
@@ -73,7 +75,7 @@ After DEC-005, the relevant Owner Decisions, and a specific RV scope are approve
 - env markers are `yuni-audit-validation` and `disabled` for external providers;
 - database name is exactly `yuni_validation_test`, contains `validation`, and both optional DB URLs resolve to it on host port `56032`;
 - host binding value is exactly `56032`, never `5432`;
-- the compose file exists, declares PostgreSQL 16 Alpine and the expected project name, binds only `127.0.0.1`, and has no reference to `yuni-postgres-1`, `yuni_postgres_data`, or the ordinary Yuni network;
+- the compose file exists, declares only `validation-postgres` on PostgreSQL 16 Alpine, binds only `127.0.0.1:56032` to container port `5432`, declares a non-internal `yuni-validation-network`, and has no reference to `yuni-postgres-1`, `yuni_postgres_data`, or the ordinary Yuni network;
 - `DATABASE_URL` and `TEST_DATABASE_URL`, if set, are both set, point to the same target, and contain no production/staging target marker.
 
 The guard checks input configuration; it does not grant authorization. Record its result, all future commands, working directory, redacted targets, SHA, exit codes, durations, artifacts, cleanup result, and any stop condition in the validation report.

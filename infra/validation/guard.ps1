@@ -96,6 +96,9 @@ function Test-ValidationUrl {
     if ([string]::IsNullOrWhiteSpace($uri.Host)) {
         Stop-Guard "$Name has no database host."
     }
+    if ($uri.Port -eq 5432) {
+        Stop-Guard "$Name must not use ordinary Yuni host port 5432."
+    }
     if ($uri.Port -ne $ExpectedHostPort) {
         Stop-Guard "$Name does not use host port $ExpectedHostPort."
     }
@@ -149,10 +152,31 @@ if ($composeText -notmatch '(?m)^name:\s*yuni-validation\s*$') {
 if ($composeText -notmatch 'postgres:16-alpine') {
     Stop-Guard 'Validation compose file does not use PostgreSQL 16 Alpine.'
 }
-if ($composeText -notmatch '127\.0\.0\.1:\$\{VALIDATION_POSTGRES_PORT') {
-    Stop-Guard 'Validation compose file does not bind the validation port to 127.0.0.1.'
+$servicesMatch = [regex]::Match($composeText, '(?ms)^services:\s*\r?\n(?<body>.*?)(?=^volumes:|^networks:|\z)')
+if (-not $servicesMatch.Success) {
+    Stop-Guard 'Validation compose file has no services block.'
 }
-if ($composeText -match 'yuni-postgres-1|yuni_postgres_data|yuni_default') {
+$serviceNames = @([regex]::Matches($servicesMatch.Groups['body'].Value, '(?m)^  (?<name>[A-Za-z0-9_-]+):\s*$') | ForEach-Object { $_.Groups['name'].Value })
+if ($serviceNames.Count -ne 1 -or $serviceNames[0] -ne 'validation-postgres') {
+    Stop-Guard 'Validation compose file must define only validation-postgres.'
+}
+if ($servicesMatch.Groups['body'].Value -match '(?m)^  (frontend|backend):\s*$') {
+    Stop-Guard 'Validation compose file must not define frontend or backend services.'
+}
+if ($composeText -notmatch '127\.0\.0\.1:\$\{VALIDATION_POSTGRES_PORT:\?Set VALIDATION_POSTGRES_PORT to 56032\}:5432') {
+    Stop-Guard 'Validation compose file must bind only 127.0.0.1:56032 to PostgreSQL container port 5432.'
+}
+if ($composeText -match '(?m)^\s*internal:\s*true\s*$') {
+    Stop-Guard 'Validation network must not be declared internal: true for host-driven validation.'
+}
+if ($composeText -notmatch '(?m)^\s*driver:\s*bridge\s*$') {
+    Stop-Guard 'Validation network must use bridge driver.'
+}
+
+if ($composeText -notmatch '(?m)^\s*name:\s*yuni-validation-network\s*$' -or $composeText -notmatch '(?m)^\s*name:\s*yuni-validation-postgres-data\s*$') {
+    Stop-Guard 'Validation compose file does not declare its isolated network and volume names.'
+}
+if ($composeText -match 'yuni-postgres-1|yuni-frontend-1|yuni-backend-1|yuni_postgres_data|yuni_default') {
     Stop-Guard 'Validation compose file references existing Yuni infrastructure.'
 }
 
