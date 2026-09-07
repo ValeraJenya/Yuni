@@ -1,0 +1,604 @@
+\# Yuni — Pre-Audit Plan and Journal
+
+
+
+\## Метаданные
+
+
+
+\- \*\*Проект:\*\* Yuni
+
+\- \*\*Разработчики:\*\* Валера и Женя
+
+\- \*\*Начало подготовки:\*\* 2026-09-06
+
+\- \*\*Статус:\*\* In Progress — интеграция результатов Wave 1 в центральные findings/assurances; validation и Owner Decisions ещё не выполнены.
+
+\- \*\*Начальный синхронизированный `main`:\*\* `2aa1011`
+
+\- \*\*Ветка подготовки:\*\* `chore/pre-audit-setup`
+
+\- \*\*Коммит с tooling:\*\* `521dd23`
+
+\- \*\*Audit commit/tag Wave 1:\*\* `fed276a97fd84f29032c5eac1b11447bb1f3ed4c` / `audit/yuni-2026-09-wave1` (по Synthesis).
+
+
+
+\---
+
+
+
+\## 1. Цель
+
+
+
+Подготовить Yuni к полноценному техническому аудиту с использованием сильной модели и специализированных sub-agent’ов.
+
+
+
+Аудит должен:
+
+
+
+\- проверить архитектуру и структуру проекта;
+
+\- найти spaghetti-код, чрезмерную связанность и дублирование;
+
+\- проверить frontend, backend, API и базу данных;
+
+\- проверить безопасность и целостность данных;
+
+\- проверить качество тестов, а не только факт их прохождения;
+
+\- проверить производительность и оптимизацию;
+
+\- проверить CI/CD, Docker и production readiness;
+
+\- проверить актуальность Markdown-документации;
+
+\- сформировать backlog исправлений;
+
+\- сформировать лучшие практики и архитектурные решения Yuni;
+
+\- сохранить знания для дальнейшей работы более лёгких AI-моделей.
+
+
+
+\---
+
+
+
+\## 2. Основные принципы аудита
+
+
+
+1\. Сначала проводится read-only анализ, затем исправления.
+
+2\. Документация не является доказательством реализации.
+
+3\. Каждое замечание должно иметь доказательство в коде, тестах, конфигурации или воспроизводимом поведении.
+
+4\. Не проводить крупный рефакторинг до завершения общего анализа.
+
+5\. Не предлагать изменения только ради более красивого кода.
+
+6\. Изменение должно улучшать хотя бы одно:
+
+&#x20;  - корректность;
+
+&#x20;  - безопасность;
+
+&#x20;  - производительность;
+
+&#x20;  - сопровождаемость;
+
+&#x20;  - тестируемость;
+
+&#x20;  - понятность архитектуры.
+
+7\. Безопасность и права доступа нельзя отключать ради упрощения разработки.
+
+8\. Best practice должна быть применима именно к Yuni, а не быть общей рекомендацией без контекста.
+
+9\. Выводы отдельных sub-agent’ов должны пройти итоговый cross-review.
+
+10\. Полный аудит может состоять из нескольких последовательных проходов.
+
+
+
+\---
+
+
+
+\## 3. Что уже выполнено
+
+
+
+\- \[x] Локальный проект синхронизирован с `origin/main`.
+
+\- \[x] Проверено отсутствие расхождений между рабочей feature-веткой и `origin/main`.
+
+\- \[x] Незакоммиченный `apps/backend/.env.example` временно сохранён в stash.
+
+\- \[x] Создана ветка `chore/pre-audit-setup`.
+
+\- \[x] Установлен CodeGraph MCP `0.20.1`.
+
+\- \[x] Установлен Windows CodeGraph engine.
+
+\- \[x] CodeGraph успешно проиндексировал Yuni:
+
+&#x20; - 273 файла;
+
+&#x20; - 2566 узлов;
+
+&#x20; - 4212 связей;
+
+&#x20; - 0 пропущенных файлов.
+
+\- \[x] CodeGraph добавлен в `.mcp.json`.
+
+\- \[x] Добавлен `.codex/config.toml`.
+
+\- \[x] Для CodeGraph выбран профиль `core`.
+
+\- \[x] Введён Conventional Commits.
+
+\- \[x] Установлены Husky и commitlint.
+
+\- \[x] Настроен hook `commit-msg`.
+
+\- \[x] Проверена обработка корректных и некорректных commit messages.
+
+\- \[x] Tooling зафиксирован коммитом `521dd23`.
+
+\- \[x] Создан onboarding-чеклист для второго разработчика.
+
+\- \[ ] Проверить, что onboarding-чеклист добавлен в Git отдельным коммитом.
+
+
+
+\---
+
+
+
+\## 4. Что осталось выполнить до аудита
+
+
+
+\### 4.1. Завершение технической подготовки
+
+
+
+\- \[x] Проверить вызов CodeGraph из реального Codex-клиента.
+
+\- \[x] Проверить, что Codex видит MCP-сервер `codegraph`.
+
+\- \[x] Проверить доступность инструментов профиля `core`.
+
+\- \[x] Просмотреть stash `pre-audit local files`.
+
+\- \[x] Проверить `apps/backend/.env.example` на отсутствие секретов.
+
+\- \[x] Решить, должен ли `apps/backend/.env.example` храниться в Git.
+
+\- \[x] Завершить блок проверки stash: при финальной проверке `refs/stash` отсутствовал, оставшихся stash не было; `git stash drop` в этой проверке не выполнялась.
+
+\- \[ ] Проверить состояние onboarding-файла.
+
+\- \[ ] Проверить чистоту рабочей ветки.
+
+\- \[ ] Влить или подготовить `chore/pre-audit-setup` к слиянию с `main`.
+
+\- \[x] Зафиксирован commit SHA для Wave 1: `fed276a97fd84f29032c5eac1b11447bb1f3ed4c`; это не commit интеграции отчётов.
+
+\- \[x] Audit tag Wave 1 `audit/yuni-2026-09-wave1` подтверждён Synthesis; новый tag в этой интеграции не создаётся.
+
+
+
+\### 4.2. Контекст проекта
+
+
+
+\- \[ ] Получить контекст из второго чата.
+
+\- \[ ] Собрать важные продуктовые решения.
+
+\- \[ ] Собрать информацию о текущей готовности функций.
+
+\- \[ ] Отделить реализованные функции от запланированных.
+
+\- \[ ] Зафиксировать известные проблемы и ограничения.
+
+\- \[ ] Зафиксировать цели будущей презентации инвестору.
+
+
+
+\### 4.3. Протокол аудита
+
+
+
+\- \[ ] Определить зоны ответственности sub-agent’ов.
+
+\- \[ ] Определить единый формат findings.
+
+\- \[ ] Зафиксировать классификацию `P0 / P1 / P2 / P3`.
+
+\- \[ ] Определить требования к доказательствам.
+
+\- \[ ] Определить формат итогового backlog.
+
+\- \[ ] Определить правила cross-review.
+
+\- \[x] Создать и проверить основной repo-level skill `yuni-audit`.
+
+\- \[ ] Определить процесс принятия best practices.
+
+
+
+\### 4.4. Предварительная проверка документации
+
+
+
+\- \[ ] Проверить `AGENTS.md`.
+
+\- \[ ] Проверить `AI\_CONTEXT.md`.
+
+\- \[ ] Проверить `CLAUDE.md`.
+
+\- \[ ] Проверить `PROJECT\_STATE`.
+
+\- \[ ] Проверить `ROADMAP`.
+
+\- \[ ] Проверить ADR и architecture docs.
+
+\- \[ ] Проверить testing и security docs.
+
+\- \[ ] Найти устаревшие, дублирующиеся и противоречащие друг другу документы.
+
+\- \[ ] Не использовать непроверенные документы как источник истины.
+
+
+
+\---
+
+
+
+\## 5. План аудита
+
+
+
+\### Этап 0 — Baseline — выполнен
+
+\- \[x] Baseline выполнен 2026-09-06 относительно commit `80de2c161f58e821d28bf2eb1d0a6ff7fd6329aa`. Полное evidence — [02-BASELINE.md](02-BASELINE.md).
+
+Краткие результаты (baseline observations, не окончательные audit findings):
+
+\- backend: 220 тестов PASS;
+
+\- frontend: 60 тестов PASS;
+
+\- build/typecheck/lint/Prisma validate и generate: PASS;
+
+\- frontend lint: 17 предупреждений, 0 ошибок;
+
+\- e2e: BLOCKED — нет подтверждённой отдельной тестовой БД, Docker daemon недоступен; migrations и DB integration остаются непроверенными;
+
+\- coverage: NOT CONFIGURED, процент покрытия неизвестен;
+
+\- корневой `.env` автоматически не загружается при локальном запуске backend из `apps/backend`;
+
+\- выявлены различия между локальными scripts и CI, включая frontend typecheck и состав aggregate checks; сравнение приведено в baseline-отчёте.
+
+Завершение этапа означает фиксацию результатов и ограничений, а не успешное прохождение заблокированных проверок.
+
+
+
+Категории исходного состояния, рассмотренные в baseline (статусы и ограничения — в отчёте):
+
+
+
+\- версии инструментов;
+
+\- установка зависимостей;
+
+\- lint;
+
+\- typecheck;
+
+\- frontend build;
+
+\- backend build;
+
+\- unit tests;
+
+\- integration tests;
+
+\- e2e tests;
+
+\- coverage;
+
+\- Prisma validation;
+
+\- migrations;
+
+\- Docker configuration;
+
+\- GitHub Actions;
+
+\- известные ошибки и flaky-тесты.
+
+
+
+Baseline проведён без исправления найденных проблем.
+
+
+
+\### Этап 1 — Architecture and Spaghetti Code — primary Wave 1 завершён
+
+\- \[x] Завершён ограниченный primary pass Wave 1: [01-ARCHITECTURE-SPAGHETTI.md](passes/wave-1/01-ARCHITECTURE-SPAGHETTI.md); результаты рассмотрены Synthesis. Это завершение static scope с указанными blind spots, не runtime PASS всей области.
+
+
+
+Проверить:
+
+
+
+\- направление зависимостей;
+
+\- циклические зависимости;
+
+\- чрезмерную связанность;
+
+\- god-services;
+
+\- god-components;
+
+\- большие и сложные функции;
+
+\- смешивание слоёв;
+
+\- дублирование бизнес-логики;
+
+\- скрытые side effects;
+
+\- ненужные абстракции;
+
+\- blast radius изменений.
+
+
+
+\### Этап 2 — Test Reliability — primary Wave 1 завершён
+
+\- \[x] Завершён ограниченный primary pass Wave 1: [02-TEST-RELIABILITY.md](passes/wave-1/02-TEST-RELIABILITY.md); результаты рассмотрены Synthesis. Это завершение static scope с указанными blind spots, не runtime PASS всей области.
+
+
+
+Проверить:
+
+
+
+\- слабые assertions;
+
+\- happy-path-only tests;
+
+\- чрезмерный mocking;
+
+\- тестирование mock-логики;
+
+\- отсутствие negative и boundary cases;
+
+\- тесты авторизации;
+
+\- rollback и транзакции;
+
+\- flaky-тесты;
+
+\- способность тестов падать при намеренной поломке реализации;
+
+\- возможность выборочного mutation testing.
+
+
+
+\### Этап 3 — Security and Data Integrity — primary Wave 1 завершён
+
+\- \[x] Завершён ограниченный primary pass Wave 1: [03-SECURITY-DATA-INTEGRITY.md](passes/wave-1/03-SECURITY-DATA-INTEGRITY.md); результаты рассмотрены Synthesis. Это завершение static scope с указанными blind spots, не runtime PASS всей области.
+
+
+
+Проверить:
+
+
+
+\- authentication;
+
+\- authorization;
+
+\- доступ к чужим данным;
+
+\- validation;
+
+\- secrets;
+
+\- загрузку файлов;
+
+\- rate limiting;
+
+\- приватность;
+
+\- транзакции;
+
+\- race conditions;
+
+\- ограничения базы данных;
+
+\- обработку ошибок;
+
+\- утечки внутренних данных.
+
+
+
+\### Этап 4 — Backend, API and Database
+
+
+
+Проверить NestJS, Prisma, API contracts, DTO, queries, индексы, pagination, migrations, N+1 и обработку ошибок.
+
+
+
+\### Этап 5 — Frontend
+
+
+
+Проверить Next.js, React, server/client boundaries, state management, loading/error states, accessibility, производительность и структуру компонентов.
+
+
+
+\### Этап 6 — DevOps and Production Readiness
+
+
+
+Проверить CI/CD, Docker, environment configuration, deployment, logging, monitoring, backups и воспроизводимость сборки.
+
+
+
+\### Этап 7 — Documentation and AI Context
+
+
+
+Проверить актуальность, непротиворечивость, token-efficiency и полезность документации для разработчиков и AI-моделей.
+
+
+
+\### Этап 8 — Synthesis and Red-Team Review — Wave 1 завершён
+
+\- \[x] Независимый [Synthesis / Red-Team Wave 1](passes/wave-1/04-SYNTHESIS-RED-TEAM.md) завершён 2026-09-07. SHA synthesis result: `f2e9471` (`f2e94711b710262a58c88ca65416c12aaae6fc51`). Финальный synthesis всего многоэтапного аудита и принятие best practices этим не закрыты.
+
+
+
+\- объединить findings;
+
+\- удалить дубли;
+
+\- проверить приоритеты;
+
+\- проверить доказательства;
+
+\- отклонить неподтверждённые рекомендации;
+
+\- сформировать итоговый backlog;
+
+\- утвердить best practices.
+
+
+
+\---
+
+
+
+\## 6. Best Practices
+
+
+
+Best practice не становится обязательным правилом автоматически.
+
+
+
+Процесс:
+
+
+
+```text
+
+Finding
+
+→ Candidate best practice
+
+→ Проверка применимости к Yuni
+
+→ Рассмотрение альтернатив
+
+→ Cross-review
+
+→ Accepted / Rejected
+
+→ Фиксация в документации
+
+```
+
+
+
+\---
+
+
+
+\## 7. Предварительные наблюдения
+
+\- \[x] Три primary Wave 1 pass и Synthesis / Red-Team завершены. Проверенный код: `fed276a97fd84f29032c5eac1b11447bb1f3ed4c`; primary reports: `bac836bb06b536e9805fa382ab3272f4d49adec1`; synthesis input: `a756c5a4d721638b786c50903c2857fb6fd1e632`; synthesis result: `f2e9471`.
+
+\- Подтверждённых P0/P1 нет. SEC-003 остаётся Proposed / provisional P1 и требует RV-01 runtime validation плюс решения о block/unblock semantics; отсутствие runtime не означает Rejected.
+
+\- Центральные [findings](03-FINDINGS.md) и [assurances](06-ASSURANCE-REGISTER.md) находятся на этапе интеграции по решениям Synthesis: 9 Confirmed findings (8 P2, 1 P3), 1 Proposed; SEC-002/004 сохранены merged sources ARCH-001/002 без отдельных findings. Четыре Confirmed assurances ограничены static evidence.
+
+\- [07-WAVE-1-FOLLOWUPS.md](07-WAVE-1-FOLLOWUPS.md) хранит 9 неисполненных validation items и 6 Pending Owner Decisions; решения Валеры и Жени, runtime execution и remediation не подменяются интеграцией документов. AGENTS.md не меняется по allowlist владельца: новых workflow/security rules не вводится.
+
+
+
+
+\- Созданы и проверены repo-level skills: `.agents/skills/yuni-audit/SKILL.md`, `.agents/skills/yuni-code-review/SKILL.md` и `.agents/skills/yuni-refactor/SKILL.md`.
+
+\- Codex Desktop успешно обнаружил все три skill; наличие и инструкции подтверждены чтением соответствующих `SKILL.md`.
+
+\- Подтверждено разделение режимов: `yuni-audit` работает в read-only режиме; `yuni-code-review` не изменяет код; `yuni-refactor` требует явного scope и acceptance criteria. Удаление зависимостей разрешено только после доказательства их неиспользования и безопасности удаления; одного поиска imports недостаточно.
+
+\- Интеграция Codex Desktop → MCP → CodeGraph успешно проверена 2026-09-06.
+
+\- CodeGraph нашёл `AuthService` через MCP-инструменты и не изменял проект. Использованы `codegraph_symbol_search`, `codegraph_get_detailed_symbol` и `codegraph_get_ai_context`; инструменты профиля `core` доступны в Codex Desktop.
+
+\- Ранее `stash@{0}` (`pre-audit local files`) был проверен и содержал только пустой файл `apps/backend/.env.example` размером 0 байт. Содержимое получено через `stash@{0}^3`, без `stash apply` и `stash pop`.
+
+\- Проверенный файл не содержал секретов, placeholders или переменных; принято решение не добавлять его в Git.
+
+\- При финальной проверке `refs/stash` уже отсутствовал, `git stash list` был пуст: оставшихся stash не было. Команда `git stash drop` в этой проверке не выполнялась. Блок проверки stash завершён; кем и когда stash был удалён, не установлено.
+
+\- Корневой `.env.example` остаётся единственным содержательным шаблоном окружения.
+
+\- Baseline подтвердил: default ConfigModule не загружает корневой `.env` при CWD `apps/backend`; проверка выполнена на synthetic fixture без запуска dev-сервера.
+
+\- Необходимость `NODE_ENV` и `TEST_DATABASE_URL` рассмотрена в baseline: первый необязателен для локального development-default, второй полезно документировать для отдельной тестовой БД вместе со способом передачи в процесс. Изменения `.env.example` не выполнялись.
+
+
+
+\---
+
+
+
+\## 8. История подготовки
+
+
+
+| Дата | Выполнено | Результат |
+| --- | --- | --- |
+| 2026-09-06 | Проверка CodeGraph через Codex Desktop | Интеграция Codex Desktop → MCP → CodeGraph работает; сервер `codegraph` и инструменты профиля `core` доступны; `AuthService` найден через MCP без изменения проекта. |
+| 2026-09-06 | Read-only проверка stash и backend `.env.example` | Через `stash@{0}^3` проверен пустой `apps/backend/.env.example` (0 байт): секретов, placeholders и переменных нет. Решено не добавлять файл в Git и сохранить корневой `.env.example` единственным содержательным шаблоном. Вопросы загрузки окружения и полноты шаблона перенесены в baseline. |
+| 2026-09-06 | Завершение блока проверки stash | Ранее `stash@{0}` содержал только пустой `apps/backend/.env.example` размером 0 байт. При финальной проверке `refs/stash` уже отсутствовал, оставшихся stash не было. Команда `git stash drop` в этой проверке не выполнялась. Блок проверки завершён; кем и когда stash был удалён, не установлено. |
+| 2026-09-06 | Baseline выполнен | Проверен commit `80de2c161f58e821d28bf2eb1d0a6ff7fd6329aa`: backend 220 tests PASS, frontend 60 tests PASS, build/typecheck/lint/Prisma PASS; frontend lint — 17 warnings, 0 errors. E2e BLOCKED из-за неподтверждённой отдельной тестовой БД и недоступного Docker daemon; coverage NOT CONFIGURED. Зафиксированы отсутствие автоматической загрузки root `.env` из backend CWD и различия local scripts/CI. Полное evidence — [02-BASELINE.md](02-BASELINE.md); код не исправлялся. |
+| 2026-09-06 | Создание и проверка repo-level skills | Созданы и проверены `yuni-audit`, `yuni-code-review` и `yuni-refactor`; Codex Desktop успешно обнаружил все три skill. Подтверждены read-only audit/review, явные scope и acceptance criteria для refactor и обязательное доказательство неиспользования перед удалением зависимостей. Аудит и рефакторинг при проверке skills не запускались. |
+| 2026-09-07 | Завершение primary Wave 1 и независимого Synthesis / Red-Team | Завершены Architecture, Test Reliability, Security/Data Integrity; решения и ограничения — [Synthesis](passes/wave-1/04-SYNTHESIS-RED-TEAM.md), result SHA `f2e9471` (`f2e94711b710262a58c88ca65416c12aaae6fc51`). Подтверждённых P0/P1 нет; SEC-003 Proposed / provisional P1 требует runtime validation. |
+| 2026-09-07 | Интеграция центральных результатов Wave 1 | По разрешению владельца подготовлен перенос в 03-FINDINGS.md и 06-ASSURANCE-REGISTER.md: 10 самостоятельных findings (9 Confirmed, 1 Proposed), 2 merged sources без отдельных findings, 4 static assurances. В 07-WAVE-1-FOLLOWUPS.md вынесены 9 RV и 6 Pending Owner Decisions. Интеграция не является новым аудитом, runtime validation или принятием remediation; production code/reports не изменялись. |
+
+
+
+\---
+
+
+
+\## 9. Следующее действие
+
+
+
+1\. Принять Owner Decisions, необходимые до validation; вопросы и зависимости — [07-WAVE-1-FOLLOWUPS.md](07-WAVE-1-FOLLOWUPS.md#owner-decisions-required). Решения принимают Валера и Женя.
+
+2\. Определить отдельную безопасную runtime-validation environment, synthetic fixtures, версии/targets и разрешённые операции (DEC-005).
+
+3\. Решить: запускать targeted validation pass (первым RV-01 для SEC-003) или переходить к Wave 2 с явно сохранёнными blocker-ами. Ни один вариант не выбран автоматически.
