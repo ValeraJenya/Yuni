@@ -6,6 +6,8 @@ Last merged task / PR: PR #80 — User data export (Task 067a)
 
 ## Baseline `main`
 
+Дополнение к архитектурному snapshot от 2026-09-16: [статическая сверка кода/config на `8092c1a`](./architecture/integration-2026-09-16.md). Описаны CURRENT single-instance REST/PostgreSQL/local media и TARGET/PROPOSED edge, storage, WSS, scaling, finance. Это отдельная сверка документации; исторический baseline `42db25f` ниже не объявляется заново проверенным, runtime поведение и audit statuses не меняются.
+
 Этот раздел описывает подтверждённый baseline ветки `main`.
 
 Подтверждённый baseline:

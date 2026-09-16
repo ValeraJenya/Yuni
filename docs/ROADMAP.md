@@ -51,6 +51,8 @@ Git-правилам больше нет.
 
 ## Запланировано
 
+Архитектурные требования от 2026-09-16 интегрированы в [Scaling Roadmap](./architecture/scaling-roadmap.md), [Financial Flow](./architecture/financial-flow.md) и [evidence record](./architecture/integration-2026-09-16.md). Они уточняют scope существующих задач 023/025 и будущих решений; не назначают новые приоритеты и не переводят инфраструктуру в done. Redis/WSS transport/Kubernetes/provider и включение финансовой функциональности остаются OPEN/PROPOSED до решения владельцев.
+
 | ID | Название | Статус | Priority | Зависимости | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 023 | Safe image processing and media lifecycle | idea | P1 | Task 000 | EXIF/sanitization/moderation lifecycle; orphaned public file after delete выделен в Task 047. |

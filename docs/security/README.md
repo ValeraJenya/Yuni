@@ -4,6 +4,24 @@
 
 Подробные правила выдачи данных описаны отдельно: [Data Exposure Rules](./data-exposure-rules.md).
 
+## Network boundaries — CURRENT / TARGET / OPEN
+
+CURRENT static review on `8092c1aa0a1ddfc15ec368c8f05a306fc2e9e993`: root Compose exposes local frontend/backend and a development PostgreSQL port; `main.ts` starts an HTTP application without configured TLS termination or `trust proxy`. [Program Flow Map](../architecture/program-flow-map.md) owns the actual topology. No live firewall/TLS evidence is claimed.
+
+TARGET before production:
+
+- Browser/mobile clients call authorized backend endpoints; never give clients direct PostgreSQL/Redis access or credentials. A public application LB cannot publish database/cache ports.
+- Put backend data services behind private networking/firewall and scoped credentials. Check IPv4 and IPv6 ingress, NAT/routing, security groups and egress needs. A private address alone is not access control.
+- Use an explicitly configured HTTPS/WSS edge with certificate renewal, redirect policy and TLS termination. Exact proxy product, minimum TLS policy and internal hop encryption remain OPEN; HTTP and TLS versions are separate choices.
+- Trust forwarded client IP/protocol headers only from configured proxy hops and prevent direct-origin bypass of CDN/WAF/edge limits. Do not set unrestricted `trust proxy` as a substitute for topology evidence.
+- Verify no public origin/database route bypasses the edge, and that readiness/draining work before scaling. Provider outage and network failure behavior must be evidenced in a separate authorized validation pass.
+
+CURRENT local public photo serving is not a private-object policy: known URLs bypass the profile serializer. TARGET private storage, signed access and invalidation decisions belong to [media architecture](../architecture/scaling-roadmap.md) and existing DEC-003; changing prose does not secure existing URLs.
+
+UUID is an identifier, never authorization. Apply ownership/membership checks even with opaque IDs; keep PII out of generated IDs. See [Data ownership and identifiers](../architecture/domain-model.md). Conditional gift/payout risks and legal-review boundaries are centralized in [Financial Flow](../architecture/financial-flow.md), not new security findings here.
+
+## Application security rules
+
 - Нельзя хранить реальные секреты в репозитории.
 - Нельзя коммитить production credentials, API keys, токены, private certificates или пароли.
 - Сырые пароли никогда не сохраняются: в базе должен быть только `password_hash`.
@@ -101,7 +119,7 @@ Authenticated policies must use `CurrentUser` populated by `JwtAccessGuard`; act
 
 Limiter keys, policy names, raw email, IP, user id, token and cookie values must not be exposed in responses or logs.
 
-The current endpoint-specific limiter is local in-memory and single-instance only. Production or multi-instance deployments must use a shared Redis/Valkey-backed store to avoid per-instance bypass. Rate limiting is an anti-abuse layer only; it does not replace authentication, owner checks, block checks, profile visibility checks, conversation membership checks or database constraints.
+The CURRENT endpoint-specific limiter is local in-memory and single-instance only. TARGET multi-instance deployments must preserve aggregate anti-abuse limits across instances; Redis/Valkey or another shared enforcement design is PROPOSED, not mandatory for every single-instance deployment. Select it using the [candidate gate](../architecture/scaling-roadmap.md). Rate limiting does not replace authentication, owner checks, block checks, profile visibility checks, conversation membership checks or database constraints.
 
 ## Serializer rules
 
@@ -144,7 +162,7 @@ Security rules:
 - Максимальный размер файла - `5 MB`.
 - Storage filename генерируется backend через storage adapter random UUID; original filename не используется как имя файла в storage и не возвращается клиенту.
 - Local adapter path `apps/backend/uploads/profile-photos` не коммитится в репозиторий.
-- Path traversal protection for local deletes lives in `LocalProfilePhotoStorageService`; `MediaService` owns best-effort cleanup policy, not filesystem path construction.
+- Path traversal protection for local deletes lives in `LocalProfilePhotoStorageService`; CURRENT `MediaService.deleteProfilePhoto` removes the file before the DB transaction and aborts on storage failure. Best-effort cleanup applies to rollback after upload failure, not the delete endpoint.
 - Public responses не должны отдавать `storageKey`, filesystem path, original filename или moderation internals.
 - Self response может видеть `moderationStatus`, но всё равно не должен видеть filesystem/storage internals.
 - Public profile serializers отдают только photos с `publicUrl`, `moderationStatus=approved` и `publishedAt`.

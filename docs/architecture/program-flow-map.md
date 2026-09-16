@@ -18,11 +18,29 @@ frontend page/component
 
 Frontend is not a security boundary. Backend must enforce auth, ownership, membership, validation and visibility.
 
+## Network request flow — CURRENT
+
+Static verification: `8092c1aa0a1ddfc15ec368c8f05a306fc2e9e993`, 2026-09-16. Sources: root `docker-compose.yml`, `apps/backend/src/main.ts`, `apps/frontend/lib/auth-api.ts`, and backend controllers. No live network checks were run.
+
+```mermaid
+flowchart LR
+  Browser[Browser] -->|HTTP localhost:3000| Frontend[Next.js]
+  Browser -->|HTTP localhost:4000 REST| Backend[NestJS single instance]
+  Backend -->|Prisma postgres:5432| DB[(PostgreSQL 16)]
+  Backend -->|photo bytes| Files[Local upload directory]
+  Browser -->|GET /uploads/profile-photos/...| Backend
+  Host[Local developer tools] -.->|Compose published DB port| DB
+```
+
+The browser-facing API base is independent from the Docker service hostname. Current routes include `/auth/*`, `/profiles/*`, `/chat/*` and `/media/profile-photos`; there is no global `/api` prefix in `bootstrap`. No WSS gateway, production DNS, TLS termination or L7 proxy is configured in the application Compose stack. Publishing GHCR images is not deploying an application; Hugo deployment serves documentation only.
+
+The local Compose publishes PostgreSQL `${POSTGRES_PORT:-5432}:5432` without a loopback restriction. This is a development config, not proof of a private production database. Browser clients use backend authorization and never receive a database connection. Actual host firewall, IPv6 exposure, negotiated HTTP/TLS versions and external deployment topology are **OPEN**; no runtime assertions are made here. Target ingress and private boundaries live in [Scaling Roadmap](./scaling-roadmap.md) and [Security](../security/README.md).
+
 Local Docker boot flow:
 
 ```text
 copy .env.example .env
-  -> docker compose config/build
+  -> docker compose config --quiet, then build
   -> docker compose up -d postgres
   -> docker:migrate runs prisma migrate deploy in backend container
   -> docker compose up -d backend frontend
@@ -298,6 +316,26 @@ Security:
 
 ## D. Profile Photos / Media Flow
 
+**CURRENT:** `MediaModule` binds `ProfilePhotoStorage` to `LocalProfilePhotoStorageService`; there is no S3 provider. PostgreSQL stores metadata and ownership, and the local filesystem stores bytes. `ProfilePhoto` has optional dimensions but no persisted byte-size field; the upload service stores MIME type, generated storage key and public URL. No presigned upload endpoint or CDN is configured.
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant B as MediaController / MediaService
+  participant L as Local storage adapter
+  participant P as PostgreSQL
+  C->>B: Authenticated multipart upload
+  B->>B: Active user, size, MIME and signature checks
+  B->>L: Save bytes under generated filename
+  B->>P: Transaction creating photo metadata
+  B-->>C: Safe profile/photo response
+  C->>B: GET public upload URL
+  B->>L: Static file read
+  B-->>C: Bytes (no per-request DB visibility check)
+```
+
+The static route in `main.ts` has a one-hour cache setting and does not pass through profile visibility/owner checks. Filtering profile JSON is therefore not equivalent to revoking an already known photo URL. Private serving, cache invalidation and post-delete semantics remain subject to [Wave 1 owner decisions](../audits/yuni-2026-09/07-WAVE-1-FOLLOWUPS.md). **TARGET/OPEN** object-storage alternatives are in [Scaling Roadmap](./scaling-roadmap.md), not current behavior.
+
 ### Frontend Files
 
 - `apps/frontend/app/(app)/profile/page.tsx`
@@ -395,8 +433,8 @@ Security:
   -> MediaService.deleteProfilePhoto
   -> Prisma find photo
   -> assertOwner(photo.userId, CurrentUser.id)
+  -> ProfilePhotoStorage.deleteProfilePhoto (failure aborts request)
   -> transaction: delete row and promote next primary if needed
-  -> best-effort ProfilePhotoStorage.deleteProfilePhoto
   -> toSelfProfile + toSelfProfilePhoto list
 ```
 
