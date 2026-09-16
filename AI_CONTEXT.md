@@ -6,6 +6,8 @@ Quick onboarding for any AI agent or LLM. Read this file first; follow links onl
 
 ## 1. Что за проект
 
+Архитектурное дополнение 2026-09-16: [интеграция и evidence](docs/architecture/integration-2026-09-16.md), статическая сверка на `8092c1aa0a1ddfc15ec368c8f05a306fc2e9e993`. Используйте CURRENT/TARGET/PROPOSED/OPEN/DEPRECATED из [архитектурного индекса](docs/architecture/README.md). Это не обновление всех исторических продуктовых статусов ниже и не runtime audit. Финансы и optional infrastructure остаются PROPOSED/OPEN; подробности — по ссылкам, а не по учебным схемам.
+
 Yuni — dating app в монорепозитории. Стек: Next.js frontend, NestJS backend, PostgreSQL + Prisma, Docker Compose для локальной разработки. Production deployment не реализован: образы backend/frontend публикуются в GHCR, но окружения для деплоя нет. Разработка ведётся локально; CI запускается на GitHub Actions при PR и push в `main`. Verified state: commit `42db25f`, 2026-08-20 (последний merged PR — #80).
 
 ---
@@ -42,7 +44,8 @@ Yuni — dating app в монорепозитории. Стек: Next.js fronten
 - Email verification, password reset backend
 - Admin/moderation panel
 - Superlike (значение есть в enum `LikeKind`, эндпоинта нет)
-- Frontend tests (отсутствуют)
+
+Уточнение статического инвентаря 2026-09-16: прежнее отсутствие frontend tests более не актуально — в repo есть `apps/frontend/lib/*.test.ts` и `auth-context.test.ts`. Результаты текущей документационной задачи не включают их запуск.
 
 **Закрыто с прошлой ревизии этого файла** — здесь стояли как открытые, но реализованы: staged-chat concurrency при завершении игр (Task 043) и при voice totals (Task 044), seed стартовых фраз (Task 045).
 

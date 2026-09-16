@@ -10,6 +10,26 @@ Yuni разделен на доменные блоки, которые хоро�
 
 `users` - стабильная owner identity для auth, profiles, likes, matches, conversations, notifications, blocks, reports, privacy settings и notification settings. Большинство owner checks должны начинаться с authenticated `user.id`.
 
+## Data ownership and identifiers — CURRENT / OPEN
+
+Static evidence on `8092c1aa0a1ddfc15ec368c8f05a306fc2e9e993`: `apps/backend/prisma/schema.prisma`, its migrations, `common/security/access-control.ts`, `MediaModule` and `LocalProfilePhotoStorageService`. This table describes implemented storage; it does not create new models.
+
+| Data | CURRENT storage / responsible module | Boundary or gap |
+| --- | --- | --- |
+| Users / profiles | PostgreSQL `User` / `Profile`; Auth and Profiles | `Profile.userId` is its PK and owner FK; `handle` is public lookup data |
+| Photos | PostgreSQL `ProfilePhoto`; bytes in local adapter; Media | Owner is `userId`; keys stay internal; direct byte-serving policy is OPEN |
+| Roles | No `Role`, `UserRole` or user role column in Prisma | `UserStatus` is account lifecycle, not RBAC; future role model is OPEN |
+| Chat history | PostgreSQL `Conversation`, `Message`, `ConversationParticipant`; Chat | Membership is checked on backend; WSS would be delivery, not canonical history |
+| Attachments | No attachment object/storage model or upload flow | `voiceDurationSec` is client-supplied metadata, not stored/verified audio bytes |
+| Sessions | PostgreSQL `RefreshToken`; Auth | Hashed refresh material and revocation state; access JWT validation is separate |
+| Financial transactions | No wallet/gift/payment/withdrawal/ledger models or services | [Financial proposal](./financial-flow.md); no balances or payouts are operational |
+
+Independent entity PKs use PostgreSQL `uuid` with `gen_random_uuid()` defaults, including users, photos, refresh sessions and messages. On PostgreSQL 16 this produces UUIDv4 ([official documentation](https://www.postgresql.org/docs/16/functions-uuid.html)). The local media adapter independently calls Node `randomUUID()` for filenames. These are opaque generated identifiers, not PII-derived keys. `Profile`, privacy and notification settings share the user PK; participants and profile interests use composite PKs. PK/UNIQUE/FK constraints, not collision probability alone, enforce database identity and relations.
+
+**TARGET:** UUIDs never substitute for ownership, membership or permissions: guessing or possessing `photoId`/`conversationId` must not grant access (IDOR/BOLA). Public handles are not opaque authorization tokens and can contain user-chosen data. Session IDs and storage keys are internal; only allowlisted resource IDs go through serializers. Existing endpoint evidence is in `MediaService.setProfilePhotoPrimary/deleteProfilePhoto` and `ChatService`; this is not an assurance that every path is covered.
+
+**OPEN:** UUIDv7, separate internal PK + public UUID, and IDs for future financial entities require a demonstrated ordering/indexing or exposure need before an ADR/migration. Keep current UUIDv4 defaults until such a decision; do not invent deployed IDs for absent entities.
+
 ## Profiles
 
 `profiles` хранит один underlying dating profile и использует `user_id` как primary key. Public handle находится в `profiles.handle`, а не в `users`, потому что публичная идентичность относится к presentation layer профиля.
@@ -32,7 +52,7 @@ Discovery returns computed age instead of raw `birth_date`, and only approved/pu
 
 ## Media And Photos
 
-`profile_photos` хранит object storage keys, optional public URLs, dimensions, ordering, primary-photo state, moderation status и publishing timestamps. PostgreSQL не хранит image binaries. Фото может быть uploaded и moderated до публикации; profile responses должны отдавать только approved и published photos.
+`profile_photos` хранит storage-adapter keys, optional public URLs, dimensions, ordering, primary-photo state, moderation status и publishing timestamps. CURRENT bytes хранятся локально, не в S3; PostgreSQL не хранит image binaries. Схема допускает moderation lifecycle, но текущий upload сразу выставляет approved и published. Profile responses фильтруют фото; direct URL behavior описан в [Program Flow Map](./program-flow-map.md).
 
 ## Likes
 
@@ -70,7 +90,7 @@ Conversation создается только из match через `POST /matche
 
 `conversations.match_id` уникален, поэтому repeated start возвращает existing conversation idempotently. Race на unique `match_id` должен обрабатываться application service как safe read-existing path.
 
-Messages MVP - plain text only. API принимает поле `text`, а DB хранит его в `messages.body`. Backend trim-ит текст, запрещает пустые сообщения и ограничивает длину `2000` символов. In-app notifications for received messages are handled by Step 18 without storing message body in notification rows. Realtime, typing, read receipts, attachments/media messages, encryption and complex search are future work.
+CURRENT messages API принимает поле `text`, а DB хранит его в `messages.body`; staged-chat использует также `voiceDurationSec`, `messageWeight` и system messages. Это не реализованная загрузка audio attachments. In-app notifications не хранят message body. Realtime delivery, attachments и encryption остаются future work; текущие endpoints см. в [API reference](../api/README.md).
 
 Blocks apply to chat in both directions: blocked conversations are hidden from list, message read uses not-found style, and send returns safe `403`.
 

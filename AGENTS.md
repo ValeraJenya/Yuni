@@ -1,7 +1,7 @@
 # AGENTS.md
 
-Version: 1.3
-Last updated: 2026-08-25
+Version: 1.4
+Last updated: 2026-09-16
 
 ## Назначение
 
@@ -34,6 +34,8 @@ Yuni - dating app monorepo: React frontend, NestJS backend, PostgreSQL/Prisma, D
 8. Code, tests and current diff.
 
 ## Источники истины
+
+Архитектурные источники и vocabulary CURRENT/TARGET/PROPOSED/OPEN/DEPRECATED находятся в `docs/architecture/README.md`. Дополнение 2026-09-16 интегрировано со статическим evidence в `docs/architecture/integration-2026-09-16.md`. Future diagrams не являются разрешением внедрять Redis, Kubernetes, storage или финансовые сервисы. Учебный `docs/knowledge/README.md` ссылается на эти источники и не заменяет их.
 
 Приоритет источников:
 

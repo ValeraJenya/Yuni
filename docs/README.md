@@ -27,5 +27,6 @@
 - `api/` - текущий backend API contract.
 - `security/` - security rules, data exposure rules and safety invariants.
 - `onboarding/` - локальная разработка и workflow для новых участников.
+- `knowledge/` - учебные объяснения со ссылками на architecture source of truth.
 
 Raw/unreviewed audit drafts не являются подтверждёнными findings и не должны использоваться как источник истины без commit, evidence и review.
