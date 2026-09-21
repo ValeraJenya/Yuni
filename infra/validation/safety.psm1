@@ -326,6 +326,19 @@ function Invoke-SafeProcess([string]$Executable, [string[]]$Arguments, [string]$
         throw 'SAFETY STOP: native command incomplete or failed; resource state unknown; output suppressed'
     } finally { $job.Dispose() }
 }
+function Get-ValidationGitExecutable {
+    # Get-Command preserves effective PATH precedence. Never cast the full Source array to a string.
+    $candidates = @(Get-Command git.exe -CommandType Application -ErrorAction Stop)
+    Assert-Safe ($candidates.Count -gt 0) 'Git executable not found'
+    $candidate = $candidates[0]
+    Assert-Safe ($candidate -is [Management.Automation.ApplicationInfo]) 'Git candidate is not an application'
+    Assert-Safe ($candidate.CommandType -eq [Management.Automation.CommandTypes]::Application) 'Git command type mismatch'
+    Assert-Safe ($candidate.Source -is [string] -and -not [string]::IsNullOrWhiteSpace($candidate.Source)) 'Git path missing'
+    $path = Get-SafePath $candidate.Source -MustExist
+    Assert-Safe (Test-Path -LiteralPath $path -PathType Leaf) 'Git path is not a file'
+    Assert-Safe ([IO.Path]::GetFileName($path) -ieq 'git.exe') 'Git executable basename mismatch'
+    return $path
+}
 function Get-StaticContext([string]$ExpectedWorktreeRoot, [string]$BaselineSha, [string]$ExpectedHeadSha,
     [string]$EnvFile, [string]$InfrastructureRoot) {
     Assert-InheritedEnvironment ([Environment]::GetEnvironmentVariables())
@@ -339,7 +352,7 @@ function Get-StaticContext([string]$ExpectedWorktreeRoot, [string]$BaselineSha, 
     Assert-Safe ($envPath -ieq "$root\infra\validation\.env.validation") 'only explicit worktree validation env allowed'
     $values = Read-ValidationEnvironment $envPath
     Assert-ValidationEnvironment $values $root
-    $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
+    $git = Get-ValidationGitExecutable
     $commands = [Collections.Generic.List[object]]::new()
     function Read-Git([string[]]$A) {
         $r = Invoke-SafeProcess $git (@('-c','core.fsmonitor=false','-C',$root) + $A) $root

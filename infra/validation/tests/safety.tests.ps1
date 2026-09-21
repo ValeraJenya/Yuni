@@ -191,6 +191,68 @@ if ($Mode -eq 'parent-waits') { Start-Sleep -Seconds 30 }
         Assert-Safe ($r.Output.Trim() -ceq ($argv | ConvertTo-Json -Compress)) 'native quoting changed arguments'
     }
 
+
+    # Resolver fixtures model installations without executing the copied binaries.
+    $gitFirst = Join-Path $temp 'git-first'
+    $gitSecond = Join-Path $temp 'git-second'
+    $null = [IO.Directory]::CreateDirectory($gitFirst)
+    $null = [IO.Directory]::CreateDirectory($gitSecond)
+    $sourceGit = @(Microsoft.PowerShell.Core\Get-Command git.exe -CommandType Application -ErrorAction Stop)[0].Source
+    $firstExe = Join-Path $gitFirst 'git.exe'
+    $secondExe = Join-Path $gitSecond 'git.exe'
+    Copy-Item -LiteralPath $sourceGit -Destination $firstExe
+    Copy-Item -LiteralPath $sourceGit -Destination $secondExe
+    $firstCandidate = @(Microsoft.PowerShell.Core\Get-Command $firstExe -CommandType Application -ErrorAction Stop)[0]
+    $secondCandidate = @(Microsoft.PowerShell.Core\Get-Command $secondExe -CommandType Application -ErrorAction Stop)[0]
+    function Resolve-FixtureCandidates([object[]]$Candidates) {
+        # Test-only discovery substitution. The production resolver has no path/candidate override.
+        & (Get-Module safety) {
+            param([object[]]$Items)
+            $script:GitResolverFixtureCandidates = $Items
+            function script:Get-Command {
+                param($Name,$CommandType,$ErrorAction)
+                Assert-Safe ($Name -ceq 'git.exe' -and $CommandType -ceq 'Application' -and $ErrorAction -ceq 'Stop') 'unexpected discovery request'
+                return $script:GitResolverFixtureCandidates
+            }
+            try { Get-ValidationGitExecutable }
+            finally {
+                Remove-Item Function:Get-Command
+                Remove-Variable GitResolverFixtureCandidates -Scope Script
+            }
+        } $Candidates
+    }
+    Check 'Git resolver rejects zero candidates' { Resolve-FixtureCandidates @() } -Reject
+    Check 'Git resolver accepts one application' {
+        Assert-Safe ((Resolve-FixtureCandidates @($firstCandidate)) -ceq $firstExe) 'single Git mismatch'
+    }
+    Check 'Git resolver selects first of multiple candidates without concatenation' {
+        $resolved = @(Resolve-FixtureCandidates @($firstCandidate,$secondCandidate))
+        Assert-Safe ($resolved.Count -eq 1 -and $resolved[0] -ceq $firstExe) 'Git candidates concatenated'
+    }
+    Check 'Git resolver rejects malformed candidate' {
+        Resolve-FixtureCandidates @([pscustomobject]@{Source=$firstExe;CommandType='Application'})
+    } -Reject
+    $wrongExe = Join-Path $gitFirst 'not-git.exe'
+    Copy-Item -LiteralPath $sourceGit -Destination $wrongExe
+    $wrongCandidate = @(Microsoft.PowerShell.Core\Get-Command $wrongExe -CommandType Application -ErrorAction Stop)[0]
+    Check 'Git resolver rejects wrong basename' { Resolve-FixtureCandidates @($wrongCandidate) } -Reject
+    $originalPath = $env:PATH
+    try {
+        $env:PATH = "$gitFirst;$gitSecond"
+        Check 'Git resolver follows actual PATH precedence' {
+            Assert-Safe ((Get-ValidationGitExecutable) -ceq $firstExe) 'PATH precedence mismatch'
+        }
+        $env:PATH = "$gitSecond;$gitFirst"
+        Check 'Git resolver follows reversed PATH precedence' {
+            Assert-Safe ((Get-ValidationGitExecutable) -ceq $secondExe) 'reversed PATH precedence mismatch'
+        }
+    } finally { $env:PATH = $originalPath }
+    Remove-Item -LiteralPath $firstExe
+    Check 'Git resolver rejects nonexistent executable' { Resolve-FixtureCandidates @($firstCandidate) } -Reject
+    Check 'Git resolver does not fall back from invalid first candidate' {
+        Resolve-FixtureCandidates @($firstCandidate,$secondCandidate)
+    } -Reject
+
     Write-Output "STATIC TESTS PASS: $script:passed; Docker/DB/runtime operations: 0."
 } finally {
     # This test owns a unique temporary root. Verify the final target before recursive removal.
