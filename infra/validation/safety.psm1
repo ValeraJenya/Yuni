@@ -295,15 +295,77 @@ namespace YuniValidation {
 '@
 }
 
-function Invoke-SafeProcess([string]$Executable, [string[]]$Arguments, [string]$Directory,
-    [hashtable]$ExtraEnvironment = @{}, [int]$TimeoutSeconds = 60, [switch]$ReturnExitCode) {
-    Assert-Safe ($TimeoutSeconds -ge 1 -and $TimeoutSeconds -le 300) 'invalid command timeout'
-    $childEnvironment = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::OrdinalIgnoreCase)
+function Get-WindowsProgramFiles {
+    # SHGetKnownFolderPath via .NET, not a caller/env-provided directory.
+    Assert-Safe $IsWindows 'Windows Docker plugin discovery required'
+    $path = Get-SafePath ([Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFiles)) -MustExist
+    Assert-Safe (Test-Path -LiteralPath $path -PathType Container) 'system ProgramFiles directory missing'
+    return $path
+}
+function New-NativeChildEnvironment([hashtable]$ExtraEnvironment = @{}, [switch]$DockerChild) {
+    $environment = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($key in @('SystemRoot','WINDIR','PATH','TEMP','TMP')) {
         $value = [Environment]::GetEnvironmentVariable($key)
-        if ($value) { $childEnvironment[$key] = $value }
+        if ($value) { $environment[$key] = $value }
     }
-    foreach ($key in $ExtraEnvironment.Keys) { $childEnvironment[$key] = $ExtraEnvironment[$key] }
+    foreach ($key in $ExtraEnvironment.Keys) {
+        Assert-Safe ($key -ine 'ProgramFiles') 'ProgramFiles override forbidden'
+        $environment[$key] = $ExtraEnvironment[$key]
+    }
+    if ($DockerChild) { $environment['ProgramFiles'] = Get-WindowsProgramFiles }
+    return ,$environment
+}
+function Test-CapabilityArguments([string]$Executable, [string[]]$Arguments) {
+    if (@($Arguments | Where-Object { $_ -match '[\x00\r\n]' }).Count) { return $false }
+    $name = [IO.Path]::GetFileName($Executable)
+    if ($name -ieq 'psql.exe') { return ($Arguments.Count -eq 1 -and $Arguments[0] -ceq '--version') }
+    if ($name -ine 'docker.exe') { return $false }
+    $argsToCheck = $Arguments
+    if ($Arguments.Count -gt 4 -and $Arguments[0] -ceq '--host' -and
+        $Arguments[1] -ceq 'npipe:////./pipe/dockerDesktopLinuxEngine' -and $Arguments[2] -ceq '--config') {
+        $null = Get-SafePath $Arguments[3] -MustExist
+        $argsToCheck = $Arguments[4..($Arguments.Count-1)]
+    }
+    # Exact token lists: never opt config/inspect/SQL or arbitrary flags into diagnostics.
+    return (($argsToCheck -join "`n") -cin @('--version','version',"version`n--format`n{{json .}}",
+        "compose`nversion", "compose`nversion`n--short"))
+}
+function Get-SanitizedCapabilityStderr([string]$Text) {
+    if ([string]::IsNullOrWhiteSpace($Text)) { return '' }
+    # Keep known diagnostics only; no free-form native text, paths, URLs or config fragments.
+    $safe = [Collections.Generic.List[string]]::new()
+    $scan = if ($Text.Length -gt 4096) { $Text.Substring(0,4096) } else { $Text }
+    foreach ($line in ($scan -split '\r?\n')) {
+        $line = $line.Trim()
+        if (-not $line) { continue }
+        if ($line -cin @('docker: unknown command: docker compose','unknown flag: --short',
+            "docker: 'compose' is not a docker command.","Run 'docker --help' for more information",'Usage:  docker [OPTIONS] COMMAND [ARG...]')) {
+            $safe.Add($line)
+        } else { $safe.Add('[REDACTED: unrecognized capability diagnostic]') }
+        if (($safe -join "`n").Length -ge 768) { break }
+    }
+    $result = $safe -join "`n"
+    if ($Text.Length -gt 4096 -or $result.Length -gt 768) { $result = $result.Substring(0,[Math]::Min(768,$result.Length)) + "`n[TRUNCATED]" }
+    return $result
+}
+function Read-ComposeVersion([string]$Output, [int]$ExitCode) {
+    Assert-Safe ($ExitCode -eq 0 -and $Output.Length -le 64 -and
+        $Output.Trim() -cmatch '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$') 'Compose capability/version unconfirmed'
+    return $Output.Trim()
+}
+function Invoke-SafeProcess([string]$Executable, [string[]]$Arguments, [string]$Directory,
+    [hashtable]$ExtraEnvironment = @{}, [int]$TimeoutSeconds = 60, [switch]$ReturnExitCode,
+    [switch]$DockerChild, [hashtable]$CapabilityEvidence) {
+    Assert-Safe ($TimeoutSeconds -ge 1 -and $TimeoutSeconds -le 300) 'invalid command timeout'
+    if ($DockerChild) {
+        $null = Get-SafePath $Executable -MustExist
+        Assert-Safe ([IO.Path]::GetFileName($Executable) -ieq 'docker.exe') 'Docker-only environment requested for another executable'
+    }
+    if ($null -ne $CapabilityEvidence) {
+        Assert-Safe (Test-CapabilityArguments $Executable $Arguments) 'diagnostics forbidden for this command'
+        $CapabilityEvidence.ExitCode=$null; $CapabilityEvidence.SanitizedStderr='[UNAVAILABLE: command did not complete]'
+    }
+    $childEnvironment = New-NativeChildEnvironment $ExtraEnvironment -DockerChild:$DockerChild
     $job = [YuniValidation.NativeJob]::new()
     $watch = [Diagnostics.Stopwatch]::StartNew()
     try {
@@ -315,7 +377,12 @@ function Invoke-SafeProcess([string]$Executable, [string[]]$Arguments, [string]$
             Assert-Safe ($watch.Elapsed.TotalSeconds -lt $TimeoutSeconds) 'command deadline exceeded; resource state unknown'
             [Threading.Thread]::Sleep(20)
         }
-        $output = $stdout.GetAwaiter().GetResult(); $null = $stderr.GetAwaiter().GetResult()
+        $output = $stdout.GetAwaiter().GetResult(); $errorOutput = $stderr.GetAwaiter().GetResult()
+        if ($null -ne $CapabilityEvidence) {
+            $CapabilityEvidence.ExitCode=$process.ExitCode
+            $CapabilityEvidence.SanitizedStderr=Get-SanitizedCapabilityStderr $errorOutput
+        }
+        $errorOutput=$null
         if (-not $ReturnExitCode) { Assert-Safe ($process.ExitCode -eq 0) 'command failed; native output suppressed' }
         return @{ Output=$output; ExitCode=$process.ExitCode; Milliseconds=$watch.ElapsedMilliseconds }
     } catch {
@@ -424,10 +491,12 @@ function Get-ValidationPsqlPath([string]$Path) {
     Assert-Safe ([IO.Path]::GetFileName($resolved) -ieq 'psql.exe') 'psql basename mismatch'
     return $resolved
 }
-function Get-ValidationPsqlClient([string]$Path, [string]$Directory) {
+function Get-ValidationPsqlClient([string]$Path, [string]$Directory, [hashtable]$CapabilityEvidence) {
     $resolved = Get-ValidationPsqlPath $Path
     $beforeHash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
-    $r = Invoke-SafeProcess $resolved @('--version') $Directory
+    $diagnosticOptions = @{}
+    if ($null -ne $CapabilityEvidence) { $diagnosticOptions.CapabilityEvidence=$CapabilityEvidence }
+    $r = Invoke-SafeProcess $resolved @('--version') $Directory @diagnosticOptions
     Assert-Safe ($r.ExitCode -eq 0 -and $r.Output.Trim() -cmatch '^psql \(PostgreSQL\) (16\.[0-9]+)$') 'psql major 16 required'
     $version = $Matches[1]
     Assert-Safe ((Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash -ceq $beforeHash) 'psql changed during capability check'

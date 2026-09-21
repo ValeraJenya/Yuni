@@ -50,7 +50,9 @@ try {
         $journal.Commands.Add($entry); Save-Evidence
         $watch = [Diagnostics.Stopwatch]::StartNew()
         try {
-            $r = Invoke-SafeProcess $ctx.Docker $full $ctx.Root @{VALIDATION_RUN_ID=$ctx.RunId}
+            $diagnosticOptions = @{}
+            if (Test-CapabilityArguments $ctx.Docker $full) { $diagnosticOptions.CapabilityEvidence=$entry }
+            $r = Invoke-SafeProcess $ctx.Docker $full $ctx.Root @{VALIDATION_RUN_ID=$ctx.RunId} -DockerChild @diagnosticOptions
             $entry.Result='PASS'; $entry.ExitCode=0
             return $r.Output
         } catch {
@@ -157,7 +159,7 @@ try {
     $capability = @{Tool='psql';Arguments=@('--version');Result='STARTED'}
     $journal.Commands.Add($capability); Save-Evidence
     try {
-        $ctx.Psql = Get-ValidationPsqlClient $ctx.Values.VALIDATION_PSQL_PATH $ctx.Root
+        $ctx.Psql = Get-ValidationPsqlClient $ctx.Values.VALIDATION_PSQL_PATH $ctx.Root -CapabilityEvidence $capability
         $capability.Result='PASS'; $capability.ExitCode=0
         $journal.PsqlClient = @{Path=$ctx.Psql.Path;Version=$ctx.Psql.Version;ExecutableSHA256=$ctx.Psql.SHA256
             PreparedReference=@{VersionBuild='16.15-4 Windows x64';ArchiveSHA256='F5F55B03BD54CE0DD1C51D524B54C7E015ABD4D620AF27D6971288A2DBE4A8F8'
@@ -173,7 +175,7 @@ try {
             $version = (Invoke-Docker @('version','--format','{{json .}}')) | ConvertFrom-Json -AsHashtable
             Assert-Safe ($version.Server.Os -ceq 'linux') 'Linux Docker engine required'
             $journal.DockerVersion = $version.Server.Version
-            $journal.ComposeVersion = (Invoke-Docker @('compose','version','--short')).Trim()
+            $journal.ComposeVersion = Read-ComposeVersion (Invoke-Docker @('compose','version','--short')) 0
             $ctx.Before = @(Get-Inventory)
             Assert-NoExistingResources $ctx.Before
             $journal.PreexistingResources = @($ctx.Before | ForEach-Object { @{Kind=$_.Kind;Name=$_.Name;Id=$_.Id;State=$_.State} })

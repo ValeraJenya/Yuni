@@ -1,5 +1,6 @@
 #requires -Version 7.4
-# Synthetic, offline tests only. No Docker executable, network connection or database is used.
+# Default: synthetic offline tests. Optional switch runs only Docker/Compose version commands.
+param([switch]$DockerCapabilityRegression)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module "$PSScriptRoot\..\safety.psm1" -Force -DisableNameChecking
@@ -400,7 +401,120 @@ if ($Mode -eq 'parent-waits') { Start-Sleep -Seconds 30 }
         try { Invoke-IdentityAndCleanup -SqlEvidence $e -Checks $checks -Probe {throw 'synthetic SQL failure'} -Compare {} -Cleanup {$order.Add('ownership');throw 'unknown owner';$order.Add('delete')} } catch {$failed=$true}
         Assert-Safe ($failed -and ($order -join ',') -ceq 'ownership' -and $checks.Cleanup -like 'FAIL*') 'unknown resource removed'
     }
-    Write-Output "STATIC TESTS PASS: $script:passed; Docker/DB/runtime operations: 0."
+    Check 'Docker-only environment adds OS-derived ProgramFiles' {
+        $child=New-NativeChildEnvironment @{VALIDATION_RUN_ID=('a'*32)} -DockerChild
+        Assert-Safe ($child['ProgramFiles'] -ceq (Get-WindowsProgramFiles)) 'system path missing'
+        foreach($key in $child.Keys){Assert-Safe ($key -cin @('SystemRoot','WINDIR','PATH','TEMP','TMP','VALIDATION_RUN_ID','ProgramFiles')) 'allowlist expanded'}
+    }
+    Check 'SQL environment does not gain ProgramFiles or ambient defaults' {
+        $child=New-NativeChildEnvironment @{PGPASSFILE='synthetic-owned-passfile';PGCONNECT_TIMEOUT='5';PGCLIENTENCODING='UTF8';PGAPPNAME='yuni-dec005-identity'}
+        Assert-Safe (-not $child.ContainsKey('ProgramFiles') -and -not $child.ContainsKey('USERPROFILE') -and
+            -not $child.ContainsKey('APPDATA') -and -not $child.ContainsKey('PGHOSTADDR')) 'SQL environment expanded'
+    }
+    foreach($dockerFlag in @($false,$true)) {
+        Check "ProgramFiles explicit override rejected (Docker=$dockerFlag)" {
+            New-NativeChildEnvironment @{pRoGrAmFiLeS='C:\synthetic-override'} -DockerChild:$dockerFlag
+        } -Reject
+    }
+    Check 'validation env cannot supply plugin directory override' {
+        $bad=Clone $values;$bad.ProgramFiles='C:\synthetic-override'
+        Assert-ValidationEnvironment $bad $temp
+    } -Reject
+    $oldProgramFiles=[Environment]::GetEnvironmentVariable('ProgramFiles')
+    try {
+        $expectedProgramFiles=Get-WindowsProgramFiles
+        $env:ProgramFiles='C:\synthetic-override'
+        Check 'OS ProgramFiles ignores caller environment override' {
+            $child=New-NativeChildEnvironment -DockerChild
+            Assert-Safe ($child['ProgramFiles'] -ceq $expectedProgramFiles) 'ambient path override accepted'
+        }
+    } finally { [Environment]::SetEnvironmentVariable('ProgramFiles',$oldProgramFiles,'Process') }
+    $oldPgHost=[Environment]::GetEnvironmentVariable('PGHOST')
+    try {
+        $env:PGHOST='synthetic-ordinary-host'
+        Check 'PG variables remain excluded from Docker and SQL children' {
+            foreach($child in @((New-NativeChildEnvironment),(New-NativeChildEnvironment -DockerChild))) {
+                Assert-Safe (-not $child.ContainsKey('PGHOST')) 'ambient PG host inherited'
+            }
+        }
+    } finally { [Environment]::SetEnvironmentVariable('PGHOST',$oldPgHost,'Process') }
+    function Simulated-ComposeCapability($Environment) {
+        if(-not $Environment.ContainsKey('ProgramFiles')) {return @{ExitCode=125;Output=''}}
+        Assert-Safe ($Environment['ProgramFiles'] -ceq (Get-WindowsProgramFiles)) 'wrong discovery directory'
+        return @{ExitCode=0;Output="5.4.0`n"}
+    }
+    Check 'regression simulated Compose unavailable without ProgramFiles' {
+        $r=Simulated-ComposeCapability (New-NativeChildEnvironment)
+        Read-ComposeVersion $r.Output $r.ExitCode
+    } -Reject
+    Check 'regression same environment plus OS ProgramFiles discovers Compose' {
+        $r=Simulated-ComposeCapability (New-NativeChildEnvironment -DockerChild)
+        Assert-Safe ((Read-ComposeVersion $r.Output $r.ExitCode) -ceq '5.4.0') 'Compose discovery not restored'
+    }
+    Check 'Compose 5.4.0 parses CRLF safely' {Assert-Safe ((Read-ComposeVersion "5.4.0`r`n" 0) -ceq '5.4.0') 'version parsing failed'}
+    foreach($badOutput in @('','Docker Compose version v5.4.0','5.4.0 secret','5.4.0-beta',"5.4.0`n5.4.1",'5.4.0; arbitrary')) {
+        Check 'malformed Compose version STOP' { Read-ComposeVersion $badOutput 0 } -Reject
+    }
+    Check 'nonzero Compose version exit STOP' {Read-ComposeVersion '5.4.0' 125} -Reject
+    Check 'known capability stderr preserved' {
+        Assert-Safe ((Get-SanitizedCapabilityStderr "docker: unknown command: docker compose`r`n") -ceq 'docker: unknown command: docker compose') 'known error lost'
+    }
+    Check 'credential-looking and arbitrary stderr redacted' {
+        $secret='SYNTHETIC_PRIVATE_CREDENTIAL'
+        $message="password=$secret`ntoken=$secret`npostgresql://user:${secret}@host/db`n$secret"
+        $safe=Get-SanitizedCapabilityStderr $message
+        Assert-Safe (-not $safe.Contains($secret) -and $safe -match 'REDACTED' -and $safe -notmatch 'postgresql://') 'stderr leaked'
+    }
+    Check 'capability stderr bounded to 800 characters' {
+        $safe=Get-SanitizedCapabilityStderr ('unknown flag: --short' + ("`nunknown flag: --short"*1000))
+        Assert-Safe ($safe.Length -le 800 -and $safe -match 'TRUNCATED') 'unbounded diagnostics'
+    }
+    foreach($argsFixture in @(@('--version'),@('version'),@('version','--format','{{json .}}'),@('compose','version','--short'))) {
+        Check 'only approved Docker capability args eligible' {Assert-Safe (Test-CapabilityArguments 'C:\synthetic\docker.exe' $argsFixture) 'capability rejected'}
+    }
+    Check 'psql version eligible for diagnostic capture' {Assert-Safe (Test-CapabilityArguments $fixturePsql @('--version')) 'psql capability rejected'}
+    foreach($argsFixture in @(@('compose','config','--format','json'),@('container','inspect','synthetic'),@('compose','up'),@("compose`nversion"))) {
+        Check 'config inspect mutation and merged-token commands cannot expose stderr' {
+            Assert-Safe (-not (Test-CapabilityArguments 'C:\synthetic\docker.exe' $argsFixture)) 'unsafe diagnostic opt-in'
+        }
+    }
+    Check 'psql SQL diagnostics stay suppressed' {Assert-Safe (-not (Test-CapabilityArguments $fixturePsql (Get-SqlIdentityArguments))) 'SQL diagnostics enabled'}
+    # Harmless pwsh exercises the process/exit/error path; only eligibility is substituted in test scope.
+    Check 'capability failure retains nonzero exit and sanitized stderr through exception' {
+        & (Get-Module safety) {
+            param($Pwsh,$Root)
+            $original=${function:Test-CapabilityArguments}
+            function script:Test-CapabilityArguments { return $true }
+            try {
+                $e=@{};$failed=$false
+                try { $null=Invoke-SafeProcess $Pwsh @('-NoProfile','-Command','[Console]::Error.WriteLine("unknown flag: --short"); [Console]::Error.WriteLine("SYNTHETIC_CREDENTIAL"); exit 23') $Root -CapabilityEvidence $e }
+                catch { $failed=$true; Assert-Safe (-not $_.Exception.Message.Contains('SYNTHETIC_CREDENTIAL')) 'exception leaked' }
+                Assert-Safe ($failed -and $e.ExitCode -eq 23 -and $e.SanitizedStderr.Contains('unknown flag: --short') -and
+                    -not $e.SanitizedStderr.Contains('SYNTHETIC_CREDENTIAL')) 'diagnostic result lost'
+            } finally { Set-Item Function:script:Test-CapabilityArguments $original }
+        } $pwshPath $temp
+    }
+    Check 'generic process cannot opt into capability diagnostics' {
+        Invoke-SafeProcess $pwshPath @('-NoProfile','-Command','exit 0') $temp -CapabilityEvidence @{}
+    } -Reject
+    if($DockerCapabilityRegression) {
+        # Explicit opt-in: no service/resource operations; no personal Docker config.
+        $dockerExe=@(Get-Command docker.exe -CommandType Application -All -ErrorAction Stop)[0].Source
+        $config=Join-Path $temp 'empty-docker-config';$null=[IO.Directory]::CreateDirectory($config)
+        $versionArgs=@('--config',$config,'compose','version','--short')
+        # The exact fixed host/config prefix is also eligible for bounded capability diagnostics.
+        $versionArgs=@('--host','npipe:////./pipe/dockerDesktopLinuxEngine')+$versionArgs
+        $without=@{};$with=@{}
+        $r=Invoke-SafeProcess $dockerExe $versionArgs $temp -ReturnExitCode -CapabilityEvidence $without
+        Check 'live Windows regression clean child cannot discover Compose without ProgramFiles' {
+            Assert-Safe ($r.ExitCode -ne 0 -and $without.SanitizedStderr -match 'unknown') 'baseline failure not reproduced'
+        }
+        $r=Invoke-SafeProcess $dockerExe $versionArgs $temp -DockerChild -CapabilityEvidence $with
+        Check 'live Windows regression Docker child discovers Compose with OS ProgramFiles' {
+            Assert-Safe ((Read-ComposeVersion $r.Output $r.ExitCode) -ceq '5.4.0' -and $with.ExitCode -eq 0) 'Compose capability unavailable'
+        }
+    }
+    Write-Output "STATIC TESTS PASS: $script:passed; DB/resource-mutation/runtime-preflight operations: 0; read-only Docker capability regression: $DockerCapabilityRegression."
 } finally {
     # This test owns a unique temporary root. Verify the final target before recursive removal.
     $resolved = [IO.Path]::GetFullPath($temp)

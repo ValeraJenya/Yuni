@@ -34,7 +34,7 @@ In that future worktree only, the operator creates ignored infra/validation/.env
 
 VALIDATION_WORKTREE_ROOT must match the explicit expected canonical local path. VALIDATION_MEDIA_ROOT must equal **<worktree>\apps\backend\uploads\dec-005** and be absent or empty. Ordinary uploads roots, relative/UNC paths, traversal, junctions and symlinks are rejected. This PostgreSQL-only run never creates, mounts or removes media. Future media use needs separate RV authorization.
 
-Known sensitive inherited variables (DB/PG/Postgres, Docker/Compose, credentials/tokens/secrets, cloud/provider and proxy variables) cause STOP. Every native child receives a fresh allowlisted environment: OS paths/temp only, plus the runner's run ID for Compose. Docker uses an empty per-run client config and an explicit local Linux-engine named pipe; personal Docker contexts, registry credentials and root .env are not inputs. Keep the shell and Docker daemon exclusively under the operator's control during the run.
+Known sensitive inherited variables (DB/PG/Postgres, Docker/Compose, credentials/tokens/secrets, cloud/provider and proxy variables) cause STOP. Every native child receives a fresh allowlisted environment: SystemRoot/WINDIR/PATH/TEMP/TMP only, plus the runner's run ID for Compose. Only Docker children additionally receive the checked Windows known-folder ProgramFiles value for CLI plugin discovery; caller/env overrides are rejected. Docker uses an empty per-run client config and an explicit local Linux-engine named pipe; personal Docker contexts, registry credentials and root .env are not inputs. Keep the shell and Docker daemon exclusively under the operator's control during the run.
 
 ## Sole supported workflow
 
@@ -60,7 +60,7 @@ The approval argument records the operator's acknowledgement; it cannot substitu
 All Docker calls specify **--host npipe:////./pipe/dockerDesktopLinuxEngine** and the empty per-run **--config** directory. Every Compose call additionally specifies **--project-name yuni-validation --project-directory <worktree> --env-file <explicit validation env> -f <worktree>\infra\validation\compose.validation.yml**.
 
 1. Read-only gates: Docker/Compose versions, container/network/volume inventory, Windows port use and excluded ranges, **compose … config --quiet**, locally cached image identity. No image pull. Unknown excluded-range output is STOP.
-2. Internally capture **compose … config --format json** in memory and validate its entire topology. **Never print full rendered config with real validation input.** Native stdout/stderr and full inspect objects are not emitted or saved. Public checks remain **config --quiet**.
+2. Internally capture **compose … config --format json** in memory and validate its entire topology. **Never print full rendered config with real validation input.** Native stdout and full inspect objects are not emitted or saved. Stderr stays suppressed except for bounded allowlisted version-capability diagnostics described below. Public checks remain **config --quiet**.
 3. Require an empty validation namespace, then **compose … create --no-recreate --pull never validation-postgres**. This creates a stopped container; it cannot authorize adoption/recreation of an existing container. Inspect labels, IDs, volume creation identity, mounts, image and bindings before **docker container start <owned-ID>**.
 4. Inspect health, actual published port (not merely HostConfig), bridge membership and consumers. Open and close a TCP socket only to 127.0.0.1:56032. Then run the fixed read-only identity query through the Windows host psql client. Require zero exit status, strict JSON parsing, database yuni_validation_test, user yuni_validation_user and server major 16. TCP alone cannot produce PASS. No application process runs.
 5. Compare ordinary resource inventory before cleanup and persist evidence. Revalidate ownership, then **container stop --time 10 <owned-ID>**, **container rm <owned-ID>**, **network rm <owned-network-ID>**, **volume rm yuni-validation-postgres-data**. Before removal verify identity and absence of foreign consumers. No force flags, down -v, prune, reset or general-purpose command forwarding.
@@ -104,3 +104,23 @@ Immediately before SQL, create **passes/validation/pgpass-<run-id>/pgpass.conf**
 The sole query is a built-in SELECT returning current_database(), current_user and version() as one JSON object; callers cannot pass SQL or connection overrides. Native output is captured privately, stderr is suppressed, malformed/extra/duplicate fields and credential-containing output fail closed. Only validated identity fields enter evidence. A 15-second job deadline and 5-second connection timeout bound execution.
 
 Prepared tool reference: **EDB PostgreSQL 16.15-4 Windows x64**, [official ZIP](https://get.enterprisedb.com/postgresql/postgresql-16.15-4-windows-x64-binaries.zip), archive SHA256 **F5F55B03BD54CE0DD1C51D524B54C7E015ABD4D620AF27D6971288A2DBE4A8F8**. Provenance limitation: official EDB HTTPS source; no publisher checksum/signature confirmed. psql/libpq/OpenSSL files checked during preparation were NotSigned. The runner records actual client version/executable hash separately from this preparation reference; it does not claim to reverify the archive or all DLLs. Portable files and local provenance stay outside Git. Only psql --version was used in preparation; SQL connectivity remains unverified until a separately approved preflight.
+## Windows Compose capability discovery
+
+The 2026-09-21 capability diagnosis proved that clearing ProgramFiles prevents Docker CLI from discovering the installed Windows Compose plugin. With the same executable, empty Docker config and process wrapper, adding only OS-derived ProgramFiles restores `docker compose version --short` output `5.4.0` (exit 0). The historical BLOCKED reports remain unchanged. This is a scoped Docker discovery requirement, not permission to inherit Windows/user environment generally.
+
+Docker children alone receive ProgramFiles from the Windows known-folder API (`Environment.GetFolderPath(SpecialFolder.ProgramFiles)`), checked as a canonical existing local directory without reparse ancestors. Neither validation input nor caller ExtraEnvironment can override it. SQL/psql children retain their existing allowlist and explicit private PGPASSFILE inputs; PG*, APPDATA, LOCALAPPDATA, USERPROFILE and ProgramFiles(x86) are not newly inherited. PATH, Docker Desktop/plugins, database topology, resource ownership and cleanup policy are unchanged.
+
+Keep `docker compose version --short`; accept exactly a numeric major.minor.patch after trimming line endings. Missing plugin, nonzero exit or malformed version is STOP before resource creation. There is no legacy docker-compose.exe fallback.
+
+Version-capability calls alone (`docker --version`, `docker version`, its fixed JSON form, `docker compose version [--short]`, `psql --version`) may retain actual exitCode and SanitizedStderr. Preserve only a small exact allowlist of known Docker discovery/usage messages; replace every other nonempty line with a generic redaction marker. Inspect at most 4096 characters and store at most 800 characters including truncation markers. Unknown localization remains redacted. Incomplete execution records null exitCode and an unavailable marker. No environment/config content is recorded; config/inspect/SQL stderr remains suppressed.
+
+Checks for this blocker:
+
+~~~powershell
+# Default offline suite; no Docker executable invoked.
+pwsh -NoProfile -File infra/validation/tests/safety.tests.ps1
+# Explicit read-only regression: two Compose version probes, no Docker resources or DB.
+pwsh -NoProfile -File infra/validation/tests/safety.tests.ps1 -DockerCapabilityRegression
+~~~
+
+The opt-in regression uses an empty temporary Docker config: the unchanged minimal child cannot discover Compose, while the Docker-only child discovers the confirmed local version 5.4.0. This proves capability discovery on the checked host, not runtime isolation/SQL/cleanup. DEC-005 remains Pending; runtime preflight requires separate approval. AGENTS.md is unchanged because this patch implements the existing scoped isolation policy rather than changing project-wide workflow.
