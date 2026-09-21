@@ -23,7 +23,6 @@ try {
     $lockHeld = $mutex.WaitOne(0)
     Assert-Safe $lockHeld 'another validation runner exists'
     $ctx.RunId = [guid]::NewGuid().ToString('N')
-    $ctx.Docker = (Get-Command docker.exe -CommandType Application -ErrorAction Stop).Source
     $ctx.DockerHost = 'npipe:////./pipe/dockerDesktopLinuxEngine'
     $ctx.Ids = @{}
     $reportDir = Get-SafePath "$($ctx.Root)\docs\audits\yuni-2026-09\passes\validation"
@@ -130,6 +129,44 @@ try {
         Save-Evidence
         return $c
     }
+    function Invoke-OwnedCleanup {
+            $journal.Stage='guarded cleanup'
+            $null = Check-Owned -Running
+            $null = Invoke-Docker @('container','stop','--time','10',$ctx.Ids.container)
+            $c = Check-Owned
+            Assert-Safe ($c.State.Running -eq $false) 'stop not verified'
+            $null = Invoke-Docker @('container','rm',$ctx.Ids.container)
+            $n = Inspect-One 'network' $ctx.Ids.network
+            $null = Assert-OwnedResource $n 'network' $ctx.RunId $ctx.Ids.network
+            Assert-Safe ($n.Containers.Count -eq 0) 'network has consumers'
+            $null = Invoke-Docker @('network','rm',$ctx.Ids.network)
+            $v = Inspect-One 'volume' 'yuni-validation-postgres-data'
+            $null = Assert-OwnedResource $v 'volume' $ctx.RunId $ctx.Ids.volume
+            Assert-Safe ([string]::IsNullOrEmpty((Invoke-Docker @('container','ls','--all','--quiet','--filter','volume=yuni-validation-postgres-data')).Trim())) 'volume has consumers'
+            $null = Invoke-Docker @('volume','rm','yuni-validation-postgres-data')
+            $after = @(Get-Inventory)
+            Assert-NoExistingResources $after
+            # Compare identities/states only; do not preserve unrelated labels or inspect ordinary DB.
+            $beforeKey = @($ctx.Before | ForEach-Object { "$($_.Kind)|$($_.Name)|$($_.Id)|$($_.State)" } | Sort-Object)
+            $afterKey = @($after | ForEach-Object { "$($_.Kind)|$($_.Name)|$($_.Id)|$($_.State)" } | Sort-Object)
+            Assert-Safe (($beforeKey -join "\n") -ceq ($afterKey -join "\n")) 'unrelated resource inventory changed'
+            $journal.Checks.Cleanup='PASS: owned Docker resources absent; original inventory unchanged'
+    }
+    $journal.Stage='psql capability (before Docker)'
+    $journal.sqlIdentity = @{attempted=$false; result='NOT RUN'}
+    $capability = @{Tool='psql';Arguments=@('--version');Result='STARTED'}
+    $journal.Commands.Add($capability); Save-Evidence
+    try {
+        $ctx.Psql = Get-ValidationPsqlClient $ctx.Values.VALIDATION_PSQL_PATH $ctx.Root
+        $capability.Result='PASS'; $capability.ExitCode=0
+        $journal.PsqlClient = @{Path=$ctx.Psql.Path;Version=$ctx.Psql.Version;ExecutableSHA256=$ctx.Psql.SHA256
+            PreparedReference=@{VersionBuild='16.15-4 Windows x64';ArchiveSHA256='F5F55B03BD54CE0DD1C51D524B54C7E015ABD4D620AF27D6971288A2DBE4A8F8'
+                Source='https://get.enterprisedb.com/postgresql/postgresql-16.15-4-windows-x64-binaries.zip'
+                Limitation='Official EDB HTTPS source; no publisher checksum/signature confirmed. Reference archive not reverified by runner.'}
+            MatchesPreparedExecutable=($ctx.Psql.SHA256 -ceq '4D77C3479F5CEBD0CD761154C4E02A34A005D2728A249FBC9ECB4BDAC1519F07')}
+    } catch { $capability.Result='FAIL / UNKNOWN'; throw }
+    finally { Save-Evidence }
+    $ctx.Docker = @(Get-Command docker.exe -CommandType Application -ErrorAction Stop)[0].Source
     Invoke-SafetySteps @(
         {
             $journal.Stage='runtime preflight'
@@ -206,32 +243,35 @@ try {
                 $tcpEntry.Result='PASS'
             } catch { $tcpEntry.Result='FAIL / UNKNOWN'; throw }
             finally { $client.Dispose(); $tcpEntry.Milliseconds=$tcpWatch.ElapsedMilliseconds; Save-Evidence }
-            $journal.Checks.Runtime='PASS: healthy; actual loopback publication; host TCP'
-            $journal.Checks.DatabaseIdentity='Configuration only; no SQL/authentication test'
+            $journal.Checks.Runtime='PENDING SQL: healthy; actual loopback publication; host TCP'
             Save-Evidence
         },
         {
-            $journal.Stage='guarded cleanup'
-            $null = Check-Owned -Running
-            $null = Invoke-Docker @('container','stop','--time','10',$ctx.Ids.container)
-            $c = Check-Owned
-            Assert-Safe ($c.State.Running -eq $false) 'stop not verified'
-            $null = Invoke-Docker @('container','rm',$ctx.Ids.container)
-            $n = Inspect-One 'network' $ctx.Ids.network
-            $null = Assert-OwnedResource $n 'network' $ctx.RunId $ctx.Ids.network
-            Assert-Safe ($n.Containers.Count -eq 0) 'network has consumers'
-            $null = Invoke-Docker @('network','rm',$ctx.Ids.network)
-            $v = Inspect-One 'volume' 'yuni-validation-postgres-data'
-            $null = Assert-OwnedResource $v 'volume' $ctx.RunId $ctx.Ids.volume
-            Assert-Safe ([string]::IsNullOrEmpty((Invoke-Docker @('container','ls','--all','--quiet','--filter','volume=yuni-validation-postgres-data')).Trim())) 'volume has consumers'
-            $null = Invoke-Docker @('volume','rm','yuni-validation-postgres-data')
-            $after = @(Get-Inventory)
-            Assert-NoExistingResources $after
-            # Compare identities/states only; do not preserve unrelated labels or inspect ordinary DB.
-            $beforeKey = @($ctx.Before | ForEach-Object { "$($_.Kind)|$($_.Name)|$($_.Id)|$($_.State)" } | Sort-Object)
-            $afterKey = @($after | ForEach-Object { "$($_.Kind)|$($_.Name)|$($_.Id)|$($_.State)" } | Sort-Object)
-            Assert-Safe (($beforeKey -join "\n") -ceq ($afterKey -join "\n")) 'unrelated resource inventory changed'
-            $journal.Checks.Cleanup='PASS: owned Docker resources absent; original inventory unchanged'
+            $journal.Stage='host SQL identity'
+            $journal.sqlIdentity = @{
+                attempted=$false; clientPath=$ctx.Psql.Path; clientVersion=$ctx.Psql.Version
+                host='127.0.0.1'; port=56032; expectedDatabase='yuni_validation_test'
+                actualDatabase=$null; currentUser=$null; postgresVersion=$null; exitCode=$null
+                result='NOT RUN'; pgpassCleanup='NOT RUN'
+            }
+            $sqlEntry = @{Tool='psql';Arguments=(Get-SqlIdentityArguments);Result='STARTED'}
+            $journal.Commands.Add($sqlEntry); Save-Evidence
+            Invoke-IdentityAndCleanup -SqlEvidence $journal.sqlIdentity -Checks $journal.Checks -Probe {
+                Assert-InputsUnchanged $ctx
+                $watch = [Diagnostics.Stopwatch]::StartNew()
+                try {
+                    Invoke-HostSqlIdentity $ctx $journal.sqlIdentity
+                    $sqlEntry.Result='PASS'; $sqlEntry.ExitCode=$journal.sqlIdentity.exitCode
+                } catch { $sqlEntry.Result='FAIL / UNKNOWN'; throw }
+                finally { $sqlEntry.Milliseconds=$watch.ElapsedMilliseconds; Save-Evidence }
+            } -Compare {
+                $journal.Stage='ordinary resource comparison before cleanup'
+                $current = @(Get-Inventory | Where-Object { $_.Name -notin @('yuni-validation-postgres','yuni-validation-network','yuni-validation-postgres-data') })
+                $beforeKey = @($ctx.Before | ForEach-Object { "$($_.Kind)|$($_.Name)|$($_.Id)|$($_.State)" } | Sort-Object)
+                $currentKey = @($current | ForEach-Object { "$($_.Kind)|$($_.Name)|$($_.Id)|$($_.State)" } | Sort-Object)
+                Assert-Safe (($beforeKey -join "\n") -ceq ($currentKey -join "\n")) 'ordinary resource inventory changed before cleanup'
+                $journal.Checks.OrdinaryResources='PASS before cleanup'; Save-Evidence
+            } -Cleanup { Invoke-OwnedCleanup; Save-Evidence }
         }
     )
     $journal.State='PASS'; $journal.CompletedAt=[DateTimeOffset]::UtcNow.ToString('o'); Save-Evidence
@@ -241,7 +281,7 @@ try {
         $journal.State='STOP'; $journal.StopReason='FAIL / UNKNOWN / AMBIGUOUS; inspect stage and command results; raw errors withheld'
         try { Save-Evidence } catch { }
     }
-    [Console]::Error.WriteLine('PREFLIGHT STOP. No further Docker operations or automatic cleanup. Raw details suppressed.')
+    [Console]::Error.WriteLine('PREFLIGHT STOP. See evidence for guarded cleanup outcome. Raw details suppressed.')
     exit 1
 } finally {
     if ($null -ne $writer) { $writer.Dispose() }

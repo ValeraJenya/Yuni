@@ -46,7 +46,8 @@ function Read-ValidationEnvironment([string]$Path) {
 function Assert-ValidationEnvironment([hashtable]$Values, [string]$ExpectedWorktreeRoot) {
     Assert-Keys $Values @('COMPOSE_PROJECT_NAME','VALIDATION_ENVIRONMENT','VALIDATION_EXTERNAL_PROVIDERS',
         'VALIDATION_DATABASE_NAME','VALIDATION_POSTGRES_PORT','VALIDATION_POSTGRES_USER','VALIDATION_POSTGRES_PASSWORD',
-        'DATABASE_URL','TEST_DATABASE_URL','VALIDATION_WORKTREE_ROOT','VALIDATION_MEDIA_ROOT')
+        'DATABASE_URL','TEST_DATABASE_URL','VALIDATION_WORKTREE_ROOT','VALIDATION_MEDIA_ROOT','VALIDATION_PSQL_PATH')
+    $null = Get-ValidationPsqlPath $Values.VALIDATION_PSQL_PATH
     $constants = @{
         COMPOSE_PROJECT_NAME='yuni-validation'; VALIDATION_ENVIRONMENT='yuni-audit-validation'
         VALIDATION_EXTERNAL_PROVIDERS='disabled'; VALIDATION_DATABASE_NAME='yuni_validation_test'
@@ -295,7 +296,7 @@ namespace YuniValidation {
 }
 
 function Invoke-SafeProcess([string]$Executable, [string[]]$Arguments, [string]$Directory,
-    [hashtable]$ExtraEnvironment = @{}, [int]$TimeoutSeconds = 60) {
+    [hashtable]$ExtraEnvironment = @{}, [int]$TimeoutSeconds = 60, [switch]$ReturnExitCode) {
     Assert-Safe ($TimeoutSeconds -ge 1 -and $TimeoutSeconds -le 300) 'invalid command timeout'
     $childEnvironment = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($key in @('SystemRoot','WINDIR','PATH','TEMP','TMP')) {
@@ -315,7 +316,7 @@ function Invoke-SafeProcess([string]$Executable, [string[]]$Arguments, [string]$
             [Threading.Thread]::Sleep(20)
         }
         $output = $stdout.GetAwaiter().GetResult(); $null = $stderr.GetAwaiter().GetResult()
-        Assert-Safe ($process.ExitCode -eq 0) 'command failed; native output suppressed'
+        if (-not $ReturnExitCode) { Assert-Safe ($process.ExitCode -eq 0) 'command failed; native output suppressed' }
         return @{ Output=$output; ExitCode=$process.ExitCode; Milliseconds=$watch.ElapsedMilliseconds }
     } catch {
         $job.Stop()
@@ -416,5 +417,144 @@ function Assert-OwnedResource([hashtable]$Resource, [string]$Kind, [string]$RunI
 function Invoke-SafetySteps([scriptblock[]]$Steps) {
     # Exceptions terminate the sequence. Deliberately no cleanup in finally.
     foreach ($step in $Steps) { & $step }
+}
+function Get-ValidationPsqlPath([string]$Path) {
+    $resolved = Get-SafePath $Path -MustExist
+    Assert-Safe (Test-Path -LiteralPath $resolved -PathType Leaf) 'psql file missing'
+    Assert-Safe ([IO.Path]::GetFileName($resolved) -ieq 'psql.exe') 'psql basename mismatch'
+    return $resolved
+}
+function Get-ValidationPsqlClient([string]$Path, [string]$Directory) {
+    $resolved = Get-ValidationPsqlPath $Path
+    $beforeHash = (Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash
+    $r = Invoke-SafeProcess $resolved @('--version') $Directory
+    Assert-Safe ($r.ExitCode -eq 0 -and $r.Output.Trim() -cmatch '^psql \(PostgreSQL\) (16\.[0-9]+)$') 'psql major 16 required'
+    $version = $Matches[1]
+    Assert-Safe ((Get-FileHash -LiteralPath $resolved -Algorithm SHA256).Hash -ceq $beforeHash) 'psql changed during capability check'
+    return @{Path=$resolved; Version=$version; SHA256=$beforeHash}
+}
+function Assert-PsqlUnchanged([hashtable]$Client) {
+    $path = Get-ValidationPsqlPath $Client.Path
+    Assert-Safe ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ceq $Client.SHA256) 'psql changed after capability gate'
+}
+function Get-SqlIdentityArguments {
+    # Not caller-configurable: no SQL, endpoint or URI is accepted from the environment.
+    return @('-X','-w','-h','127.0.0.1','-p','56032','-d','yuni_validation_test',
+        '-U','yuni_validation_user','-v','ON_ERROR_STOP=1','-A','-t','-c',
+        "SELECT pg_catalog.json_build_object('database', current_database(), 'user', current_user, 'version', version())::text;")
+}
+function Read-SqlIdentity([hashtable]$Response, [string]$Password) {
+    Assert-Safe ($Response.ExitCode -eq 0) 'SQL identity process failed'
+    Assert-Safe ($Response.Output -is [string] -and $Response.Output.Length -lt 2048 -and
+        -not $Response.Output.Contains($Password)) 'SQL output rejected'
+    try {
+        # JsonDocument preserves duplicate properties; ConvertFrom-Json alone would collapse them.
+        $json = [Text.Json.JsonDocument]::Parse($Response.Output.Trim())
+        try {
+            Assert-Safe ($json.RootElement.ValueKind -eq [Text.Json.JsonValueKind]::Object) 'SQL object required'
+            $fields = @($json.RootElement.EnumerateObject())
+            Assert-Safe ($fields.Count -eq 3) 'SQL field count mismatch'
+            $result = @{}
+            foreach ($field in $fields) {
+                Assert-Safe ($field.Name -cin @('database','user','version') -and -not $result.ContainsKey($field.Name) -and
+                    $field.Value.ValueKind -eq [Text.Json.JsonValueKind]::String) 'SQL fields invalid'
+                $result[$field.Name] = $field.Value.GetString()
+            }
+            Assert-Safe ($result.database -ceq 'yuni_validation_test' -and $result.user -ceq 'yuni_validation_user') 'SQL target identity mismatch'
+            Assert-Safe ($result.version -cmatch '^PostgreSQL 16\.[0-9]+ [\x20-\x7e]{1,500}$') 'SQL server version invalid'
+            return $result
+        } finally { $json.Dispose() }
+    } catch { throw 'SAFETY STOP: SQL identity invalid; native output withheld' }
+}
+function Assert-PrivateAcl([string]$Path, [Security.Principal.SecurityIdentifier]$Sid) {
+    $acl = Get-Acl -LiteralPath $Path
+    $rules = @($acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]))
+    Assert-Safe ($acl.AreAccessRulesProtected -and $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ceq $Sid.Value -and
+        $rules.Count -eq 1 -and $rules[0].IdentityReference.Value -ceq $Sid.Value -and
+        $rules[0].AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
+        $rules[0].FileSystemRights -eq [Security.AccessControl.FileSystemRights]::FullControl -and
+        -not $rules[0].IsInherited) 'private ACL not guaranteed'
+}
+function Get-PgpassScope([string]$Root, [string]$RunId) {
+    Assert-Safe ($RunId -cmatch '^[0-9a-f]{32}$') 'invalid pgpass run ID'
+    $rootPath = Get-SafePath $Root -MustExist
+    $parent = Get-SafePath "$rootPath\docs\audits\yuni-2026-09\passes\validation" -MustExist
+    return Get-SafePath "$parent\pgpass-$RunId"
+}
+function New-PrivatePgpass([string]$Root, [string]$RunId, [string]$Password, [hashtable]$Ownership) {
+    Assert-Safe ($Password -cmatch '^[A-Za-z0-9_-]{32,128}$') 'invalid synthetic password'
+    $scope = Get-PgpassScope $Root $RunId
+    Assert-Safe (-not (Test-Path -LiteralPath $scope)) 'pgpass scope already exists'
+    $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+    $directoryAcl = [Security.AccessControl.DirectorySecurity]::new()
+    $directoryAcl.SetOwner($sid); $directoryAcl.SetAccessRuleProtection($true,$false)
+    $directoryAcl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow'))
+    # Windows creates the directory and file with protected ACLs, before any secret is written.
+    [IO.FileSystemAclExtensions]::Create([IO.DirectoryInfo]::new($scope),$directoryAcl)
+    $Ownership.Created = $true
+    Assert-PrivateAcl $scope $sid
+    $path = Join-Path $scope 'pgpass.conf'
+    $fileAcl = [Security.AccessControl.FileSecurity]::new()
+    $fileAcl.SetOwner($sid); $fileAcl.SetAccessRuleProtection($true,$false)
+    $fileAcl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new($sid,'FullControl','Allow'))
+    $stream = [IO.FileSystemAclExtensions]::Create([IO.FileInfo]::new($path),[IO.FileMode]::CreateNew,
+        [Security.AccessControl.FileSystemRights]::Write,[IO.FileShare]::None,4096,[IO.FileOptions]::None,$fileAcl)
+    try {
+        Assert-PrivateAcl $path $sid
+        $bytes = [Text.Encoding]::ASCII.GetBytes("127.0.0.1:56032:yuni_validation_test:yuni_validation_user:$Password`n")
+        try { $stream.Write($bytes,0,$bytes.Length); $stream.Flush($true) }
+        finally { [Array]::Clear($bytes,0,$bytes.Length) }
+    } finally { $stream.Dispose() }
+    return $path
+}
+function Remove-PrivatePgpass([string]$Root, [string]$RunId) {
+    $scope = Get-PgpassScope $Root $RunId
+    $path = Get-SafePath (Join-Path $scope 'pgpass.conf')
+    # No recursive removal, wildcards or guessed outside paths. Reparse points fail closed.
+    if (Test-Path -LiteralPath $path) { [IO.File]::Delete($path) }
+    if (Test-Path -LiteralPath $scope) { [IO.Directory]::Delete($scope,$false) }
+    Assert-Safe (-not (Test-Path -LiteralPath $scope)) 'pgpass cleanup incomplete'
+}
+function Invoke-HostSqlIdentity([hashtable]$Context, [hashtable]$Evidence) {
+    $Evidence.attempted = $false; $Evidence.result='FAIL'; $Evidence.pgpassCleanup='NOT RUN'
+    $ownership = @{Created=$false}
+    try {
+        Assert-PsqlUnchanged $Context.Psql
+        $passFile = New-PrivatePgpass $Context.Root $Context.RunId $Context.Values.VALIDATION_POSTGRES_PASSWORD $ownership
+        $Evidence.attempted = $true
+        $response = Invoke-SafeProcess $Context.Psql.Path (Get-SqlIdentityArguments) $Context.Root @{
+            PGPASSFILE=$passFile; PGCONNECT_TIMEOUT='5'; PGCLIENTENCODING='UTF8'; PGAPPNAME='yuni-dec005-identity'
+        } 15 -ReturnExitCode
+        $Evidence.exitCode = $response.ExitCode
+        $identity = Read-SqlIdentity $response $Context.Values.VALIDATION_POSTGRES_PASSWORD
+        $Evidence.actualDatabase = $identity.database; $Evidence.currentUser = $identity.user
+        $Evidence.postgresVersion = $identity.version
+        $Evidence.result='PASS'
+    } catch { throw 'SAFETY STOP: host SQL identity failed; raw output suppressed' }
+    finally {
+        try {
+            if ($ownership.Created) { Remove-PrivatePgpass $Context.Root $Context.RunId }
+            $Evidence.pgpassCleanup='PASS'
+        }
+        catch {
+            $Evidence.pgpassCleanup='FAIL'; $Evidence.result='FAIL'
+            throw 'SAFETY STOP: private pgpass cleanup failed; manual recovery required'
+        }
+    }
+}
+function Invoke-IdentityAndCleanup([scriptblock]$Probe, [scriptblock]$Compare, [scriptblock]$Cleanup,
+    [hashtable]$SqlEvidence, [hashtable]$Checks) {
+    # Only this narrow post-creation phase permits failure cleanup. Cleanup itself must reprove ownership.
+    try {
+        & $Probe
+        Assert-Safe ($SqlEvidence.result -ceq 'PASS' -and $SqlEvidence.pgpassCleanup -ceq 'PASS') 'SQL success required'
+        & $Compare
+        $Checks.Runtime='PASS: health, loopback, TCP and host SQL identity'
+    } catch {
+        $Checks.Runtime='FAIL: SQL identity or resource comparison'
+        try { & $Cleanup } catch { $Checks.Cleanup='FAIL / UNKNOWN: resources retained' }
+        throw 'SAFETY STOP: identity/comparison failed; see redacted cleanup outcome'
+    }
+    & $Cleanup
 }
 Export-ModuleMember -Function *

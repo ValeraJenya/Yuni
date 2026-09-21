@@ -6,7 +6,7 @@ Import-Module "$PSScriptRoot\..\safety.psm1" -Force -DisableNameChecking
 $script:passed = 0
 function Check([string]$Name, [scriptblock]$Test, [switch]$Reject) {
     $failed = $false
-    try { & $Test } catch { $failed = $true }
+    try { & $Test } catch { $failed = $true; if (-not $Reject) { Write-Host $_.Exception.Message; Write-Host $_.ScriptStackTrace } }
     if ($failed -ne [bool]$Reject) { throw "TEST FAILED: $Name" }
     $script:passed++; Write-Output "PASS $Name"
 }
@@ -15,8 +15,11 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('yuni-validation-static-' + [guid]
 $null = [IO.Directory]::CreateDirectory($temp)
 try {
     $model = Get-Content -LiteralPath "$PSScriptRoot\..\compose.validation.yml" -Raw | ConvertFrom-Json -AsHashtable
+    $fixturePsql = Join-Path $temp 'psql.exe'
+    [IO.File]::WriteAllText($fixturePsql,'synthetic executable path fixture; never executed')
     $values = @{
         COMPOSE_PROJECT_NAME='yuni-validation'; VALIDATION_ENVIRONMENT='yuni-audit-validation'
+        VALIDATION_PSQL_PATH=$fixturePsql
         VALIDATION_EXTERNAL_PROVIDERS='disabled'; VALIDATION_DATABASE_NAME='yuni_validation_test'
         VALIDATION_POSTGRES_PORT='56032'; VALIDATION_POSTGRES_USER='yuni_validation_user'
         VALIDATION_POSTGRES_PASSWORD=('a' * 40); VALIDATION_WORKTREE_ROOT=$temp
@@ -253,6 +256,150 @@ if ($Mode -eq 'parent-waits') { Start-Sleep -Seconds 30 }
         Resolve-FixtureCandidates @($firstCandidate,$secondCandidate)
     } -Reject
 
+    # New probe tests never execute psql or connect: only the process boundary is substituted.
+    $reportDir=Join-Path $temp 'docs\audits\yuni-2026-09\passes\validation'
+    $null=[IO.Directory]::CreateDirectory($reportDir)
+    function With-SqlProcessFixture([hashtable]$Response, [scriptblock]$Body) {
+        & (Get-Module safety) {
+            param($Response,$Body,$Root,$FixturePsql,$Values)
+            $script:SqlFixtureResponse=$Response
+            function script:Invoke-SafeProcess {
+                param($Executable,$Arguments,$Directory,$ExtraEnvironment,$TimeoutSeconds,[switch]$ReturnExitCode)
+                Assert-Safe ($Executable -ceq $FixturePsql) 'unexpected executable'
+                if ($Arguments[0] -ceq '--version') {
+                    Assert-Safe ($Arguments.Count -eq 1) 'version command grew connection arguments'
+                } else {
+                    Assert-Safe (($Arguments -join "`n") -ceq ((Get-SqlIdentityArguments) -join "`n")) 'SQL arguments changed'
+                    Assert-Safe (-not (($Arguments -join '')).Contains($Values.VALIDATION_POSTGRES_PASSWORD)) 'password in arguments'
+                    Assert-Safe ($ReturnExitCode) 'exit status not captured'
+                    Assert-Keys $ExtraEnvironment @('PGPASSFILE','PGCONNECT_TIMEOUT','PGCLIENTENCODING','PGAPPNAME')
+                    $passPath=$ExtraEnvironment.PGPASSFILE
+                    Assert-Safe ($passPath.StartsWith("$Root\docs\audits\yuni-2026-09\passes\validation\pgpass-")) 'pgpass outside scope'
+                    Assert-PrivateAcl $passPath ([Security.Principal.WindowsIdentity]::GetCurrent().User)
+                    Assert-Safe ([IO.File]::ReadAllText($passPath) -ceq "127.0.0.1:56032:yuni_validation_test:yuni_validation_user:$($Values.VALIDATION_POSTGRES_PASSWORD)`n") 'pgpass not exact single record'
+                }
+                return $script:SqlFixtureResponse
+            }
+            try { & (Get-Module safety).NewBoundScriptBlock($Body) }
+            finally { Remove-Item Function:Invoke-SafeProcess; Remove-Variable SqlFixtureResponse -Scope Script }
+        } $Response $Body $temp $fixturePsql $values
+    }
+    $bad=Clone $values; $bad.Remove('VALIDATION_PSQL_PATH')
+    Check 'missing explicit psql fails static guard before Docker' { Assert-ValidationEnvironment $bad $temp } -Reject
+    Check 'relative psql path' { Get-ValidationPsqlPath '.\psql.exe' } -Reject
+    Check 'missing psql file' { Get-ValidationPsqlPath "$temp\absent\psql.exe" } -Reject
+    Check 'wrong psql basename' { Get-ValidationPsqlPath $fixture } -Reject
+    Check 'wrong client major rejected' {
+        With-SqlProcessFixture @{Output='psql (PostgreSQL) 17.1';ExitCode=0} {Get-ValidationPsqlClient $FixturePsql $Root}
+    } -Reject
+    Check 'valid psql 16 capability' {
+        With-SqlProcessFixture @{Output='psql (PostgreSQL) 16.15';ExitCode=0} {
+            $client=Get-ValidationPsqlClient $FixturePsql $Root
+            Assert-Safe ($client.Version -ceq '16.15' -and $client.Path -ceq $FixturePsql) 'capability mismatch'
+        }
+    }
+    foreach ($key in @('PGHOST','PGHOSTADDR','PGPORT','PGDATABASE','PGUSER','PGPASSWORD','PGPASSFILE','PGSERVICE','PGSERVICEFILE','PGOPTIONS','PGAPPNAME','PGSYSCONFDIR','PGSSLCERT','PGSSLKEY','PGSSLMODE','PGGSSENCMODE','PGTARGETSESSIONATTRS','PGLOADBALANCEHOSTS')) {
+        Check "reject inherited libpq $key" { Assert-InheritedEnvironment @{$key='synthetic-override'} } -Reject
+    }
+    $savedPg=@{}
+    try {
+        foreach ($key in @('PGHOST','PGHOSTADDR','PGSERVICE','PGPASSFILE','PGOPTIONS','PGSYSCONFDIR')) {
+            $savedPg[$key]=[Environment]::GetEnvironmentVariable($key)
+            [Environment]::SetEnvironmentVariable($key,'synthetic-override','Process')
+        }
+        $r=Invoke-SafeProcess $pwshPath @('-NoProfile','-Command','if (@(Get-ChildItem Env: | Where-Object Name -like "PG*").Count) { exit 1 }; "clean"') $temp
+        Check 'all inherited PG variables absent in real harmless child' { Assert-Safe ($r.Output.Trim() -ceq 'clean') 'PG inherited' }
+    } finally { foreach ($key in $savedPg.Keys) { [Environment]::SetEnvironmentVariable($key,$savedPg[$key],'Process') } }
+    $ok=@{ExitCode=0;Output='{"database":"yuni_validation_test","user":"yuni_validation_user","version":"PostgreSQL 16.15 on synthetic, 64-bit"}'}
+    Check 'expected SQL identity parses' { $null=Read-SqlIdentity $ok $values.VALIDATION_POSTGRES_PASSWORD }
+    foreach ($case in @(
+        @{Name='wrong database';Output=$ok.Output.Replace('yuni_validation_test','yuni');ExitCode=0},
+        @{Name='wrong user';Output=$ok.Output.Replace('yuni_validation_user','postgres');ExitCode=0},
+        @{Name='nonzero SQL exit';Output=$ok.Output;ExitCode=2},
+        @{Name='malformed output';Output='not JSON';ExitCode=0},
+        @{Name='duplicate JSON field';Output=$ok.Output.Replace('{','{"database":"yuni",');ExitCode=0},
+        @{Name='unexpected password output';Output=$ok.Output+$values.VALIDATION_POSTGRES_PASSWORD;ExitCode=0}
+    )) { Check $case.Name { Read-SqlIdentity $case $values.VALIDATION_POSTGRES_PASSWORD } -Reject }
+    Check 'SQL arguments have no password, URI or startup script' {
+        $a=Get-SqlIdentityArguments
+        Assert-Safe ('-X' -cin $a -and '-w' -cin $a -and '-h' -cin $a -and '127.0.0.1' -cin $a -and '56032' -cin $a -and
+            -not (($a -join '')).Contains($values.VALIDATION_POSTGRES_PASSWORD) -and ($a -join '') -notmatch 'postgresql://') 'unsafe arguments'
+    }
+    Check 'SQL probe uses private exact pgpass and removes it on success' {
+        With-SqlProcessFixture $ok {
+            $runId=[guid]::NewGuid().ToString('N')
+            $ctx=@{Root=$Root;RunId=$runId;Values=$Values;Psql=@{Path=$FixturePsql;SHA256=(Get-FileHash $FixturePsql).Hash}}
+            $e=@{}
+            Invoke-HostSqlIdentity $ctx $e
+            Assert-Safe ($e.result -ceq 'PASS' -and $e.pgpassCleanup -ceq 'PASS' -and $e.attempted) 'probe failed'
+            Assert-Safe (-not (Test-Path -LiteralPath (Get-PgpassScope $Root $runId))) 'passfile retained'
+            Assert-Safe (($e | ConvertTo-Json) -notmatch $Values.VALIDATION_POSTGRES_PASSWORD) 'password in evidence'
+        }
+    }
+    Check 'failed SQL cleans pgpass and records failure without password' {
+        With-SqlProcessFixture @{ExitCode=2;Output='synthetic error'} {
+            $runId=[guid]::NewGuid().ToString('N')
+            $ctx=@{Root=$Root;RunId=$runId;Values=$Values;Psql=@{Path=$FixturePsql;SHA256=(Get-FileHash $FixturePsql).Hash}}
+            $e=@{}; $failed=$false
+            try { Invoke-HostSqlIdentity $ctx $e } catch { $failed=$true }
+            Assert-Safe ($failed -and $e.result -ceq 'FAIL' -and $e.exitCode -eq 2 -and $e.pgpassCleanup -ceq 'PASS') 'failure outcome wrong'
+            Assert-Safe (-not (Test-Path (Get-PgpassScope $Root $runId))) 'failed SQL retained password'
+            Assert-Safe (($e | ConvertTo-Json) -notmatch $Values.VALIDATION_POSTGRES_PASSWORD) 'password in failure evidence'
+        }
+    }
+    Check 'existing pgpass scope never adopted or removed' {
+        With-SqlProcessFixture $ok {
+            $runId=[guid]::NewGuid().ToString('N');$scope=Get-PgpassScope $Root $runId
+            $null=[IO.Directory]::CreateDirectory($scope)
+            $marker=Join-Path $scope 'pgpass.conf';[IO.File]::WriteAllText($marker,'synthetic existing marker')
+            $ctx=@{Root=$Root;RunId=$runId;Values=$Values;Psql=@{Path=$FixturePsql;SHA256=(Get-FileHash $FixturePsql).Hash}}
+            $e=@{};$failed=$false
+            try { Invoke-HostSqlIdentity $ctx $e } catch {$failed=$true}
+            Assert-Safe ($failed -and -not $e.attempted -and [IO.File]::ReadAllText($marker) -ceq 'synthetic existing marker') 'foreign pgpass was touched'
+            [IO.File]::Delete($marker);[IO.Directory]::Delete($scope)
+        }
+    }
+    Check 'pgpass ACL denies inherited broad access' {
+        $id=[guid]::NewGuid().ToString('N');$ownership=@{Created=$false}
+        try {
+            $pass=New-PrivatePgpass $temp $id $values.VALIDATION_POSTGRES_PASSWORD $ownership
+            Assert-PrivateAcl $pass ([Security.Principal.WindowsIdentity]::GetCurrent().User)
+            Assert-Safe $ownership.Created 'ownership not recorded'
+        } finally { if($ownership.Created){Remove-PrivatePgpass $temp $id} }
+    }
+    Check 'pgpass cleanup failure rejects overall SQL success' {
+        With-SqlProcessFixture $ok {
+            function script:Remove-PrivatePgpass { throw 'synthetic cleanup failure' }
+            $runId=[guid]::NewGuid().ToString('N')
+            $ctx=@{Root=$Root;RunId=$runId;Values=$Values;Psql=@{Path=$FixturePsql;SHA256=(Get-FileHash $FixturePsql).Hash}}
+            $e=@{};$failed=$false
+            try { Invoke-HostSqlIdentity $ctx $e } catch {$failed=$true}
+            finally {
+                # Restore production implementation after this test-only substitution.
+                Remove-Item Function:Remove-PrivatePgpass
+            }
+            Assert-Safe ($failed -and $e.result -ceq 'FAIL' -and $e.pgpassCleanup -ceq 'FAIL') 'cleanup failure ignored'
+        }
+    }
+    # Reload the module after the one test that substitutes a production cleanup function.
+    Import-Module "$PSScriptRoot\..\safety.psm1" -Force -DisableNameChecking
+    $order=[Collections.Generic.List[string]]::new();$e=@{result='NOT RUN';pgpassCleanup='NOT RUN'};$checks=@{}
+    Check 'success sequence requires SQL before comparison and owned cleanup' {
+        Invoke-IdentityAndCleanup -SqlEvidence $e -Checks $checks -Probe {$order.Add('SQL');$e.result='PASS';$e.pgpassCleanup='PASS'} -Compare {$order.Add('compare')} -Cleanup {$order.Add('ownership');$order.Add('cleanup')}
+        Assert-Safe (($order -join ',') -ceq 'SQL,compare,ownership,cleanup' -and $checks.Runtime -like 'PASS*') 'wrong success ordering'
+    }
+    $order.Clear();$e.result='FAIL';$checks=@{Runtime='TCP PASS'}
+    Check 'TCP PASS plus SQL FAIL stays FAIL and attempts guarded cleanup only' {
+        $failed=$false
+        try { Invoke-IdentityAndCleanup -SqlEvidence $e -Checks $checks -Probe {$order.Add('SQL');throw 'synthetic SQL failure'} -Compare {$order.Add('compare')} -Cleanup {$order.Add('ownership');$order.Add('cleanup')} } catch {$failed=$true}
+        Assert-Safe ($failed -and $checks.Runtime -like 'FAIL*' -and ($order -join ',') -ceq 'SQL,ownership,cleanup') 'SQL failure bypass'
+    }
+    $order.Clear();$checks=@{}
+    Check 'unproven cleanup ownership stops before deletion' {
+        $failed=$false
+        try { Invoke-IdentityAndCleanup -SqlEvidence $e -Checks $checks -Probe {throw 'synthetic SQL failure'} -Compare {} -Cleanup {$order.Add('ownership');throw 'unknown owner';$order.Add('delete')} } catch {$failed=$true}
+        Assert-Safe ($failed -and ($order -join ',') -ceq 'ownership' -and $checks.Cleanup -like 'FAIL*') 'unknown resource removed'
+    }
     Write-Output "STATIC TESTS PASS: $script:passed; Docker/DB/runtime operations: 0."
 } finally {
     # This test owns a unique temporary root. Verify the final target before recursive removal.
