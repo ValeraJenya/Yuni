@@ -44,7 +44,7 @@ After DEC-005, the relevant Owner Decisions, and a specific RV scope are approve
 
 1. **Preflight** — verify dedicated validation worktree and a clean Git state; confirm synthetic-only data, local-only providers, canonical validation media root, and no root `.env` input.
 2. **Guard** — run `guard.ps1`; any failure is a STOP. Run it again immediately before a migration, reset/drop, cleanup, or another destructive action.
-3. **Compose config** — run the read-only `docker compose ... config` command above and verify only `validation-postgres`, host binding `127.0.0.1:56032`, database `yuni_validation_test`, validation network, and validation volume appear.
+3. **Compose config** — run the explicit `docker compose ... config --quiet` command above and require exit code 0. It checks configuration validity without rendering values; it does not prove live connectivity. Verify non-secret service, binding, database, network and volume declarations against the Compose file and guard. Never print or copy a full rendered config, credentials or credential-bearing URLs into the console or audit log.
 4. **Start validation PostgreSQL** — only under the approved RV scope, repeat the guard, then run:
 
    ```powershell

@@ -149,6 +149,7 @@ C = проверенный code commit `fed276a97fd84f29032c5eac1b11447bb1f3ed4c
 ## DEC-005
 
 - Decision ID: DEC-005; Status: **Pending**.
+- Preparation disposition (2026-09-21): [decision draft §5/§8](08-VALIDATION-ENVIRONMENT.md) separates historical preflight failure, implemented infrastructure changes and missing final runtime/owner-acceptance evidence. [Validation infrastructure](../../../infra/validation/README.md) exists; its preparation does not close this decision or authorize RV-01–09.
 - Вопрос: Какую отдельную synthetic validation environment использовать; какие fixtures/mutations разрешить, какие PostgreSQL/dependency versions и evidence retention задать?
 - Почему необходимо: Все RV требуют явной изоляции, safe targets и разрешения операций; наличие backlog и имя БД не дают такого разрешения.
 - Findings/tests, зависящие от решения: Все RV-01–09, в первую очередь SEC-003/RV-01; runtime extensions ASR-001–004.

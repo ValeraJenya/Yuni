@@ -206,7 +206,17 @@ Wave 1: **21/125** основных назначений; остальные **1
 
 ## Proposed changes to existing audit documents
 
-Предложения ниже не внесены в другие документы и не являются findings или принятыми best practices.
+Исторические предложения на дату создания mapping; последующее disposition приведено ниже. Исходные предложения и основная mapping-таблица сохранены. Эти пометки описывают судьбу документационных предложений, не вводят lifecycle findings.
+
+| Предложение | Disposition на 2026-09-21 | Artifact / граница |
+| --- | --- | --- |
+| Расширить finding format | IMPLEMENTED | [03-FINDINGS.md §5](03-FINDINGS.md#5-detailed-finding-template): checklist/SHA/applicability/assessment/reverification, horizon, fix alternatives и условные risk/owner/dependency поля; действуют фактические имена и optionality шаблона, не первоначальный список дословно |
+| Создать Assurance Register | IMPLEMENTED | [06-ASSURANCE-REGISTER.md](06-ASSURANCE-REGISTER.md): отдельный реестр и четыре ограниченных static assurances; runtime не подтверждён |
+| Уточнить scopes и safety первой волны | IMPLEMENTED | [04-WAVE-1-PLAN.md](04-WAVE-1-PLAN.md) и связанные четыре specifications; это не выполнение всего master-checklist |
+| Подготовительные Pending SHA/tag и ожидание primary cross-review | SUPERSEDED | Фактические SHA, scope, primary reports и review — [Synthesis §1–2](passes/wave-1/04-SYNTHESIS-RED-TEAM.md); результат интегрирован в центральные реестры |
+| Последующие волны, Consistency/Idempotency, targeted runtime и owner policies | STILL OPEN | [07-WAVE-1-FOLLOWUPS.md](07-WAVE-1-FOLLOWUPS.md), [DEC-005 draft](08-VALIDATION-ENVIRONMENT.md); инфраструктурная подготовка не закрывает решения и проверки |
+
+Неисполненные части предложений ниже, включая NFR, production choices, acceptance и full-audit completion criteria, остаются STILL OPEN; создание реестров не означает принятия всех предложенных политик.
 
 ### 03-FINDINGS.md
 

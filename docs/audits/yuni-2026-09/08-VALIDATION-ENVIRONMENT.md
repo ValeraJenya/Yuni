@@ -4,7 +4,7 @@
 
 This document is the technical decision draft for **DEC-005** from [Wave 1 Followups](07-WAVE-1-FOLLOWUPS.md). It defines a disposable environment for future runtime validation of RV-01–RV-09. It does not approve a validation run, change the status of DEC-005, or authorize migrations, resets, Docker, PostgreSQL, tests, or application startup.
 
-Status: **Draft / Pending owner decision**. The owners must still approve DEC-005, a specific validation scope, and each destructive operation.
+Status: **Draft / Pending owner decision**. Infrastructure preparation is partial progress, not formal acceptance of DEC-005. The owners must still approve DEC-005, a specific validation scope, and each destructive operation. Recorded decisions and run statuses remain authoritative in [Followups](07-WAVE-1-FOLLOWUPS.md); the evidence chronology and missing acceptance evidence are separated in §5.
 
 The design applies to code commit `fed276a97fd84f29032c5eac1b11447bb1f3ed4c` or to an explicitly named remediation commit. The future validation report must record its actual SHA; evidence cannot be transferred automatically between commits.
 
@@ -57,13 +57,13 @@ Only this gate may enable destructive commands. It does not itself authorize the
 
 ## 5. Option A — Preferred: isolated Docker PostgreSQL
 
-Use Docker Compose with a dedicated project name and an explicit validation env file. Prefer a PostgreSQL-only stack first; start backend/frontend only when the approved RV needs an HTTP or browser boundary. The existing Compose file has a persistent named volume and a backend bind mount to `./apps/backend/uploads`; using it directly from the validation worktree makes those paths worktree-local, but the future execution plan must still use a validation-specific Compose invocation or overlay that names the validation volume and validates the media path.
+Use the dedicated PostgreSQL-only [validation Compose](../../../infra/validation/compose.validation.yml) and its [documented explicit invocation](../../../infra/validation/README.md), not the root application Compose. The current validation stack defines no backend/frontend or media mount. Any later application process and temporary media directory require their own approved RV scope and §4 checks.
 
 | Area | Design |
 | --- | --- |
 | Prerequisites | Docker daemon is reachable; separate validation worktree is clean; validation env file passes §4; approved RV and destructive scope exist; no host production/staging connection is permitted. |
-| Isolation guarantees | Unique Compose project name, proposed `yuni-audit-validation`; database `yuni_validation_test`; unique named volume derived from that project; network scoped to that project; media bind mount under the validation worktree; synthetic-only credentials and data. |
-| Environment variables | All §3 variables, plus Compose-specific `POSTGRES_DB=yuni_validation_test`, synthetic `POSTGRES_USER`/`POSTGRES_PASSWORD`, a non-conflicting validation-only port, and `COMPOSE_PROJECT_NAME=yuni-audit-validation` passed explicitly rather than inherited. |
+| Isolation guarantees | Declared Compose project `yuni-validation`; database `yuni_validation_test`; named volume `yuni-validation-postgres-data`; separate bridge network `yuni-validation-network`; loopback host endpoint `127.0.0.1:56032`. These are configuration declarations, not a fresh verification of running resources; media isolation is checked separately. |
+| Environment variables | All applicable §3 variables; explicit `COMPOSE_PROJECT_NAME=yuni-validation`, `VALIDATION_POSTGRES_USER`, `VALIDATION_POSTGRES_PASSWORD`, `VALIDATION_POSTGRES_PORT=56032` in the separate validation input. Compose sets container `POSTGRES_DB=yuni_validation_test` and maps the validation credential variables to container `POSTGRES_USER`/`POSTGRES_PASSWORD`. |
 | Allowed commands after §4 | Read-only `docker compose config --quiet`; start only the approved services with explicit `--project-name` and `--env-file`; `prisma migrate deploy` only against the verified validation URL; approved RV command; read-only inspection and synthetic cleanup. Exact commands are chosen and recorded in the validation report. |
 | Prohibited commands | Bare `docker compose up/down`; commands using root `.env`; `docker system prune`; unrelated project/volume removal; `prisma migrate dev`; unguarded reset/drop; publishing images; external network calls; host-path media mounts outside the validation worktree. |
 | Database-name guard | Parse both DB URLs before Compose and before Prisma; require `yuni_validation_test`. Use `docker compose config --quiet` to validate interpolation and rely on static guard checks for the expected `POSTGRES_DB` without printing secret values. |
@@ -71,17 +71,22 @@ Use Docker Compose with a dedicated project name and an explicit validation env 
 | Cleanup | After the report captures results, stop the validation project, remove only its named volume and validation media directory after repeating §4, then confirm no containers, volume, database objects, or synthetic media remain. If the guard fails, retain artifacts and report the blocker rather than deleting. |
 | Risks | Docker daemon/desktop availability; Compose defaults are unsafe without explicit env/project name; backend/frontend startup can create artifacts; mounted media and persistent volumes require exact targeting. |
 
-### Current availability
+### Recorded preflight history and current configuration
 
 #### Port preflight update
 
-Runtime preflight rejected host port `55432`: Windows reserves TCP ports `55372–55471`. Port `56032` was checked with `Get-NetTCPConnection` and `netstat` and is free. The validation infrastructure therefore uses `127.0.0.1:56032` for the host endpoint and retains PostgreSQL container port `5432`.
+The recorded runtime preflight rejected host port `55432` because Windows reserved TCP ports `55372–55471`. At that attempt, `56032` was checked with `Get-NetTCPConnection` and `netstat` and was free; availability must be rechecked before a separately authorized run. The validation infrastructure therefore uses `127.0.0.1:56032` for the host endpoint and retains PostgreSQL container port `5432`.
 
 #### Host connectivity preflight
 
 The validation PostgreSQL container was healthy and `HostConfig` contained the mapping `127.0.0.1:56032 -> 5432`. However, `NetworkSettings.Ports` reported `{"5432/tcp":[]}`, the validation network had `Internal=true`, and `Test-NetConnection 127.0.0.1:56032` returned `False`. The internal network is therefore incompatible with host-driven validation: the Windows-host runner must reach PostgreSQL only through the loopback binding. The implementation removes `internal:true` while retaining the dedicated named bridge network, volume, project, database, and loopback port restriction.
 
-The initial baseline recorded Docker Desktop as unavailable. The later runtime preflight above is separate evidence collected after Docker became available; no migration, test, or production service operation is implied by this decision draft.
+The [2026-09-06 baseline](02-BASELINE.md) recorded Docker daemon unavailability. The later healthy-container / failed-host-TCP attempt above records that the daemon had become available at that time; neither statement establishes availability today.
+
+Configuration follow-up is preserved in Git: `b9b0d9d` moved the host port to `56032`; `8092c1a` removed `internal:true`. The current Compose file confirms the separate project/network/volume and loopback declaration. A final successful post-change runtime preflight report covering connectivity, isolation, targets and cleanup was not found in the repository during the 2026-09-21 documentation cleanup. An external/chat assertion of success is not substituted for that missing artifact. No new runtime check was executed.
+
+**Formal acceptance still required:** attach scoped runtime evidence and satisfy §8, then obtain owner acceptance of DEC-005. Until then DEC-005 stays Pending and RV-01–RV-09 retain their recorded Not run status. `COMPOSE_PROJECT_NAME=yuni-validation` identifies Docker resources; `VALIDATION_ENVIRONMENT=yuni-audit-validation` is a separate fail-safe marker required by the guard, not an alternate project name.
+
 ## 6. Option B — Fallback: local PostgreSQL audit database
 
 Use a separately provisioned local PostgreSQL instance or database only when it can meet the same §4 gate. It is a fallback for a currently unavailable Docker daemon, not permission to use any already-running local database.
@@ -128,9 +133,9 @@ Meeting Definition of Ready authorizes neither a run nor remediation. It establi
 
 ## 9. Recommendation for this computer
 
-Use **Option B, the local PostgreSQL audit database**, if and only if it can satisfy Definition of Ready and the §4 guard. Docker is not currently available: client `29.7.2` is installed, but the Docker daemon is unreachable. If no separately owned local `yuni_validation_test` database and validation worktree can be verified, do not run any RV yet.
+Prefer **Option A** when a separately authorized preflight confirms Docker availability and all §4/§8 isolation requirements. The repository already contains its PostgreSQL-only configuration; this does not establish current daemon health or successful host connectivity. Use **Option B** only if Docker cannot satisfy those prerequisites and a separately owned local validation database can satisfy the same safeguards. If neither option can be evidenced safely, do not run any RV.
 
-When the daemon becomes reachable, Option A becomes the preferred implementation because its project-scoped containers, network, and volume make cleanup and isolation easier to demonstrate. The decision remains Pending until the owners choose an option and approve the concrete scope.
+This is a conditional recommendation, not an owner selection. DEC-005 remains Pending until the owners accept the concrete environment and evidence; each RV still requires its own authorization.
 
 ## 10. Evidence and limitations
 

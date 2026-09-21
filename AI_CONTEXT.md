@@ -1,6 +1,8 @@
 # AI_CONTEXT.md
 
-Quick onboarding for any AI agent or LLM. Read this file first; follow links only when you need domain detail.
+Quick onboarding for any AI agent or LLM. Start with [AGENTS.md](AGENTS.md), then use the dated context below.
+
+> Historical product snapshot: **2026-08-20, `42db25f`**. Product/task statuses and test counts below describe that verification, not a complete September state. The separately dated architecture update is linked below; use the [audit navigation](docs/audits/README.md#september-2026-audit-navigation) for recorded findings, assurances, Owner Decisions and validation backlog. Documentation updates and ordinary CI runs do not close targeted audit validation.
 
 ---
 
@@ -12,7 +14,7 @@ Yuni — dating app в монорепозитории. Стек: Next.js fronten
 
 ---
 
-## 2. Текущее состояние
+## 2. Историческое состояние на 2026-08-20
 
 **Реализовано (backend + frontend + unit tests):**
 
