@@ -4,6 +4,8 @@
 Основания: [Pre-Audit Plan](00-PRE-AUDIT-PLAN.md), [Audit Charter](01-AUDIT-CHARTER.md), [Baseline](02-BASELINE.md), [Findings Register](03-FINDINGS.md) и repo-skill `yuni-audit`.
 Scope создания: только этот документ; аудит, создание `passes/`, отчётов проходов, findings, tag и commit не выполняются. `AGENTS.md` не изменяется по ограничению владельца: план конкретизирует charter, не заменяя общие правила проекта.
 
+**Disposition — 2026-09-21:** Pending и будущие шаги исторического плана относятся к подготовке 6 сентября. Три primary pass и независимый Synthesis завершены в ограниченном static scope: [Architecture](passes/wave-1/01-ARCHITECTURE-SPAGHETTI.md), [Testing](passes/wave-1/02-TEST-RELIABILITY.md), [Security](passes/wave-1/03-SECURITY-DATA-INTEGRITY.md), [Synthesis](passes/wave-1/04-SYNTHESIS-RED-TEAM.md). Code SHA `fed276a97fd84f29032c5eac1b11447bb1f3ed4c`, tag `audit/yuni-2026-09-wave1`; reports `bac836b`, synthesis input `a756c5a`, synthesis result `f2e9471`. Фактический fingerprint/tag binding сохранён в Synthesis §1–2; решения перенесены в [Findings](03-FINDINGS.md) и [Assurances](06-ASSURANCE-REGISTER.md). [Owner Decisions и RV-01–09](07-WAVE-1-FOLLOWUPS.md) остаются открытыми; завершение Wave 1 не означает runtime PASS всей области.
+
 ## 1. Goal
 
 - Выявить наиболее системные риски до детального frontend/backend-аудита тремя независимыми проходами.

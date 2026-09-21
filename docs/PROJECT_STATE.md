@@ -4,11 +4,13 @@ Last verified at: 2026-08-20
 Verified on commit: 42db25f
 Last merged task / PR: PR #80 — User data export (Task 067a)
 
-## Baseline `main`
+> Historical product snapshot: **2026-08-20, `42db25f`**. The PR and product/task statuses below describe that verification, not the current GitHub branch tip. For separately dated architecture evidence see the link below; for recorded September audit state use the [audit navigation](./audits/README.md#september-2026-audit-navigation). Each result retains its own checked SHA and verification limits.
+
+## Исторический baseline `main` — 2026-08-20
 
 Дополнение к архитектурному snapshot от 2026-09-16: [статическая сверка кода/config на `8092c1a`](./architecture/integration-2026-09-16.md). Описаны CURRENT single-instance REST/PostgreSQL/local media и TARGET/PROPOSED edge, storage, WSS, scaling, finance. Это отдельная сверка документации; исторический baseline `42db25f` ниже не объявляется заново проверенным, runtime поведение и audit statuses не меняются.
 
-Этот раздел описывает подтверждённый baseline ветки `main`.
+Этот раздел сохраняет подтверждённый baseline ветки `main` на `42db25f`; он не является повторной проверкой текущей версии.
 
 Подтверждённый baseline:
 

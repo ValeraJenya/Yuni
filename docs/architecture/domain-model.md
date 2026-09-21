@@ -66,7 +66,9 @@ Discovery returns computed age instead of raw `birth_date`, and only approved/pu
 
 LIKE действует 3 days, SKIP/PASS действует 1 day. `expires_at` задает cooldown window: active interaction blocks another LIKE/SKIP for the same liker/liked pair until expiration, while expired interactions do not block a new action.
 
-Схема не использует вечный unique `(liker_user_id, liked_user_id)`, потому что это мешало бы future rematch. Вместо этого DB-level overlap exclusion constraint защищает от пересекающихся active interactions for the same pair. Race behavior for this constraint should be covered in a later integration/e2e step with a test database.
+Схема не использует вечный unique `(liker_user_id, liked_user_id)`, потому что это мешало бы future rematch. Вместо этого DB-level overlap exclusion constraint защищает от пересекающихся active interactions for the same pair. Ordinary integration/e2e artifacts already exist: [match-block-chat.e2e-spec.ts](../../apps/backend/test/match-block-chat.e2e-spec.ts) contains like/match/block concurrency scenarios, and [Quality Gates](../../.github/workflows/quality-gates.yml) runs backend e2e against its separate CI PostgreSQL service. These tests do not establish complete constraint/race coverage.
+
+Ordinary automated tests and targeted audit validation are distinct: [CI run on `bea416879779e361ee5711dc2259ec61078a5a73`, 2026-09-16](https://github.com/ValeraJenya/Yuni/actions/runs/35093793555) completed backend e2e successfully. The [2026-09-06 local baseline](../audits/yuni-2026-09/02-BASELINE.md) retains its historical e2e BLOCKED result; [RV-01–09](../audits/yuni-2026-09/07-WAVE-1-FOLLOWUPS.md) remain Not run. In particular, an ordinary CI pass does not confirm or reject the SEC-003 concurrent conversation-start hypothesis.
 
 ## Matches
 

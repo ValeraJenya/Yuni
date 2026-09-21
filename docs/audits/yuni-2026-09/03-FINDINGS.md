@@ -44,7 +44,21 @@ Scope создания: только `03-FINDINGS.md`, без изменения
 
 Обычный путь: `Proposed → Confirmed → Accepted → In Progress → Implemented → Verified`. Отклонение, объединение или отсрочка требуют записи в Review history. При неудачной проверке исправления вернуть `In Progress`; если пересматривается сам вывод — `Proposed`. Историю прежнего подтверждения не стирать.
 
-Master register и detailed entry должны иметь одинаковый текущий статус. Эти статусы не переводятся в lifecycle общего audit index механически: `Confirmed` подтверждает дефект, `Verified` — исправление; соответствие оформляется по смыслу с evidence и task reference.
+Master register и detailed entry должны иметь одинаковый текущий статус. Для findings технического аудита Yuni, которые ведутся в этом центральном реестре, authoritative vocabulary — восемь статусов §3 выше. Исторические audit/review records сохраняют исходные обозначения; их перенос требует смысловой проверки evidence, а не смены регистра букв.
+
+### Compatibility with historical audit/review statuses
+
+Это единое пояснение совместимости с общими audit/review documents, не новый набор статусов и не массовая переклассификация записей.
+
+| Historical/general status | Интерпретация при переносе finding в этот реестр |
+| --- | --- |
+| `verified` | Если независимо подтверждён дефект — `Confirmed`; `Verified` только при evidence независимой проверки исправления на fix commit. Для статуса отчёта в целом прямого соответствия finding нет. |
+| `resolved` | `Implemented`, если есть fix commit без завершённой независимой проверки; `Verified` — только после неё. Иную причину закрытия разобрать по evidence, не считать автоматически исправлением. |
+| `needs-recheck` | Если пересматривается сам вывод — `Proposed`; если требуется перепроверка исправления — учитывать fix evidence и правила возврата из §3. Это не доказательство новой проверки или исправления. |
+| `deferred` | `Deferred` только при подтверждённой проблеме и явном owner decision с причиной/условием пересмотра; недостаток evidence не заменять принятием риска. |
+| `false-positive` | `Rejected` с evidence причины. Обратное неверно: `Rejected` может означать merge, а не false positive. |
+
+Без достаточного evidence перенос/повышение статуса не выполнять; сохранить исходную историю и обозначить недостающую проверку. DEC lifecycle, assessment PASS/FAIL/BLOCKED и статусы assurance отдельны от finding lifecycle. Эта cleanup-правка не меняет ни одной записи, severity или counters.
 
 ## 4. Master register
 

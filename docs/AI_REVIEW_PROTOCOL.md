@@ -43,7 +43,9 @@ Related task:
 
 Severity: `critical`, `high`, `medium`, `low`, `info`.
 
-Finding statuses:
+Historical/general review statuses are listed below. Findings entered in the central Yuni technical audit register use its authoritative [finding lifecycle and compatibility rules](audits/yuni-2026-09/03-FINDINGS.md#compatibility-with-historical-auditreview-statuses). In particular, lowercase `verified` in an old review does not by itself mean that a fix is independently `Verified`. Existing review records are not reclassified automatically.
+
+Finding statuses for historical/general review records:
 
 ```text
 verified
