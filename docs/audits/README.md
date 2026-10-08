@@ -11,6 +11,7 @@ Audit index хранит только reviewed audit records and findings. Raw d
 | Ограниченные assurances | [Assurance Register](yuni-2026-09/06-ASSURANCE-REGISTER.md): scope, checked SHA и статические границы |
 | Owner Decisions и runtime backlog | [Wave 1 Followups](yuni-2026-09/07-WAVE-1-FOLLOWUPS.md): DEC-001–006 и RV-01–09; [DEC-005 draft](yuni-2026-09/08-VALIDATION-ENVIRONMENT.md) не заменяет acceptance |
 | Выполненная Wave 1 | [Synthesis](yuni-2026-09/passes/wave-1/04-SYNTHESIS-RED-TEAM.md) и связанные primary reports: ограниченный static scope |
+| Новая система audit subagents | [Next-system roster/specifications](yuni-2026-09/prompts/next-system/README.md): Sol 6.1 Coordinator + 10 workers, Astra escalation/synthesis; подготовка specs не запускает audit/runtime и не закрывает DEC/RV |
 | CURRENT architecture | [Program Flow Map](../architecture/program-flow-map.md), [Domain Model](../architecture/domain-model.md): dated source evidence |
 | TARGET / PROPOSED / OPEN | [Scaling Roadmap](../architecture/scaling-roadmap.md), [Financial Flow](../architecture/financial-flow.md); vocabulary — [Architecture](../architecture/README.md) |
 | Исторические планы и snapshots | [Wave 1 Plan](yuni-2026-09/04-WAVE-1-PLAN.md), [Mapping](yuni-2026-09/05-AUDIT-CHECKLIST-MAPPING.md), [Baseline](yuni-2026-09/02-BASELINE.md), [Project State](../PROJECT_STATE.md), [AI Context](../../AI_CONTEXT.md) |

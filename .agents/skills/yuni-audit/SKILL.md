@@ -27,6 +27,8 @@ description: Run evidence-based read-only technical audit passes for Yuni, inclu
 
 ## 4. Preflight
 
+- Для явно назначенного next-system pass прочитай [shared contract](../../../docs/audits/yuni-2026-09/prompts/next-system/00-SHARED-CONTRACT.md) и только свою role specification из [roster](../../../docs/audits/yuni-2026-09/prompts/next-system/README.md). Выполняй его frozen SHA/root, ID allocation, output/envelope и более строгие static-only/STOP gates; наличие skill/spec не разрешает запуск.
+
 - Зафиксируй дату, ветку через `git branch --show-current`, полный SHA через `git rev-parse HEAD` и исходный `git status -sb`.
 - Подтверди audit-pass, проверяемые вопросы, границы и точный разрешённый output-файл из задания; запроси недостающий обязательный scope до зависимых действий.
 - Сверь выбранный SHA с baseline и предыдущим evidence; явно укажи различия, не смешивай результаты разных commits.
@@ -93,6 +95,8 @@ description: Run evidence-based read-only technical audit passes for Yuni, inclu
 - Обнаружены возможные секреты или персональные данные; прекрати чтение/вывод чувствительного содержимого, сообщи только безопасное описание без значений.
 
 Зафиксируй блокер и его влияние на выводы; продолжай только независимые разрешённые проверки, которым он не препятствует.
+
+Для next-system это общее правило продолжения не применяется при STOP: останови worker, верни BLOCKED/FAIL и escalation по shared contract; Coordinator останавливает pipeline. Provisional P0/P1 не подтверждай самостоятельно — передай Astra. Runtime/DEC/RV, registry integration и remediation остаются отдельными owner-authorized задачами.
 
 ## 11. Completion checklist
 

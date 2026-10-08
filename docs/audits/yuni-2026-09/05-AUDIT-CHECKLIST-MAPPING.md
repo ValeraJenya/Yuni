@@ -154,6 +154,8 @@
 
 ## Mapping statistics
 
+Статистика ниже относится к исходной основной таблице, а не к [next-system routing overlay](#next-system-routing-overlay-2026-10-08). Новый overlay не меняет исторические Applicability, Planned stage, Responsible pass или результаты Wave 1.
+
 Всего: **125** строк данных; каждый раздел учитывается один раз по основному назначению. Нулевые категории сохранены; числа не являются результатами аудита.
 
 ### Applicability
@@ -268,3 +270,30 @@ Assurance действует только для проверенных усло
 - SHA256 исходника повторно совпадает с указанным immutable input hash. Проверка подтверждает полноту mapping, не полноту или результат технического аудита.
 
 Для повторной проверки: извлечь строки первого столбца, сравнить отсортированный список с `list(range(125))`, проверить `Counter` каждого ID равным 1, сверить Topic с заголовками исходника и пересчитать группировки колонок 3–5.
+
+## Next-system routing overlay 2026-10-08
+
+Approved role/specification routing for [next-system](prompts/next-system/README.md), not an audit result. The original 125-row mapping, source hash, statistics and historical stages remain unchanged. Each section has one primary routing owner below; neighboring workers review only assigned overlapping subscopes and cross-reference one cause. Assignment does not authorize execution or close coverage.
+
+| Primary routing owner | Source sections | Count | Scope / deferred boundary |
+| --- | --- | ---: | --- |
+| Coordinator | 0, 1, 3, 23, 81, 106, 115, 116, 120 | 9 | Governance, coverage and owner-policy routing only; does not perform NFR/product decisions |
+| Astra Architect | 2, 92, 118, 119 | 4 | Architecture escalation/final synthesis; reference production map is not a required implemented topology |
+| Backend / REST API | 30–34, 42–45, 47–49, 66, 90–91, 99–101 | 18 | API/business contracts; jobs/webhooks/admin/cache presence gates; privacy/security impact cross-references |
+| PostgreSQL / Prisma | 11–16, 19–21, 27 | 10 | Local schema/query/transaction invariants; migration execution/data access excluded |
+| Frontend | 74, 102–103 | 3 | Browser implementation; mobile Conditional, visual/runtime/accessibility target proof separate |
+| Security Deep-Dive | 25–26, 28–29, 35–38, 40, 50–56, 58–65, 67–70, 72–73, 98 | 31 | Auth/data/security consequences; WSS and optional credential machinery Conditional; no actual secrets/active attacks |
+| Network / Edge | 4–10, 39, 75 | 9 | Declared connectivity/exposure/headers; DNS/TLS/proxy production decisions and probes separate |
+| Test Reliability | 93–95, 117 | 4 | Test code/assertions/category inventory; section 94 mutation/fault execution excluded |
+| Consistency / Idempotency | 24, 41, 46, 71, 87, 104, 121–124 | 10 | Cross-operation invariants/failure matrix; cache/queue/providers Conditional; runtime races/retries excluded |
+| DevOps / CI / Supply Chain | 22, 76–80, 83–86, 88–89, 96–97, 107 | 15 | Delivery/config/provenance; restore drills/runtime telemetry/deploy and cost decisions separate |
+| Documentation Drift | 112–114 | 3 | Claims/provenance/navigation; no automatic historical document rewrite |
+| Static Performance | 17–18, 57, 82, 105 | 5 | Static efficiency hypotheses; WSS compression Conditional, runtime percentiles/capacity NOT VERIFIED |
+| Conditional AI/LLM — activation routing by Coordinator | 108–111 | 4 | No active worker/spec; product AI presence proof, separately approved scope and future security/evals validation required |
+
+Planned routing totals: 125 sections, 0–124, one primary assignment per section. This is not a statement that all checks are executable statically. Each launched pass must identify subsection coverage, N/A evidence, NOT VERIFIED, BLOCKED and owner dependencies; Coordinator/Astra cannot infer full audit PASS from the partition.
+
+- Preserve original applicability/presence gates in mixed sections. Payments/ledger, WSS, Redis, Kubernetes, queues/replicas/mobile and AI remain Conditional until actual implementation is verified; runtime always requires separate safe authorization.
+- Security additionally reviews consequences/exposure in Network/DevOps/Frontend-owned sections, without duplicating their causes. Database/Consistency separate local mechanics from cross-operation races/retries; Testing documents independent test weakness only.
+- Runtime-only subchecks (including 82, 89, 94, 105 and 108–111) remain deferred/NOT VERIFIED or BLOCKED as prerequisites dictate; missing critical evidence stops the assigned pass. Do not label them N/A merely because execution is prohibited.
+- Sections 121–124 remain a separate Consistency/Idempotency direction. Reuse historical evidence only with its original SHA/limits; CODE_AUDIT_SHA for a new launch is assigned separately.
