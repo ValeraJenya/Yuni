@@ -111,6 +111,141 @@ try {
     Check 'synthetic normalized Compose model' { Assert-ComposeTopology $rendered $values $run -Rendered }
     $bad=Clone $rendered; $bad.services['validation-postgres'].environment.POSTGRES_DB='yuni'
     Check 'rendered database mismatch' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    # Compose 5.4.0 structural projection, synthetic values only; no Docker invocation.
+    $compose54=Clone $rendered
+    $s54=$compose54.services['validation-postgres']
+    $s54.command=$null; $s54.entrypoint=$null
+    $null=$s54.volumes[0].Remove('volume')
+    $compose54.networks.validation_network.ipam=@{}
+    Check 'Compose 5.4 rendered structure accepted' { Assert-ComposeTopology $compose54 $values $run -Rendered }
+    foreach ($key in @('command','entrypoint')) {
+        $optional=Clone $rendered; $optional.services['validation-postgres'][$key]=$null
+        Check "rendered $key null accepted" { Assert-ComposeTopology $optional $values $run -Rendered }
+        foreach ($override in @('', 'postgres', @(), @('postgres'))) {
+            $bad=Clone $rendered; $bad.services['validation-postgres'][$key]=$override
+            Check "rendered non-null $key rejected" { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+        }
+        $bad=Clone $model; $bad.services['validation-postgres'][$key]=$null
+        Check "source $key null still rejected" { Assert-ComposeTopology $bad $values '' } -Reject
+    }
+    $optional=Clone $rendered; $optional.networks.validation_network.ipam=@{}
+    Check 'rendered empty IPAM accepted' { Assert-ComposeTopology $optional $values $run -Rendered }
+    foreach ($ipam in @($null, '', @(), @(@{}), @{driver='default'}, @{config=@()}, @{options=@{}}, @{unknown='synthetic'})) {
+        $bad=Clone $rendered; $bad.networks.validation_network.ipam=$ipam
+        Check 'nonempty or invalid IPAM rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    }
+    $bad=Clone $model; $bad.networks.validation_network.ipam=@{}
+    Check 'source empty IPAM still rejected' { Assert-ComposeTopology $bad $values '' } -Reject
+    foreach ($node in @('root','service','network','volume','port','mount')) {
+        $bad=Clone $compose54
+        switch ($node) {
+            root {$bad.unknown='synthetic'}
+            service {$bad.services['validation-postgres'].unknown='synthetic'}
+            network {$bad.networks.validation_network.unknown='synthetic'}
+            volume {$bad.volumes.validation_postgres_data.unknown='synthetic'}
+            port {$bad.services['validation-postgres'].ports[0].unknown='synthetic'}
+            mount {$bad.services['validation-postgres'].volumes[0].unknown='synthetic'}
+        }
+        Check "rendered unknown $node key rejected" { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    }
+    foreach ($portSet in @(@(), $null, @{target=5432;published='56032';host_ip='127.0.0.1';protocol='tcp'},
+        @(@{target=5432;published='56032';host_ip='127.0.0.1';protocol='tcp'},@{target=5432;published='56032';host_ip='127.0.0.1';protocol='tcp'}))) {
+        $bad=Clone $compose54; $bad.services['validation-postgres'].ports=$portSet
+        Check 'rendered invalid port shape/count rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    }
+    foreach ($hostFixture in @('0.0.0.0','::')) {
+        $bad=Clone $compose54; $bad.services['validation-postgres'].ports[0].host_ip=$hostFixture
+        Check 'rendered wildcard binding rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    }
+    $bad=Clone $compose54; $bad.services['validation-postgres'].ports[0].published='5432'
+    Check 'rendered ordinary host port rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    $bad=Clone $compose54; $bad.services.backend=@{image='synthetic'}
+    Check 'rendered extra service rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    $bad=Clone $compose54; $bad.services['validation-postgres'].volumes+=@{type='volume';source='other';target='/other'}
+    Check 'rendered extra mount rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    $bad=Clone $compose54; $bad.services['validation-postgres'].labels['io.yuni.validation.run']='other'
+    Check 'rendered wrong ownership rejected' { Assert-ComposeTopology $bad $values $run -Rendered } -Reject
+    foreach ($testFixture in @($null, @(), @('CMD-SHELL'), @('CMD-SHELL','synthetic','extra'),
+        'CMD-SHELL', @{0='CMD-SHELL';1='synthetic'}, @('CMD-SHELL',42), @(@('CMD-SHELL'),'synthetic'))) {
+        foreach ($renderedCheck in @($false,$true)) {
+            $bad=Clone $(if ($renderedCheck) {$compose54} else {$model})
+            $bad.services['validation-postgres'].healthcheck.test=$testFixture
+            Check "malformed health array STOP with safe category (rendered=$renderedCheck)" {
+                $caught=$false
+                try { Assert-ComposeTopology $bad $values $run -Rendered:$renderedCheck }
+                catch {
+                    $caught=$true
+                    $diag=Get-SafeStopDiagnostic 'rendered-compose-validation' -NativeExitCode 0 -Exception $_.Exception
+                    Assert-Safe ($diag.gate -ceq 'healthcheck.test' -and $diag.category -ceq 'INVALID_HEALTHCHECK_CONFIGURATION' -and
+                        $diag.runnerExitCode -eq 1) 'health rejection diagnostics missing'
+                }
+                Assert-Safe $caught 'malformed health accepted'
+            }
+        }
+    }
+    foreach ($shape in @('service','network','health')) {
+        $bad=Clone $compose54; $sentinel='SYNTHETIC_DIAGNOSTIC_PRIVATE_VALUE'
+        switch ($shape) {
+            service {$bad.services['validation-postgres'][$sentinel]=$sentinel}
+            network {$bad.networks.validation_network.ipam=@{}; $bad.networks.validation_network.ipam[$sentinel]=$sentinel}
+            health {$bad.services['validation-postgres'].healthcheck.test=@('CMD-SHELL',$sentinel)}
+        }
+        Check "structured $shape rejection does not leak values or unknown keys" {
+            $caught=$false
+            try { Assert-ComposeTopology $bad $values $run -Rendered }
+            catch {
+                $caught=$true
+                $diag=Get-SafeStopDiagnostic 'rendered-compose-validation' -NativeExitCode 0 -Exception $_.Exception
+                $expectedGate=switch ($shape) {service {'service.keys'} network {'network.schema'} health {'healthcheck.test'}}
+                $expectedCategory=switch ($shape) {service {'UNEXPECTED_STRUCTURAL_KEY'} network {'INVALID_NETWORK_CONFIGURATION'} health {'INVALID_HEALTHCHECK_CONFIGURATION'}}
+                Assert-Safe ($diag.gate -ceq $expectedGate -and $diag.category -ceq $expectedCategory -and
+                    $diag.stage -ceq 'rendered-compose-validation' -and $diag.nativeExitCode -eq 0 -and $diag.runnerExitCode -eq 1) 'wrong structured reason'
+                Assert-Safe (-not (($diag | ConvertTo-Json -Compress).Contains($sentinel)) -and
+                    -not $_.Exception.Message.Contains($sentinel)) 'diagnostics leaked'
+            }
+            Assert-Safe $caught 'unsafe fixture accepted'
+        }
+    }
+    Check 'unknown errors and diagnostic identifiers are redacted and fail closed' {
+        $sentinel='SYNTHETIC_DIAGNOSTIC_PRIVATE_VALUE'; $failure=[Exception]::new("password=$sentinel")
+        $failure.Data['ValidationGate']=$sentinel; $failure.Data['ValidationCategory']=$sentinel
+        $diag=Get-SafeStopDiagnostic -Stage $sentinel -Gate $sentinel -Exception $failure
+        Assert-Safe ($diag.stage -ceq 'unknown' -and $diag.gate -ceq 'unknown' -and $diag.category -ceq 'UNKNOWN_FAILURE' -and
+            $null -eq $diag.nativeExitCode -and $diag.runnerExitCode -eq 1 -and
+            -not (($diag | ConvertTo-Json -Compress).Contains($sentinel))) 'unknown failure leaked or opened'
+    }
+    Check 'JSON parser failure exposes only safe structural diagnostic' {
+        $caught=$false
+        try { Throw-ValidationStop 'rendered-json.parse' 'JSON_PARSE_FAILURE' }
+        catch {
+            $caught=$true; $diag=Get-SafeStopDiagnostic 'rendered-compose-json' -NativeExitCode 0 -Exception $_.Exception
+            Assert-Safe ($diag.gate -ceq 'rendered-json.parse' -and $diag.category -ceq 'JSON_PARSE_FAILURE') 'JSON reason lost'
+        }
+        Assert-Safe $caught 'JSON failure continued'
+    }
+    # Exercise the actual Docker wrapper with mocked native completion, never docker.exe.
+    $tokens=$null; $parseErrors=$null
+    $runnerAst=[Management.Automation.Language.Parser]::ParseFile("$PSScriptRoot\..\preflight.ps1",[ref]$tokens,[ref]$parseErrors)
+    $invokeNode=$runnerAst.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -ceq 'Invoke-Docker'},$true)
+    foreach ($exitFixture in @(0,23)) {
+        Check "Docker wrapper preserves exit and remains fail closed (exit=$exitFixture)" {
+            & {
+                param($Definition,$ExitCode)
+                $ctx=@{DockerHost='synthetic';DockerConfig='synthetic';Docker='synthetic';Root='synthetic';RunId='synthetic'}
+                $journal=@{Commands=[Collections.Generic.List[object]]::new()}
+                function Assert-InputsUnchanged { }
+                function Save-Evidence { }
+                function Test-CapabilityArguments { return $false }
+                function Invoke-SafeProcess { return @{Output='SYNTHETIC_NATIVE_PRIVATE_VALUE';ExitCode=$ExitCode} }
+                . ([scriptblock]::Create($Definition))
+                $failed=$false; $output=$null
+                try { $output=Invoke-Docker @('synthetic') } catch { $failed=$true }
+                Assert-Safe ($failed -eq ($ExitCode -ne 0) -and $journal.Commands[0].ExitCode -eq $ExitCode) 'native failure opened or exit lost'
+                if ($failed) { Assert-Safe ($null -eq $output -and $journal.Commands[0].Result -ceq 'FAIL / UNKNOWN') 'failed stdout returned' }
+                else { Assert-Safe ($journal.Commands[0].Result -ceq 'PASS') 'zero exit rejected' }
+            } $invokeNode.Extent.Text $exitFixture
+        }
+    }
     Check 'empty resource namespace' { Assert-NoExistingResources @() }
     foreach ($entry in @(@{Name='yuni-validation-network';Labels=''},@{Name='other';Labels='com.docker.compose.project=yuni-validation'},
         @{Name='other';Labels='io.yuni.validation.run=old'})) {

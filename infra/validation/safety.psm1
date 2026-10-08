@@ -71,14 +71,67 @@ function Assert-ValidationEnvironment([hashtable]$Values, [string]$ExpectedWorkt
         Assert-Safe (@(Get-ChildItem -Force -LiteralPath $media).Count -eq 0) 'media must be empty'
     }
 }
+function Throw-ValidationStop([string]$Gate, [string]$Category) {
+    $stopException = [InvalidOperationException]::new('SAFETY STOP: structural validation rejected; raw details suppressed')
+    $stopException.Data['ValidationGate']=$Gate; $stopException.Data['ValidationCategory']=$Category
+    throw $stopException
+}
+function Get-SafeStopDiagnostic([string]$Stage, [string]$Gate = 'unknown',
+    [Nullable[int]]$NativeExitCode = $null, [Exception]$Exception) {
+    # Copy only fixed identifiers, never exception messages, unknown keys or config values.
+    $stages = @('static','psql capability (before Docker)','runtime preflight','rendered-compose-json',
+        'rendered-compose-validation','cached-image-validation','create stopped resources','start owned container',
+        'health and host TCP','host SQL identity','ordinary resource comparison before cleanup','guarded cleanup')
+    $gates = @('unknown','input-integrity','native-command','rendered-json.parse','image.identity','namespace.inventory',
+        'model.keys','project.identity','services.keys','service.keys','service.identity','service.environment',
+        'service.execution-defaults','healthcheck.schema','healthcheck.test','healthcheck.policy','ports.schema',
+        'ports.policy','mounts.schema','mounts.policy','service.networks','volumes.keys','networks.keys',
+        'volume.schema','network.schema','volume.identity','network.identity','ownership.labels')
+    $categories = @('UNKNOWN_FAILURE','UNKNOWN_TOPOLOGY_FAILURE','UNEXPECTED_STRUCTURAL_KEY','MISSING_STRUCTURAL_KEY',
+        'INVALID_NODE_SCHEMA','INVALID_NETWORK_CONFIGURATION','EXECUTION_OVERRIDE_NOT_ALLOWED',
+        'INVALID_HEALTHCHECK_CONFIGURATION','INVALID_TOPOLOGY_CONFIGURATION','JSON_PARSE_FAILURE')
+    $category='UNKNOWN_FAILURE'
+    if ($null -ne $Exception) {
+        if ($Exception.Data['ValidationGate'] -is [string] -and $Exception.Data['ValidationGate'] -cin $gates) {
+            $Gate=$Exception.Data['ValidationGate']
+        }
+        if ($Exception.Data['ValidationCategory'] -is [string] -and $Exception.Data['ValidationCategory'] -cin $categories) {
+            $category=$Exception.Data['ValidationCategory']
+        }
+    }
+    return @{stage=$(if ($Stage -cin $stages) {$Stage} else {'unknown'})
+        gate=$(if ($Gate -cin $gates) {$Gate} else {'unknown'}); category=$category
+        nativeExitCode=$NativeExitCode; runnerExitCode=1}
+}
 function Assert-ComposeTopology([hashtable]$Model, [hashtable]$Values, [string]$RunId, [switch]$Rendered) {
+    $gate='model.keys'
+    try {
     Assert-Keys $Model @('name','services','volumes','networks')
+    $gate='project.identity'
     Assert-Safe ($Model.name -ceq 'yuni-validation') 'wrong project'
+    $gate='services.keys'
     Assert-Keys $Model.services @('validation-postgres')
     $s = $Model.services['validation-postgres']
-    Assert-Keys $s @('image','container_name','environment','ports','volumes','networks','healthcheck','labels')
+    $gate='service.keys'
+    $requiredServiceKeys=@('image','container_name','environment','ports','volumes','networks','healthcheck','labels')
+    $allowedServiceKeys=$requiredServiceKeys
+    if ($Rendered) { $allowedServiceKeys += @('command','entrypoint') }
+    Assert-Keys $s $allowedServiceKeys $requiredServiceKeys
+    $gate='service.execution-defaults'
+    if ($Rendered) {
+        foreach ($key in @('command','entrypoint')) {
+            if ($s.ContainsKey($key)) { Assert-Safe ($null -eq $s[$key]) 'execution override forbidden' }
+        }
+    }
+    $gate='service.identity'
     Assert-Safe ($s.image -ceq 'postgres:16-alpine' -and $s.container_name -ceq 'yuni-validation-postgres') 'wrong image/container'
+    $gate='service.environment'
     Assert-Keys $s.environment @('POSTGRES_DB','POSTGRES_USER','POSTGRES_PASSWORD')
+    $gate='healthcheck.schema'
+    Assert-Keys $s.healthcheck @('test','interval','timeout','retries','start_period')
+    $gate='healthcheck.test'
+    Assert-Safe ($s.healthcheck.test -is [Array] -and $s.healthcheck.test.Count -eq 2 -and
+        $s.healthcheck.test[0] -is [string] -and $s.healthcheck.test[1] -is [string]) 'invalid health array'
     $user = '${VALIDATION_POSTGRES_USER:?Required}'; $password = '${VALIDATION_POSTGRES_PASSWORD:?Required}'
     $port = '${VALIDATION_POSTGRES_PORT:?Required}'; $label = '${VALIDATION_RUN_ID:?Runner required}'
     $health = 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
@@ -88,37 +141,70 @@ function Assert-ComposeTopology([hashtable]$Model, [hashtable]$Values, [string]$
         Assert-Safe ($s.healthcheck.test[1] -cin @($health, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"')) 'health command changed'
         $health = $s.healthcheck.test[1]
     }
+    $gate='service.environment'
     Assert-Safe ($s.environment.POSTGRES_DB -ceq 'yuni_validation_test' -and
         $s.environment.POSTGRES_USER -ceq $user -and $s.environment.POSTGRES_PASSWORD -ceq $password) 'container DB environment mismatch'
+    $gate='ports.schema'
     Assert-Safe (@($s.ports).Count -eq 1) 'unexpected ports'
     $p = $s.ports[0]
     Assert-Keys $p @('target','published','host_ip','protocol','mode') @('target','published','host_ip','protocol')
+    $gate='ports.policy'
     Assert-Safe ($p.target -eq 5432 -and [string]$p.published -ceq $port -and $p.host_ip -ceq '127.0.0.1' -and
         $p.protocol -ceq 'tcp' -and (-not $p.ContainsKey('mode') -or $p.mode -ceq 'ingress')) 'port/bind mismatch'
+    $gate='mounts.schema'
     Assert-Safe (@($s.volumes).Count -eq 1) 'unexpected mounts'
     $v = $s.volumes[0]
     Assert-Keys $v @('type','source','target','volume','read_only') @('type','source','target')
+    $gate='mounts.policy'
     Assert-Safe ($v.type -ceq 'volume' -and $v.source -ceq 'validation_postgres_data' -and
         $v.target -ceq '/var/lib/postgresql/data') 'mount mismatch'
     if ($v.ContainsKey('volume')) { Assert-Keys $v.volume @() @() }
     if ($v.ContainsKey('read_only')) { Assert-Safe ($v.read_only -eq $false) 'mount mode mismatch' }
+    $gate='service.networks'
     Assert-Keys $s.networks @('validation_network')
     if ($null -ne $s.networks.validation_network) { Assert-Keys $s.networks.validation_network @() @() }
-    Assert-Keys $s.healthcheck @('test','interval','timeout','retries','start_period')
+    $gate='healthcheck.policy'
     Assert-Safe (@($s.healthcheck.test).Count -eq 2 -and $s.healthcheck.test[0] -ceq 'CMD-SHELL' -and
         $s.healthcheck.test[1] -ceq $health -and $s.healthcheck.interval -ceq '5s' -and
         $s.healthcheck.timeout -ceq '5s' -and $s.healthcheck.retries -eq 20 -and $s.healthcheck.start_period -ceq '5s') 'healthcheck mismatch'
+    $gate='volumes.keys'
     Assert-Keys $Model.volumes @('validation_postgres_data')
+    $gate='networks.keys'
     Assert-Keys $Model.networks @('validation_network')
     $volume = $Model.volumes.validation_postgres_data; $network = $Model.networks.validation_network
+    $gate='volume.schema'
     Assert-Keys $volume @('name','driver','labels')
-    Assert-Keys $network @('name','driver','labels')
+    $gate='network.schema'
+    $requiredNetworkKeys=@('name','driver','labels'); $allowedNetworkKeys=$requiredNetworkKeys
+    if ($Rendered) { $allowedNetworkKeys += 'ipam' }
+    Assert-Keys $network $allowedNetworkKeys $requiredNetworkKeys
+    if ($Rendered -and $network.ContainsKey('ipam')) {
+        Assert-Safe ($network.ipam -is [Collections.IDictionary] -and $network.ipam.Count -eq 0) 'invalid rendered IPAM'
+    }
+    $gate='volume.identity'
     Assert-Safe ($volume.name -ceq 'yuni-validation-postgres-data' -and $volume.driver -ceq 'local') 'volume mismatch'
+    $gate='network.identity'
     Assert-Safe ($network.name -ceq 'yuni-validation-network' -and $network.driver -ceq 'bridge') 'network mismatch'
     foreach ($resource in @($s,$volume,$network)) {
+        $gate='ownership.labels'
         Assert-Keys $resource.labels @('io.yuni.validation.run','io.yuni.validation.environment')
         Assert-Safe ($resource.labels['io.yuni.validation.run'] -ceq $label -and
             $resource.labels['io.yuni.validation.environment'] -ceq 'yuni-audit-validation') 'ownership label mismatch'
+    }
+    } catch {
+        # Fixed messages from our assertions may classify a rejection; never emit them or raw values.
+        $category = switch -CaseSensitive ($_.Exception.Message) {
+            'SAFETY STOP: unexpected configuration key' {'UNEXPECTED_STRUCTURAL_KEY'}
+            'SAFETY STOP: missing configuration key' {'MISSING_STRUCTURAL_KEY'}
+            'SAFETY STOP: missing object' {'INVALID_NODE_SCHEMA'}
+            'SAFETY STOP: execution override forbidden' {'EXECUTION_OVERRIDE_NOT_ALLOWED'}
+            'SAFETY STOP: invalid rendered IPAM' {'INVALID_NETWORK_CONFIGURATION'}
+            default {
+                if ($gate -like 'healthcheck.*') {'INVALID_HEALTHCHECK_CONFIGURATION'}
+                else {'INVALID_TOPOLOGY_CONFIGURATION'}
+            }
+        }
+        Throw-ValidationStop $gate $category
     }
 }
 

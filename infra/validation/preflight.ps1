@@ -11,6 +11,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $journal = $null; $mutex = $null; $lockHeld = $false; $writer = $null
+$script:validationGate='unknown'; $script:validationNativeExitCode=$null
 try {
     Import-Module "$PSScriptRoot\safety.psm1" -Force -DisableNameChecking
     $ctx = Get-StaticContext $ExpectedWorktreeRoot $BaselineSha $ExpectedHeadSha $EnvFile $PSScriptRoot
@@ -44,7 +45,9 @@ try {
         $writer.Position=0; $writer.SetLength(0); $writer.Write($bytes,0,$bytes.Length); $writer.Flush($true)
     }
     function Invoke-Docker([string[]]$Arguments) {
+        $script:validationGate='input-integrity'; $script:validationNativeExitCode=$null
         Assert-InputsUnchanged $ctx
+        $script:validationGate='native-command'
         $full = @('--host',$ctx.DockerHost,'--config',$ctx.DockerConfig) + $Arguments
         $entry = @{Tool='docker'; Arguments=$full; Directory=$ctx.Root; StartedAt=[DateTimeOffset]::UtcNow.ToString('o'); Result='STARTED'}
         $journal.Commands.Add($entry); Save-Evidence
@@ -52,8 +55,10 @@ try {
         try {
             $diagnosticOptions = @{}
             if (Test-CapabilityArguments $ctx.Docker $full) { $diagnosticOptions.CapabilityEvidence=$entry }
-            $r = Invoke-SafeProcess $ctx.Docker $full $ctx.Root @{VALIDATION_RUN_ID=$ctx.RunId} -DockerChild @diagnosticOptions
-            $entry.Result='PASS'; $entry.ExitCode=0
+            $r = Invoke-SafeProcess $ctx.Docker $full $ctx.Root @{VALIDATION_RUN_ID=$ctx.RunId} -DockerChild -ReturnExitCode @diagnosticOptions
+            $script:validationNativeExitCode=$r.ExitCode; $entry.ExitCode=$r.ExitCode
+            Assert-Safe ($r.ExitCode -eq 0) 'Docker command failed; native output suppressed'
+            $entry.Result='PASS'
             return $r.Output
         } catch {
             $entry.Result='FAIL / UNKNOWN'; throw 'SAFETY STOP: Docker command failed; output suppressed'
@@ -206,9 +211,18 @@ try {
             }
             Assert-Safe ($matched -gt 0) 'excluded-port output unknown'
             $null = Invoke-Compose @('config','--quiet')
-            $rendered = (Invoke-Compose @('config','--format','json')) | ConvertFrom-Json -AsHashtable
+            $renderedText = Invoke-Compose @('config','--format','json')
+            $journal.Stage='rendered-compose-json'; $script:validationGate='rendered-json.parse'
+            Save-Evidence
+            try { $rendered = $renderedText | ConvertFrom-Json -AsHashtable }
+            catch { Throw-ValidationStop 'rendered-json.parse' 'JSON_PARSE_FAILURE' }
+            finally { $renderedText=$null }
+            $journal.Stage='rendered-compose-validation'; $script:validationGate='model.keys'
+            Save-Evidence
             Assert-ComposeTopology $rendered $ctx.Values $ctx.RunId -Rendered
             $rendered = $null
+            $journal.Stage='cached-image-validation'; $script:validationGate='image.identity'
+            Save-Evidence
             $image = Inspect-One 'image' 'postgres:16-alpine'
             Assert-Safe ($image.Id -cmatch '^sha256:[0-9a-f]{64}$' -and @($image.RepoDigests).Count -gt 0) 'local image identity missing; no automatic pull'
             $ctx.ImageId = $image.Id; $journal.ImageId = $image.Id
@@ -281,6 +295,8 @@ try {
 } catch {
     if ($null -ne $journal -and $null -ne $writer) {
         $journal.State='STOP'; $journal.StopReason='FAIL / UNKNOWN / AMBIGUOUS; inspect stage and command results; raw errors withheld'
+        $journal.StopDiagnostic=Get-SafeStopDiagnostic -Stage $journal.Stage -Gate $script:validationGate `
+            -NativeExitCode $script:validationNativeExitCode -Exception $_.Exception
         try { Save-Evidence } catch { }
     }
     [Console]::Error.WriteLine('PREFLIGHT STOP. See evidence for guarded cleanup outcome. Raw details suppressed.')
