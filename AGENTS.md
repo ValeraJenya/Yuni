@@ -1,7 +1,7 @@
 # AGENTS.md
 
-Version: 1.4
-Last updated: 2026-09-16
+Version: 1.5
+Last updated: 2026-10-08
 
 ## Назначение
 
@@ -127,6 +127,11 @@ Yuni - dating app monorepo: React frontend, NestJS backend, PostgreSQL/Prisma, D
 - anti-spam and rate limits;
 - safe serializers: не отдавать raw Prisma rows, secrets, PII, `storageKey`, local paths;
 - safe media handling: MIME/magic bytes, size limits, no original filename as storage name, no path traversal.
+
+## Technical audit subagents
+
+Для явно запущенной next-system audit-задачи используй [roster/specifications](docs/audits/yuni-2026-09/prompts/next-system/README.md) и [shared contract](docs/audits/yuni-2026-09/prompts/next-system/00-SHARED-CONTRACT.md): Sol 6.1 Coordinator и workers, Astra для escalation/final synthesis; максимум 3 concurrent workers. Это не разрешение запускать аудит, runtime или remediation.
+Каждый worker работает на frozen SHA в отдельном clean worktree/context и пишет только свой report. При BLOCKED/FAIL, provisional P0/P1 или evidence conflict Coordinator останавливает pipeline; P0/P1 проверяет Astra, DEC/product decisions принимают владельцы. Registry integration и любые runtime operations требуют отдельного явного задания.
 
 ## Independent blind review
 

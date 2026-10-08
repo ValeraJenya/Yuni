@@ -586,6 +586,7 @@ Finding
 | 2026-09-06 | Создание и проверка repo-level skills | Созданы и проверены `yuni-audit`, `yuni-code-review` и `yuni-refactor`; Codex Desktop успешно обнаружил все три skill. Подтверждены read-only audit/review, явные scope и acceptance criteria для refactor и обязательное доказательство неиспользования перед удалением зависимостей. Аудит и рефакторинг при проверке skills не запускались. |
 | 2026-09-07 | Завершение primary Wave 1 и независимого Synthesis / Red-Team | Завершены Architecture, Test Reliability, Security/Data Integrity; решения и ограничения — [Synthesis](passes/wave-1/04-SYNTHESIS-RED-TEAM.md), result SHA `f2e9471` (`f2e94711b710262a58c88ca65416c12aaae6fc51`). Подтверждённых P0/P1 нет; SEC-003 Proposed / provisional P1 требует runtime validation. |
 | 2026-09-07 | Интеграция центральных результатов Wave 1 | По разрешению владельца подготовлен перенос в 03-FINDINGS.md и 06-ASSURANCE-REGISTER.md: 10 самостоятельных findings (9 Confirmed, 1 Proposed), 2 merged sources без отдельных findings, 4 static assurances. В 07-WAVE-1-FOLLOWUPS.md вынесены 9 RV и 6 Pending Owner Decisions. Интеграция не является новым аудитом, runtime validation или принятием remediation; production code/reports не изменялись. |
+| 2026-10-08 | Подготовка новой системы audit subagents | По согласованному scope созданы [next-system specifications](prompts/next-system/README.md): Sol 6.1 lightweight Coordinator, Astra Architect, 10 Sol 6.1 static workers, shared safety/output contract и отдельный future Codex Security follow-up. Conditional runtime-роли не активированы; master 0–124 распределён routing overlay без изменения исторической таблицы. Создание specs не выбирает новый CODE_AUDIT_SHA, не запускает Wave 2/audit/runtime, не принимает DEC и не меняет findings/assurances. |
 
 
 
@@ -602,3 +603,5 @@ Finding
 2\. Определить отдельную безопасную runtime-validation environment, synthetic fixtures, версии/targets и разрешённые операции (DEC-005).
 
 3\. Решить: запускать targeted validation pass (первым RV-01 для SEC-003) или переходить к Wave 2 с явно сохранёнными blocker-ами. Ни один вариант не выбран автоматически.
+
+Подготовка next-system от 2026-10-08 завершает только структуру и specifications. До отдельного запуска согласовать scope, полный CODE_AUDIT_SHA/SPECIFICATION_SHA, roots/output/ID ranges и результаты independent review; [launch contract](prompts/next-system/README.md) не заменяет решений DEC-001–006 или разрешения RV. Исторические Wave 1 reports/specs сохраняются без переписывания.
